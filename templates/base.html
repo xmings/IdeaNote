@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>IdeaNote</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <script src="{{ url_for('static', filename='js/jquery.min.js')}}"></script>
+    <script src="{{ url_for('static', filename='js/popper.min.js')}}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js')}}"></script>
+    <style type="text/css">
+        .left-frame{
+            float: left;
+            width: 200px;
+        }
+    </style>
+    {% block cssdefine %}{% endblock %}
+    <script>
+    </script>
+    {% block jsdefinebefore %}{% endblock %}
+</head>
+<body>
+<nav class="navbar navbar-default" role="navigation">
+    <div class="container-fluid">
+    </div>
+</nav>
+
+<div class="content">
+    <div class="left-frame">
+        {% block leftframe %}{% endblock %}
+    </div>
+    <div class="center-frame">
+        {% block centerframe %}{% endblock %}
+    </div>
+    <div class="right-frame">
+        {% block rightframe %}{% endblock %}
+    </div>
+</div>
+
+
+<div class="footer"></div>
+{% block jsdefineafter %}{% endblock %}
+</body>
+</html>
