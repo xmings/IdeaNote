@@ -9,5 +9,4 @@ from flask import render_template
 
 @core.route('/')
 def hello_world():
-
-    return render_template('editor.html')
+    return render_template('editor-markdown.html')

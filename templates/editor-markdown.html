@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block cssdefine %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/highlight-default.css') }}">
+    <style>
+        #markdown-editor {
+            width: 100%;
+            margin-right: 10px;
+            font-family: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Heiti SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+            font-size: 14px;
+            line-height: 20px;
+            line-grid: create;
+
+        }
+
+        #markdown-editor:hover {
+            border-color: white;
+            box-shadow: none;
+            outline: 0;
+        }
+
+        #markdown-editor:visited,
+        #markdown-editor:active,
+        #markdown-editor:focus {
+            border-color: white;
+            box-shadow: none;
+            outline: 0;
+        }
+
+    </style>
+{% endblock %}
+
+{% block jsdefinebefore %}
+    <script src="{{ url_for('static', filename='js/marked.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/highlight.pack.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/require.min.js') }}"></script>
+    <script>
+        hljs.tabReplace = ' ';
+        hljs.initHighlightingOnLoad();
+    </script>
+{% endblock %}
+
+
+{% block centerframe %}
+    <textarea id="markdown-editor" class="form-control" placeholder="写你想写"></textarea>
+{% endblock %}
+
+
+{% block jsdefineafter %}
+    <script type="text/javascript">
+        var eheight = window.innerHeight;
+
+        $(document).ready(function () {
+            $('#content').height(eheight).split({
+                orientation: 'vertical',
+                limit: 10,
+                percent: true,
+                position: '15%',
+                width: 1
+            });
+
+            $('#center-frame').height(eheight).split({
+                orientation: 'vertical',
+                limit: 10,
+                percent: true,
+                position: '50%',
+                width: 1
+            });
+
+            $(".vsplitter").each(function (ind, ele) {
+                ele.style["width"] = "2px";
+                ele.style["background-color"] = "rgba(128, 128, 128, 0.18)";
+            });
+
+            $("#markdown-editor").keyup(function () {
+                content = $("#markdown-editor").val();
+                if (content !== "undefined") {
+                    $(".preview").html(marked(content,
+                        {
+                            highlight: function (code) {
+                                return hljs.highlightAuto(code).value;
+                            },
+                            pedantic: false,
+                            gfm: true,
+                            tables: true,
+                            breaks: false,
+                            sanitize: false,
+                            smartLists: true,
+                            smartypants: false,
+                            xhtml: false
+                        }
+                    ));
+                }
+            });
+
+        });
+
+    </script>
+{% endblock %}
+{% block leftframe %}
+    {% include 'catalog.html' %}
+{% endblock %}
