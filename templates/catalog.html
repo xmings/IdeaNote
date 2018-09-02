@@ -1,28 +1,54 @@
 
-<link href="{{ url_for('static', filename='css/zTreeStyle.min.css') }}" rel="stylesheet">
-<script type="text/javascript" src="{{ url_for('static', filename='js/jquery.ztree.core.min.js') }}"></script>
+<link href="{{ url_for('static', filename='css/jquery.treeview.css') }}" rel="stylesheet">
+<script type="text/javascript" src="{{ url_for('static', filename='js/jquery.treeview.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/jquery.treeview.edit.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/jquery.treeview.async.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/jquery.treeview.sortable.js') }}"></script>
 
-<script>
-    var zTreeObj;
-    // zTree 的参数配置，深入使用请参考 API 文档（setting 配置详解）
-    var setting = {};
-    var zNodes = [
-        {
-            name: "test1", open: true, children: [
-                {name: "test1_1"}, {name: "test1_2"}]
-        },
-        {
-            name: "test2", open: true, children: [
-                {name: "test2_1"}, {name: "test2_2"}]
-        }
-    ];
-    $(document).ready(function () {
-        zTreeObj = $.fn.zTree.init($("#treeDemo"), setting, zNodes);
-    });
+<script type="text/javascript">
+	$(document).ready(function(){
+		$("#browser").treeview({
+			toggle: function() {
+				console.log("%s was toggled.", $(this).find(">span").text());
+			}
+		});
 
+		$("#add").click(function() {
+			var branches = $("<li><span class='folder'>New Sublist</span><ul>" +
+				"<li><span class='file'>Item1</span></li>" +
+				"<li><span class='file'>Item2</span></li></ul></li>").appendTo("#browser");
+			$("#browser").treeview({
+				add: branches
+			});
+		});
+
+
+		$.contextMenu({
+            selector: '.folder',
+            callback: function(key, options) {
+                var m = "clicked: " + key;
+                window.console && console.log(m) || alert(m);
+            },
+            items: {
+                "edit": {name: "Edit", icon: "edit"},
+                "cut": {name: "Cut", icon: "cut"},
+               copy: {name: "Copy", icon: "copy"},
+                "paste": {name: "Paste", icon: "paste"},
+                "delete": {name: "Delete", icon: "delete"},
+                "sep1": "---------",
+                "quit": {name: "Quit", icon: function(){
+                    return 'context-menu-icon context-menu-icon-quit';
+                }}
+            }
+        });
+
+        $('.context-menu-one').on('click', function(e){
+            console.log('clicked', this);
+        });
+	});
 </script>
 
-<div class="catalog">
-    <ul id="treeDemo" class="ztree"></ul>
-</div>
+<ul id="browser" class="filetree treeview-famfamfam">
+    <li id="root"><span id="folder" class="folder">目录</span></li>
+</ul>
 

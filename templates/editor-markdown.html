@@ -2,7 +2,17 @@
 
 {% block cssdefine %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/highlight-default.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.contextmenu.min.css') }}">
     <style>
+        #browser {
+            font-family: "Microsoft YaHei", "Arial Narrow", sans-serif;
+            font-size: 12px;
+            margin-left: 0;
+        }
+        #browser > #root {
+            padding-left: 0;
+        }
+
         #markdown-editor {
             width: 100%;
             margin-right: 10px;
@@ -33,7 +43,8 @@
 {% block jsdefinebefore %}
     <script src="{{ url_for('static', filename='js/marked.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/highlight.pack.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/require.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.contextmenu.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.ui.position.min.js') }}"></script>
     <script>
         hljs.tabReplace = ' ';
         hljs.initHighlightingOnLoad();
