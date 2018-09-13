@@ -1,54 +1,133 @@
+<link href="{{ url_for('static', filename='css/zTreeStyle.css') }}" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="{{ url_for('static', filename='js/jquery.ztree.core.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/jquery.ztree.exedit.min.js') }}"></script>
 
-<link href="{{ url_for('static', filename='css/jquery.treeview.css') }}" rel="stylesheet">
-<script type="text/javascript" src="{{ url_for('static', filename='js/jquery.treeview.js') }}"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='js/jquery.treeview.edit.js') }}"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='js/jquery.treeview.async.js') }}"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='js/jquery.treeview.sortable.js') }}"></script>
 
 <script type="text/javascript">
+    var zTreeObj;
 	$(document).ready(function(){
-		$("#browser").treeview({
-			toggle: function() {
-				console.log("%s was toggled.", $(this).find(">span").text());
-			}
-		});
+	    catalogTree = $("#catalog-tree");
 
-		$("#add").click(function() {
-			var branches = $("<li><span class='folder'>New Sublist</span><ul>" +
-				"<li><span class='file'>Item1</span></li>" +
-				"<li><span class='file'>Item2</span></li></ul></li>").appendTo("#browser");
-			$("#browser").treeview({
-				add: branches
-			});
-		});
+	    var setting = {
+			check: {
+				enable: false
+			},
 
-
-		$.contextMenu({
-            selector: '.folder',
-            callback: function(key, options) {
-                var m = "clicked: " + key;
-                window.console && console.log(m) || alert(m);
-            },
-            items: {
-                "edit": {name: "Edit", icon: "edit"},
-                "cut": {name: "Cut", icon: "cut"},
-               copy: {name: "Copy", icon: "copy"},
-                "paste": {name: "Paste", icon: "paste"},
-                "delete": {name: "Delete", icon: "delete"},
-                "sep1": "---------",
-                "quit": {name: "Quit", icon: function(){
-                    return 'context-menu-icon context-menu-icon-quit';
-                }}
+			data: {
+				simpleData: {
+					enable: true
+				}
+			},
+            callback: {
+			    onClick: function(event, treeId, node){
+                    $.get(
+                        url="{{ url_for('core.getNode', nodeId=100) }}".replace(100, node.id),
+                        function (content) {
+                            $("#markdown-editor").val(content)
+                        }
+                    )
+                },
+                beforeRightClick: function (treeId, treeNode) {
+                    $("a[class^='level']").each(function (ind, ele) {
+                        $(ele).removeClass("curSelectedNode")
+                    });
+                    $("a[id^='"+treeNode.tId+"']").addClass("curSelectedNode");
+                },
+                onDblClick: function (event, treeId, treeNode) {
+                    zTreeObj.editName(treeNode);
+                },
+                onRename: function (event, treeId, node) {
+                    $.post(
+                        url= "{{ url_for('core.updateNode', type="rename") }}",
+                        data= {
+                            nodeId: node.id,
+                            nodeTitle: node.name
+                        }
+                    )
+                }
             }
+		};
+
+	    $.ajax({
+            url: "{{ url_for('core.getNodes') }}",
+            type: 'GET',
+            dataType: 'json',
+            success: function (jNodes) {
+                zTreeObj = $.fn.zTree.init(catalogTree, setting, jNodes);
+            },
+
         });
 
-        $('.context-menu-one').on('click', function(e){
-            console.log('clicked', this);
+
+        $(function(){
+            $.contextMenu({
+                selector: "a[class^='level']",
+                trigger: 'right',
+                className: 'contextmenu-item-custom',
+                callback: function(key, options) {
+                    test = options;
+                    nodeId = options.$trigger[0].parentNode.id;
+                    node = zTreeObj.getNodeByTId(nodeId);
+                    if (key === 'drop'){
+                        zTreeObj.removeNode(node);
+                        $.post(url= "{{ url_for('core.dropNode') }}",
+                            data= {
+                                nodeId: node.id
+                            },
+                            function (response) {
+                                
+                            }
+                        )
+                    }else if (key === 'addChild'){
+                        newNode = zTreeObj.addNodes(node, -1, {name:"新建节点"});
+                        newNode = zTreeObj.getNodeByTId(newNode[0].tId);
+                        $.post(
+                            url= "{{ url_for('core.addNode') }}",
+                            data={
+                                nodeTitle: "新建节点",
+                                nodePid: node.id
+                            },
+                            function (nodeId) {
+                                newNode.id = nodeId;
+                            }
+                        )
+                    }else if (key === 'view'){
+                        $.get(
+                            url="{{ url_for('core.getNode', nodeId=100) }}".replace(100, node.id),
+                            function (content) {
+                                $("#markdown-editor").val(content)
+                            }
+                        )
+
+                    }else if (key === 'edit'){
+                        $.get(
+                            url="{{ url_for('core.getNode', nodeId=100) }}".replace(100, node.id),
+                            function (content) {
+                                $("#markdown-editor").val(content)
+                            }
+                        )
+
+                    }else if (key === 'rename'){
+                        //title = prompt("新名称","");
+                        zTreeObj.editName(node);
+                    }
+                },
+                items: {
+                    "addChild": {name: "添加子节点", icon: "edit"},
+                    "sep1": "---------",
+                    "view": {name: "查看", icon: "copy"},
+                    "edit": {name: "编辑", icon: "paste"},
+                    "rename": {name: "重命名", icon: "cut"},
+                    "drop": {name: "删除", icon: "delete"}
+                }
+            });
         });
+
 	});
 </script>
 
-<ul id="browser" class="filetree treeview-famfamfam">
-    <li id="root"><span id="folder" class="folder">目录</span></li>
-</ul>
+
+<ul id="catalog-tree" class="ztree"></ul>
+
+
 
