@@ -29,6 +29,8 @@
             font-size: 14px;
             line-height: 20px;
             line-grid: create;
+            resize: none;
+            border: none;
 
         }
 
@@ -70,7 +72,7 @@
 
 {% block jsdefineafter %}
     <script type="text/javascript">
-        var eheight = window.innerHeight;
+        eheight = window.innerHeight;
 
         $(document).ready(function () {
             $('#content').height(eheight).split({
@@ -94,10 +96,12 @@
                 ele.style["background-color"] = "rgba(128, 128, 128, 0.18)";
             });
 
-            $("#markdown-editor").keyup(function () {
+            editor = $("#markdown-editor");
+
+            editor.keyup(function () {
                 content = $(this).val();
                 if (content !== "undefined") {
-                    $(".preview").html(marked(content,
+                    $(".preview").html(marked(content.replace(/\n/g, '</br>').replace(/\r/g, '</br>'),
                         {
                             highlight: function (code) {
                                 return hljs.highlightAuto(code).value;
@@ -120,7 +124,7 @@
                             type: "post",
                             data: {
                                 nodeId: node.id,
-                                content: $("#markdown-editor").val(),
+                                content: content,
                             },
                             success: function () {
 
