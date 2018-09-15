@@ -3,11 +3,15 @@
 # @File  : control.py
 # @Author: wangms
 # @Date  : 2018/8/6
-import os, shutil
+import os, shutil, mimetypes
+from datetime import datetime
 from config import BaseConfig
 from model import Catalog, db
 
-
+def fetchUniqName(precision='s'):
+    if precision == 'ms':
+        return datetime.now().strftime('%Y%m%d%H%M%S%f')
+    return datetime.now().strftime('%Y%m%d%H%M%S')
 
 def nodes2Json(nodes):
     start = Catalog.query.filter(Catalog.parent == None).first()
@@ -83,7 +87,7 @@ def changeFile2Folder(node):
     try:
         folderPath = filePath.rstrip('.md')
         os.mkdir(folderPath)
-        newFile = os.path.join(os.path.dirname(filePath), 'init.md')
+        newFile = os.path.join(folderPath, 'init.md')
         shutil.move(filePath, newFile)
     except Exception as e:
         print(e.args)
@@ -121,4 +125,37 @@ def readContent(node):
     except Exception as e:
         print(e.args)
     return content
+
+def saveImage(img, node):
+    file = genFilePath(node)
+    path = os.path.join(os.path.dirname(file), 'img')
+    if not os.path.exists(path):
+        os.mkdir(path)
+    try:
+        imgType = img.mimetype.split('/')[1]
+        imgPath = os.path.join(path, '{}.{}'.format(fetchUniqName(), imgType))
+        img.save(imgPath)
+    except Exception as e:
+        print(e.args)
+        return ''
+    src = os.path.relpath(imgPath, BaseConfig.PROJECT_PATH)
+    return src
+
+def readImage(path):
+    imgFile = '{}/{}'.format(BaseConfig.PROJECT_PATH, path)
+    try:
+        imgType = mimetypes.guess_type(imgFile)[0]
+        with open(imgFile, 'rb') as f:
+            img = f.read()
+    except Exception as e:
+        print(e.args)
+        return False
+    return [img, imgType]
+
+
+
+
+
+
+
 

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <title>IdeaNote</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.splitter.css') }}">
@@ -33,7 +34,8 @@
         }
 
         ::-webkit-scrollbar-track {
-            box-shadow: 1px 1px 5px rgba(0, 0, 0, .2) inset;
+            background: white;
+            box-shadow: white;
         }
 
         ::-webkit-scrollbar-thumb {
@@ -46,9 +48,43 @@
         ::-webkit-scrollbar-corner {
             background: transparent;
         }
+
+        .preview {
+            padding: 8px 12px;
+        }
     </style>
     {% block cssdefine %}{% endblock %}
     <script>
+        var splitter2, splitter1;
+        $(document).ready(function () {
+            splitter1 = $('#content').height(eheight).split({
+                orientation: 'vertical',
+                limit: 10,
+                percent: true,
+                position: '15%',
+                width: 1,
+                invisible: false,
+                onDrag: function(event) {
+                    if (splitter1.position() < 100){
+                        splitter1.position(0)
+                    }
+                }
+            });
+
+            splitter2 = $('#center-frame').height(eheight).split({
+                orientation: 'vertical',
+                limit: 0,
+                percent: true,
+                position: '0%',
+                width: 1,
+                onDrag: function(event) {
+                    //console.log(splitter2.position());
+                    if (splitter2.position() < 200){
+                        splitter2.position(0)
+                    }
+                }
+            });
+        })
     </script>
     {% block jsdefinebefore %}{% endblock %}
 </head>

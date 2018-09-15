@@ -4,26 +4,26 @@
 
 
 <script type="text/javascript">
-    var zTreeObj;
-	$(document).ready(function(){
-	    catalogTree = $("#catalog-tree");
+    $(document).ready(function () {
+        catalogTree = $("#catalog-tree");
 
-	    var setting = {
-			check: {
-				enable: false
-			},
+        var setting = {
+            check: {
+                enable: false
+            },
 
-			data: {
-				simpleData: {
-					enable: true
-				}
-			},
+            data: {
+                simpleData: {
+                    enable: true
+                }
+            },
             callback: {
-			    onClick: function(event, treeId, node){
+                onClick: function (event, treeId, node) {
                     $.get(
-                        url="{{ url_for('core.getNode', nodeId=100) }}".replace(100, node.id),
+                        url = "{{ url_for('core.getNode', nodeId=100) }}".replace(100, node.id),
                         function (content) {
-                            $("#markdown-editor").val(content)
+                            editor.val(content);
+                            preview(content);
                         }
                     )
                 },
@@ -31,84 +31,93 @@
                     $("a[class^='level']").each(function (ind, ele) {
                         $(ele).removeClass("curSelectedNode")
                     });
-                    $("a[id^='"+treeNode.tId+"']").addClass("curSelectedNode");
+                    $("a[id^='" + treeNode.tId + "']").addClass("curSelectedNode");
                 },
                 onDblClick: function (event, treeId, treeNode) {
                     zTreeObj.editName(treeNode);
                 },
                 onRename: function (event, treeId, node) {
                     $.post(
-                        url= "{{ url_for('core.updateNode', type="rename") }}",
-                        data= {
+                        url = "{{ url_for('core.updateNode', type="rename") }}",
+                        data = {
                             nodeId: node.id,
                             nodeTitle: node.name
                         }
                     )
                 }
             }
-		};
+        };
 
-	    $.ajax({
+        $.ajax({
             url: "{{ url_for('core.getNodes') }}",
             type: 'GET',
             dataType: 'json',
             success: function (jNodes) {
                 zTreeObj = $.fn.zTree.init(catalogTree, setting, jNodes);
+                node = zTreeObj.getNodes()[0];
+                $("a[id^='" + node.tId + "']").click();
+                $('textarea').inlineattachment({
+                    uploadUrl: "{{ url_for('core.uploadImage') }}",
+                    urlText: "![image]({filename})",
+                    extraParams: {
+                        nodeId: zTreeObj.getSelectedNodes()[0].id
+                    }
+                });
             },
 
         });
 
-
-        $(function(){
+        $(function () {
             $.contextMenu({
                 selector: "a[class^='level']",
                 trigger: 'right',
                 className: 'contextmenu-item-custom',
-                callback: function(key, options) {
+                callback: function (key, options) {
                     test = options;
                     nodeId = options.$trigger[0].parentNode.id;
                     node = zTreeObj.getNodeByTId(nodeId);
-                    if (key === 'drop'){
-                        zTreeObj.removeNode(node);
-                        $.post(url= "{{ url_for('core.dropNode') }}",
-                            data= {
+                    if (key === 'drop') {
+                        $.post(url = "{{ url_for('core.dropNode') }}",
+                            data = {
                                 nodeId: node.id
                             },
-                            function (response) {
-                                
+                            success = function (response) {
+                                zTreeObj.removeNode(node);
                             }
                         )
-                    }else if (key === 'addChild'){
-                        newNode = zTreeObj.addNodes(node, -1, {name:"新建节点"});
-                        newNode = zTreeObj.getNodeByTId(newNode[0].tId);
+
+                    } else if (key === 'addChild') {
+                        newNodes = zTreeObj.addNodes(node, -1, {name: "新建节点"});
+                        newNode = zTreeObj.getNodeByTId(newNodes[0].tId);
                         $.post(
-                            url= "{{ url_for('core.addNode') }}",
-                            data={
+                            url = "{{ url_for('core.addNode') }}",
+                            data = {
                                 nodeTitle: "新建节点",
                                 nodePid: node.id
                             },
-                            function (nodeId) {
-                                newNode.id = nodeId;
-                            }
+                            success = function (response) {
+                                newNode.id = response.nodeId;
+                                zTreeObj.updateNode(newNode)
+                            },
+                            dataType = 'json'
                         )
-                    }else if (key === 'view'){
+                    } else if (key === 'view') {
                         $.get(
-                            url="{{ url_for('core.getNode', nodeId=100) }}".replace(100, node.id),
-                            function (content) {
-                                $("#markdown-editor").val(content)
+                            url = "{{ url_for('core.getNode', nodeId=100) }}".replace(100, node.id),
+                            success = function (content) {
+                                editor.val(content)
                             }
                         )
 
-                    }else if (key === 'edit'){
+                    } else if (key === 'edit') {
                         $.get(
-                            url="{{ url_for('core.getNode', nodeId=100) }}".replace(100, node.id),
-                            function (content) {
-                                $("#markdown-editor").val(content)
+                            url = "{{ url_for('core.getNode', nodeId=100) }}".replace(100, node.id),
+                            success = function (content) {
+                                editor.val(content)
                             }
                         )
 
-                    }else if (key === 'rename'){
-                        //title = prompt("新名称","");
+                    } else if (key === 'rename') {
                         zTreeObj.editName(node);
                     }
                 },
@@ -123,7 +132,7 @@
             });
         });
 
-	});
+    });
 </script>
 
 

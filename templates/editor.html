@@ -31,6 +31,7 @@
             line-grid: create;
             resize: none;
             border: none;
+            outline: none;
 
         }
 
@@ -47,6 +48,11 @@
             box-shadow: none;
             outline: 0;
         }
+        .splitter_panel .vsplitter {
+            width: 2px;
+            background-color: rgba(128, 128, 128, 0.18);
+        }
+
 
     </style>
 {% endblock %}
@@ -57,6 +63,8 @@
     <script src="{{ url_for('static', filename='js/jquery.contextmenu.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.ui.position.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/hotkeys.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/inline-attachment.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.inline-attachment.min.js') }}"></script>
 
     <script>
         hljs.tabReplace = ' ';
@@ -73,35 +81,10 @@
 {% block jsdefineafter %}
     <script type="text/javascript">
         eheight = window.innerHeight;
-
         $(document).ready(function () {
-            $('#content').height(eheight).split({
-                orientation: 'vertical',
-                limit: 10,
-                percent: true,
-                position: '15%',
-                width: 1
-            });
-
-            $('#center-frame').height(eheight).split({
-                orientation: 'vertical',
-                limit: 10,
-                percent: true,
-                position: '50%',
-                width: 1
-            });
-
-            $(".vsplitter").each(function (ind, ele) {
-                ele.style["width"] = "2px";
-                ele.style["background-color"] = "rgba(128, 128, 128, 0.18)";
-            });
-
-            editor = $("#markdown-editor");
-
-            editor.keyup(function () {
-                content = $(this).val();
-                if (content !== "undefined") {
-                    $(".preview").html(marked(content.replace(/\n/g, '</br>').replace(/\r/g, '</br>'),
+            preview = function(content) {
+                content = content.replace(/\n/g, '</br>').replace(/\r/g, '</br>');
+                $(".preview").html(marked(content,
                         {
                             highlight: function (code) {
                                 return hljs.highlightAuto(code).value;
@@ -116,6 +99,14 @@
                             xhtml: false
                         }
                     ));
+            };
+
+            editor = $("#markdown-editor");
+            editor.keyup(function () {
+                content = $(this).val();
+                if (content !== "undefined") {
+                    preview(content);
+
                     currentNode = zTreeObj.getSelectedNodes();
                     if (currentNode.length > 0) {
                         node = zTreeObj.getSelectedNodes()[0];
@@ -143,8 +134,7 @@
                     
                 )
             };
-            
-            
+
             hotkeys('ctrl+s,ctrl+e', function (event, handler) {
                 console.log(event, handler);
                 switch (handler.key) {

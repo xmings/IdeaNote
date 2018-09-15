@@ -4,6 +4,7 @@
 # @Author: wangms
 # @Date  : 2018/8/7
 import os
+from datetime import timedelta
 
 
 class BaseConfig(object):
@@ -15,6 +16,7 @@ class BaseConfig(object):
     JSON_AS_ASCII = False
     CATALOG_JSON = ''
     NOTES_DIRCTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'notes')
+    SEND_FILE_MAX_AGE_DEFAULT = timedelta(seconds=1)
 
     # db.create_all(bind=['users'])
     # __bind_key__ = 'users'

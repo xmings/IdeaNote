@@ -3,13 +3,12 @@
 # @File  : view.py
 # @Author: wangms
 # @Date  : 2018/8/6
-from datetime import datetime
 from . import core
-from flask import render_template, request, jsonify
+from flask import render_template, request, Response, jsonify
 from app import db
 from model import Catalog
-from control import Table2Json, dropChildren, \
-    genFilePath, changeFile2Folder, writeContent, readContent
+from control import Table2Json, dropChildren, fetchUniqName, \
+    genFilePath, changeFile2Folder, writeContent, readContent, saveImage, readImage
 
 
 @core.route('/')
@@ -36,13 +35,13 @@ def addNode():
         'nodeTitle': request.form.get('nodeTitle'),
         'nodePid': request.form.get('nodePid'),
         'nodeType': 'file',
-        'fileName': datetime.now().strftime('%Y%m%d%H%M%S')
+        'fileName': fetchUniqName()
     }
     pnode = Catalog.query.filter_by(nodeId=info['nodePid']).first()
-    status = changeFile2Folder(pnode)
-    if not status:
-        return 'error', 500
     if pnode.nodeType == 'file':
+        status = changeFile2Folder(pnode)
+        if not status:
+            return 'error', 500
         pnode.nodeType = 'folder'
     info['level'] = pnode.level + 1
     node = Catalog(**info)
@@ -76,8 +75,29 @@ def updateNode(type):
 def dropNode():
     nodeId = request.form.get('nodeId')
     node = Catalog.query.filter_by(nodeId=nodeId).first()
+    if node.level == 0:
+        return 'FORBIDDEN', 403
     dropChildren(node)
     db.session.delete(node)
     db.session.commit()
     return 'OK', 200
+
+
+@core.route('/node/upload', methods=['POST'])
+def uploadImage():
+    img = request.files.get('file')
+    nodeId = request.form.get('nodeId')
+    node = Catalog.query.filter_by(nodeId=nodeId).first()
+    path = saveImage(img, node)
+
+    return jsonify({'filename': path.replace('\\','/')}), 200
+
+@core.route('/<path:imgPath>')
+def getImage(imgPath):
+    result = readImage(imgPath)
+    if result:
+        img, imgType = result
+        resp = Response(img, mimetype=imgType)
+        return resp
+    return 'FORBIDDEN', 403
 
