@@ -15,8 +15,8 @@ class BaseConfig(object):
     SQLALCHEMY_ECHO = True
     JSON_AS_ASCII = False
     CATALOG_JSON = ''
-    NOTES_DIRCTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'notes')
     SEND_FILE_MAX_AGE_DEFAULT = timedelta(seconds=1)
+    NOTES_DIRCTORY = os.path.join(PROJECT_PATH, 'notes')
 
     # db.create_all(bind=['users'])
     # __bind_key__ = 'users'

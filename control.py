@@ -42,7 +42,8 @@ class Table2Json(object):
         self.block = ''
         self.nodePid = ''
 
-    def run(self, nodes):
+    def run(self):
+        nodes = Catalog.query.order_by(Catalog.level).all()
         for n in nodes:
             if not n.nodePid:
                 self.json.append({
@@ -53,6 +54,10 @@ class Table2Json(object):
                 })
             else:
                 self.addNode(n, self.json)
+
+        if not self.json:
+            self.initCatalog()
+            self.run()
         return self.json
 
     def addNode(self, node, jblocks):
@@ -69,17 +74,40 @@ class Table2Json(object):
             elif block.get("children"):
                 self.addNode(node, block["children"])
 
+    def initCatalog(self, path=None):
+        if not path:
+            path = BaseConfig.NOTES_DIRCTORY
+
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        # 初始化根节点init.md文件
+        file = os.path.join(path, 'init.md')
+        writeFile(file, '## 欢迎使用IdeaNote ##')
+
+        root = Catalog(
+            nodeTitle='Mybase',
+            nodeType='folder',
+            fileName=path,
+            level=0,
+            status=1,
+            createTime=datetime.now()
+        )
+        db.session.add(root)
+        db.session.commit()
+
+
 def genFilePath(node):
     if node.nodeType == 'folder':
         filePath = "init.md"
     else:
         filePath = node.fileName + ".md"
 
-    while node.parent and node.parent.fileName:
-        filePath = os.path.join(node.parent.fileName, filePath)
+    while node and node.fileName:
+        filePath = os.path.join(node.fileName, filePath)
         node = node.parent
 
-    filePath = os.path.join(BaseConfig.NOTES_DIRCTORY, filePath)
+    # filePath = os.path.join(BaseConfig.PROJECT_PATH, filePath)
     return filePath
 
 def changeFile2Folder(node):
@@ -94,21 +122,37 @@ def changeFile2Folder(node):
         return False
     return True
 
-def dropChildren(node):
+def dropNodeWithChildren(node):
     children = Catalog.query.filter_by(nodePid=node.nodeId).all()
     for c in children:
         child = Catalog.query.filter_by(nodePid=c.nodeId).first()
         if child:
-            dropChildren(c)
+            dropNodeWithChildren(c)
         else:
             db.session.delete(c)
             db.session.commit()
+    db.session.delete(node)
+    db.session.commit()
 
-def writeContent(node, content):
-    filePath = genFilePath(node)
+def dropDirWithChildren(node):
+    if node.nodeType == 'file':
+        path = genFilePath(node)
+    else:
+        path = os.path.dirname(genFilePath(node))
     try:
-        with open(filePath, 'w', encoding='utf8') as f:
-            f.write(content)
+        shutil.rmtree(path)
+    except Exception as e:
+        print(e.args)
+        return False
+    return True
+
+def moveDirWithChildren(node, pnode):
+    nodeFile = genFilePath(node)
+    pnodeFile = genFilePath(pnode)
+    try:
+        currDir = os.path.dirname(nodeFile)
+        targetDir = os.path.dirname(pnodeFile)
+        shutil.move(currDir, targetDir)
     except Exception as e:
         print(e.args)
         return False
@@ -116,42 +160,61 @@ def writeContent(node, content):
 
 def readContent(node):
     filePath = genFilePath(node)
-    content = ''
-    try:
-        with open(filePath, 'r', encoding='utf8') as f:
-            content = f.read()
-    except FileNotFoundError:
-        writeContent(node, '')
-    except Exception as e:
-        print(e.args)
+    content = cat(filePath, 'r')
     return content
+
+def saveContent(node, content):
+    filePath = genFilePath(node)
+    status = writeFile(filePath, content)
+    return status
+
+def readImage(path):
+    imgFile = '{}/{}'.format(BaseConfig.PROJECT_PATH, path)
+    imgType = mimetypes.guess_type(imgFile)[0]
+    img = cat(imgFile, 'rb')
+    return [img, imgType]
 
 def saveImage(img, node):
     file = genFilePath(node)
     path = os.path.join(os.path.dirname(file), 'img')
-    if not os.path.exists(path):
-        os.mkdir(path)
-    try:
-        imgType = img.mimetype.split('/')[1]
-        imgPath = os.path.join(path, '{}.{}'.format(fetchUniqName(), imgType))
-        img.save(imgPath)
-    except Exception as e:
-        print(e.args)
-        return ''
+    imgType = img.mimetype.split('/')[1]
+    imgPath = os.path.join(path, '{}.{}'.format(fetchUniqName(), imgType))
+    writeFile(imgPath, img, 'wb')
     src = os.path.relpath(imgPath, BaseConfig.PROJECT_PATH)
     return src
 
-def readImage(path):
-    imgFile = '{}/{}'.format(BaseConfig.PROJECT_PATH, path)
+def writeFile(filePath, content='', mode='w'):
+    dir = os.path.dirname(filePath)
     try:
-        imgType = mimetypes.guess_type(imgFile)[0]
-        with open(imgFile, 'rb') as f:
-            img = f.read()
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        if mode=='wb':
+            with open(filePath, mode) as f:
+                f.write(content)
+        else:
+            with open(filePath, mode, encoding='utf8') as f:
+                f.write(content)
     except Exception as e:
         print(e.args)
         return False
-    return [img, imgType]
+    return True
 
+def cat(filePath, mode='r'):
+    content = '' if mode=='r' else b''
+    if os.path.exists(filePath):
+        try:
+            if mode == 'rb':
+                with open(filePath, mode) as f:
+                    content = f.read()
+            else:
+                with open(filePath, mode, encoding='utf8') as f:
+                    content = f.read()
+        except Exception as e:
+            print(e.args)
+    else:
+        writeFile(filePath, content, mode)
+    return content
 
 
 

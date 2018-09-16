@@ -7,8 +7,9 @@ from . import core
 from flask import render_template, request, Response, jsonify
 from app import db
 from model import Catalog
-from control import Table2Json, dropChildren, fetchUniqName, \
-    genFilePath, changeFile2Folder, writeContent, readContent, saveImage, readImage
+from control import Table2Json, dropNodeWithChildren, fetchUniqName, \
+    dropDirWithChildren, moveDirWithChildren, changeFile2Folder, \
+    saveContent, readContent, saveImage, readImage
 
 
 @core.route('/')
@@ -17,9 +18,8 @@ def index():
 
 @core.route('/node/',methods=['GET'])
 def getNodes():
-    nodes = Catalog.query.order_by(Catalog.level).all()
     t2j = Table2Json()
-    jNodes = t2j.run(nodes)
+    jNodes = t2j.run()
     return jsonify(jNodes)
 
 
@@ -47,7 +47,7 @@ def addNode():
     node = Catalog(**info)
     db.session.add(node)
     db.session.commit()
-    writeContent(node, '')
+    saveContent(node, '')
     return jsonify({"nodeId": node.nodeId })
 
 
@@ -58,10 +58,15 @@ def updateNode(type):
     if type == "rename":
         node.nodeTitle = request.form.get('nodeTitle')
     elif type == "position":
-        node.nodePid = request.form.get('nodePid')
+        nodePid = request.form.get('nodePid')
+        pnode = Catalog.query.filter_by(nodeId=nodePid).first()
+        status = moveDirWithChildren(node, pnode)
+        if not status:
+            return 'error', 500
+        node.nodePid = nodePid
     elif type == "content":
         content = request.form.get('content')
-        status = writeContent(node, content)
+        status = saveContent(node, content)
         if not status:
             return 'error', 500
     else:
@@ -77,9 +82,9 @@ def dropNode():
     node = Catalog.query.filter_by(nodeId=nodeId).first()
     if node.level == 0:
         return 'FORBIDDEN', 403
-    dropChildren(node)
-    db.session.delete(node)
-    db.session.commit()
+
+    dropDirWithChildren(node)
+    dropNodeWithChildren(node)
     return 'OK', 200
 
 

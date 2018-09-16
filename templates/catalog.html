@@ -17,6 +17,15 @@
                     enable: true
                 }
             },
+            edit: {
+                drag: {
+                    isCopy: false,
+			        isMove: true,
+                },
+                enable: true,
+                showRemoveBtn: false,
+                showRenameBtn: false
+            },
             callback: {
                 onClick: function (event, treeId, node) {
                     $.get(
@@ -44,6 +53,27 @@
                             nodeTitle: node.name
                         }
                     )
+                },
+                onDrop: function (event, treeId, treeNodes, targetNode, moveType, isCopy) {
+                    if (targetNode !== null && isCopy===false){
+                        if (moveType === 'inner'){
+                            $.ajax({
+                                url: "{{ url_for('core.updateNode', type="position") }}",
+                                type: 'POST',
+                                data: {
+                                    nodeId: treeNodes[0].id,
+                                    nodePid: targetNode.id
+                                },
+                                success: function () {
+                                    
+                                },
+                                error: function () {
+                                    
+                                }
+                                
+                            })
+                        }
+                    }
                 }
             }
         };
@@ -101,21 +131,6 @@
                             },
                             dataType = 'json'
                         )
-                    } else if (key === 'view') {
-                        $.get(
-                            url = "{{ url_for('core.getNode', nodeId=100) }}".replace(100, node.id),
-                            success = function (content) {
-                                editor.val(content)
-                            }
-                        )
-
-                    } else if (key === 'edit') {
-                        $.get(
-                            url = "{{ url_for('core.getNode', nodeId=100) }}".replace(100, node.id),
-                            success = function (content) {
-                                editor.val(content)
-                            }
-                        )
 
                     } else if (key === 'rename') {
                         zTreeObj.editName(node);
@@ -124,8 +139,6 @@
                 items: {
                     "addChild": {name: "添加子节点", icon: "edit"},
                     "sep1": "---------",
-                    "view": {name: "查看", icon: "copy"},
-                    "edit": {name: "编辑", icon: "paste"},
                     "rename": {name: "重命名", icon: "cut"},
                     "drop": {name: "删除", icon: "delete"}
                 }

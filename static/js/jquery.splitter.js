@@ -311,7 +311,7 @@
                                     if (parseInt(lastDBClickPosition[splitter_id])){
                                         current_splitter.position(lastDBClickPosition[splitter_id]);
                                     }else{
-                                        current_splitter.position(100);
+                                        current_splitter.position(500);
                                     }
 
                                 }else{
