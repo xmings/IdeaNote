@@ -50,7 +50,7 @@ class Table2Json(object):
                     "id": n.nodeId,
                     "name": n.nodeTitle,
                     "open": n.nodeType == 'folder',
-                    "children": []
+                    "childen": []
                 })
             else:
                 self.addNode(n, self.json)

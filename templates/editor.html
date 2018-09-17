@@ -83,8 +83,9 @@
         eheight = window.innerHeight;
         $(document).ready(function () {
             preview = function(content) {
-                content = content.replace(/\n/g, '</br>').replace(/\r/g, '</br>');
-                $(".preview").html(marked(content,
+                x=content.replace(/\n/g, '\n\n')
+                y = x.replace(/\n\n\n\n/g, '\n\n<br>');
+                $(".preview").html(marked(y,
                         {
                             highlight: function (code) {
                                 return hljs.highlightAuto(code).value;
@@ -92,7 +93,7 @@
                             pedantic: false,
                             gfm: true,
                             tables: true,
-                            breaks: false,
+                            breaks: true,
                             sanitize: false,
                             smartLists: true,
                             smartypants: false,

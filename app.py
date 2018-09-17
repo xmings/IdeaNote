@@ -9,6 +9,11 @@ from config import BaseConfig
 from model import db
 from core import core
 
+import win32api, win32gui
+ct = win32api.GetConsoleTitle()
+hd = win32gui.FindWindow(0,ct)
+win32gui.ShowWindow(hd,0)
+
 
 app = Flask(__name__)
 app.config.from_object(BaseConfig)
