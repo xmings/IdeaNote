@@ -1,1 +1,1 @@
-## 欢迎使用IdeaNote ##
+## 欢迎使用IdeaNote

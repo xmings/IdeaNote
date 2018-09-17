@@ -1,0 +1,1 @@
+start /min python E:\Source\Python\IdeaNote\app.py
