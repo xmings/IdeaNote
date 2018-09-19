@@ -183,15 +183,14 @@ def saveImage(img, node):
     src = os.path.relpath(imgPath, BaseConfig.PROJECT_PATH)
     return src
 
-def writeFile(filePath, content='', mode='w'):
+def writeFile(filePath, content, mode='w'):
     dir = os.path.dirname(filePath)
     try:
         if not os.path.exists(dir):
             os.makedirs(dir)
 
         if mode=='wb':
-            with open(filePath, mode) as f:
-                f.write(content)
+            content.save(filePath)
         else:
             with open(filePath, mode, encoding='utf8') as f:
                 f.write(content)

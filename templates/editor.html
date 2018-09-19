@@ -83,9 +83,8 @@
         eheight = window.innerHeight;
         $(document).ready(function () {
             preview = function(content) {
-                x=content.replace(/\n/g, '\n\n')
-                y = x.replace(/\n\n\n\n/g, '\n\n<br>');
-                $(".preview").html(marked(y,
+                x=content.replace(/#\\n/g, '\n\n');
+                $(".preview").html(marked(x,
                         {
                             highlight: function (code) {
                                 return hljs.highlightAuto(code).value;
@@ -93,19 +92,20 @@
                             pedantic: false,
                             gfm: true,
                             tables: true,
-                            breaks: true,
+                            breaks: false,
                             sanitize: false,
                             smartLists: true,
                             smartypants: false,
                             xhtml: false
                         }
-                    ));
+                    )
+                );
             };
 
             editor = $("#markdown-editor");
             editor.keyup(function () {
-                content = $(this).val();
-                if (content !== "undefined") {
+                content = this.value;
+                if (content !== undefined) {
                     preview(content);
 
                     currentNode = zTreeObj.getSelectedNodes();
@@ -127,6 +127,7 @@
 
 
                 }
+
             });
             
             save = function() {

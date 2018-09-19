@@ -47,7 +47,7 @@
                 },
                 onRename: function (event, treeId, node) {
                     $.post(
-                        url = "{{ url_for('core.updateNode', type="rename") }}",
+                        url = "{{ url_for('core.updateNode', type='rename') }}",
                         data = {
                             nodeId: node.id,
                             nodeTitle: node.name
@@ -58,7 +58,7 @@
                     if (targetNode !== null && isCopy===false){
                         if (moveType === 'inner'){
                             $.ajax({
-                                url: "{{ url_for('core.updateNode', type="position") }}",
+                                url: "{{ url_for('core.updateNode', type='position') }}",
                                 type: 'POST',
                                 data: {
                                     nodeId: treeNodes[0].id,
@@ -86,7 +86,7 @@
                 zTreeObj = $.fn.zTree.init(catalogTree, setting, jNodes);
                 node = zTreeObj.getNodes()[0];
                 $("a[id^='" + node.tId + "']").click();
-                $('textarea').inlineattachment({
+                editor.inlineattachment({
                     uploadUrl: "{{ url_for('core.uploadImage') }}",
                     urlText: "![image]({filename})",
                     extraParams: {

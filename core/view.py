@@ -88,7 +88,7 @@ def dropNode():
     return 'OK', 200
 
 
-@core.route('/node/upload', methods=['POST'])
+@core.route('/node/upload/', methods=['POST'])
 def uploadImage():
     img = request.files.get('file')
     nodeId = request.form.get('nodeId')
