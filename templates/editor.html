@@ -83,8 +83,8 @@
         eheight = window.innerHeight;
         $(document).ready(function () {
             preview = function(content) {
-                x=content.replace(/#\\n/g, '\n\n');
-                $(".preview").html(marked(x,
+                //x=content.replace(/#\\n/g, '\n\n');
+                $(".preview").html(marked(content,
                         {
                             highlight: function (code) {
                                 return hljs.highlightAuto(code).value;
