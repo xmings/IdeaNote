@@ -9,7 +9,6 @@ from datetime import timedelta
 
 class BaseConfig(object):
     PROJECT_PATH = os.path.abspath('.')
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///{}\\ideanote.db?check_same_thread=False'.format(PROJECT_PATH)
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     SQLALCHEMY_RECORD_QUERIES = True
     SQLALCHEMY_ECHO = True
@@ -17,6 +16,12 @@ class BaseConfig(object):
     CATALOG_JSON = ''
     SEND_FILE_MAX_AGE_DEFAULT = timedelta(seconds=1)
     NOTES_DIRCTORY = os.path.join(PROJECT_PATH, 'notes')
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///{}\\ideanote.db?check_same_thread=False'.format(NOTES_DIRCTORY)
+    MYTOKEN = os.getenv("MYTOKEN")
+    DB_USER = "xmings"
+    DB_PASS = "xmings"
+    REMOTE_URL = "git@github.com:xmings/xmings.github.io.git"
+
 
     # db.create_all(bind=['users'])
     # __bind_key__ = 'users'

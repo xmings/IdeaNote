@@ -7,7 +7,7 @@
     $(document).ready(function () {
         catalogTree = $("#catalog-tree");
 
-        var setting = {
+        setting = {
             check: {
                 enable: false
             },
@@ -134,13 +134,16 @@
 
                     } else if (key === 'rename') {
                         zTreeObj.editName(node);
+                    } else if (key === 'sync') {
+                        $.post(url="{{ url_for('core.sync', method="sync") }}");
                     }
                 },
                 items: {
                     "addChild": {name: "添加子节点", icon: "edit"},
                     "sep1": "---------",
                     "rename": {name: "重命名", icon: "cut"},
-                    "drop": {name: "删除", icon: "delete"}
+                    "drop": {name: "删除", icon: "delete"},
+                    "sync": {name: "同步", icon: "refresh"}
                 }
             });
         });

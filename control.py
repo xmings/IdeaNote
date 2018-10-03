@@ -7,6 +7,8 @@ import os, shutil, mimetypes
 from datetime import datetime
 from config import BaseConfig
 from model import Catalog, db
+from git import Repo
+from git.exc import InvalidGitRepositoryError
 
 def fetchUniqName(precision='s'):
     if precision == 'ms':
@@ -98,16 +100,15 @@ class Table2Json(object):
 
 
 def genFilePath(node):
+    filePath = ""
     if node.nodeType == 'folder':
-        filePath = "init.md"
-    else:
-        filePath = node.fileName + ".md"
+        filePath = 'init'
 
     while node and node.fileName:
         filePath = os.path.join(node.fileName, filePath)
         node = node.parent
 
-    # filePath = os.path.join(BaseConfig.PROJECT_PATH, filePath)
+    filePath = os.path.join(BaseConfig.NOTES_DIRCTORY, filePath.rstrip("\\") + ".md")
     return filePath
 
 def changeFile2Folder(node):
@@ -135,15 +136,20 @@ def dropNodeWithChildren(node):
     db.session.commit()
 
 def dropDirWithChildren(node):
+    path = genFilePath(node)
     if node.nodeType == 'file':
-        path = genFilePath(node)
+        try:
+            os.remove(path)
+        except Exception as e:
+            print(e.args)
+            return False
     else:
-        path = os.path.dirname(genFilePath(node))
-    try:
-        shutil.rmtree(path)
-    except Exception as e:
-        print(e.args)
-        return False
+        path = os.path.dirname(path)
+        try:
+            shutil.rmtree(path)
+        except Exception as e:
+            print(e.args)
+            return False
     return True
 
 def moveDirWithChildren(node, pnode):
@@ -169,7 +175,8 @@ def saveContent(node, content):
     return status
 
 def readImage(path):
-    imgFile = '{}/{}'.format(BaseConfig.PROJECT_PATH, path)
+    dir = os.path.dirname(path)
+    imgFile = os.path.join(BaseConfig.NOTES_DIRCTORY, dir, 'img')
     imgType = mimetypes.guess_type(imgFile)[0]
     img = cat(imgFile, 'rb')
     return [img, imgType]
@@ -180,7 +187,7 @@ def saveImage(img, node):
     imgType = img.mimetype.split('/')[1]
     imgPath = os.path.join(path, '{}.{}'.format(fetchUniqName(), imgType))
     writeFile(imgPath, img, 'wb')
-    src = os.path.relpath(imgPath, BaseConfig.PROJECT_PATH)
+    src = os.path.relpath(imgPath, BaseConfig.NOTES_DIRCTORY)
     return src
 
 def writeFile(filePath, content, mode='w'):
@@ -214,6 +221,58 @@ def cat(filePath, mode='r'):
     else:
         writeFile(filePath, content, mode)
     return content
+
+
+class Sync(object):
+    def __init__(self):
+        self.local_repo = BaseConfig.NOTES_DIRCTORY
+        self.remote_url = BaseConfig.REMOTE_URL
+        self.init()
+
+    def init(self, init=False):
+        if not os.path.exists(self.local_repo):
+            os.mkdir(self.local_repo)
+
+        if init:
+            self.repo = Repo.init(self.local_repo)
+        else:
+            try:
+                self.repo = Repo(path=self.local_repo)
+            except InvalidGitRepositoryError as e:
+                self.repo = Repo.clone_from(self.remote_url, self.local_repo)
+
+        self.remote = self.repo.remote()
+
+    def get(self):
+        self.remote.pull(refspec="master")
+
+    def put(self):
+        try:
+            self.repo.index.add("*")
+            self.repo.index.commit("同步")
+            self.remote.push(refspec="master")
+        except Exception as e:
+            print(e.args)
+
+    def run(self):
+        try:
+            self.get()
+        except Exception as e:
+            print(e.args)
+        else:
+            self.put()
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

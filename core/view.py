@@ -9,11 +9,13 @@ from app import db
 from model import Catalog
 from control import Table2Json, dropNodeWithChildren, fetchUniqName, \
     dropDirWithChildren, moveDirWithChildren, changeFile2Folder, \
-    saveContent, readContent, saveImage, readImage
+    saveContent, readContent, saveImage, readImage, Sync
 
+sync_note = Sync()
 
 @core.route('/')
 def index():
+    sync_note.get()
     return render_template('editor.html')
 
 @core.route('/node/',methods=['GET'])
@@ -105,4 +107,16 @@ def getImage(imgPath):
         resp = Response(img, mimetype=imgType)
         return resp
     return 'FORBIDDEN', 403
+
+
+@core.route('/sync/<method>', methods=['POST'])
+def sync(method):
+    if method == 'download':
+        sync_note.get()
+    elif method == 'upload':
+        sync_note.put()
+    else:
+        sync_note.run()
+
+    return 'ok', 200
 
