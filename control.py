@@ -10,6 +10,11 @@ from model import Catalog, db
 from git import Repo
 from git.exc import InvalidGitRepositoryError
 
+NOTES_DIRCTORY = BaseConfig.NOTES_DIRCTORY
+REMOTE_URL = BaseConfig.REMOTE_URL
+
+
+
 def fetchUniqName(precision='s'):
     if precision == 'ms':
         return datetime.now().strftime('%Y%m%d%H%M%S%f')
@@ -78,7 +83,7 @@ class Table2Json(object):
 
     def initCatalog(self, path=None):
         if not path:
-            path = BaseConfig.NOTES_DIRCTORY
+            path = NOTES_DIRCTORY
 
         if not os.path.exists(path):
             os.makedirs(path)
@@ -108,7 +113,7 @@ def genFilePath(node):
         filePath = os.path.join(node.fileName, filePath)
         node = node.parent
 
-    filePath = os.path.join(BaseConfig.NOTES_DIRCTORY, filePath.rstrip("\\") + ".md")
+    filePath = os.path.join(NOTES_DIRCTORY, filePath.rstrip("\\") + ".md")
     return filePath
 
 def changeFile2Folder(node):
@@ -175,8 +180,7 @@ def saveContent(node, content):
     return status
 
 def readImage(path):
-    dir = os.path.dirname(path)
-    imgFile = os.path.join(BaseConfig.NOTES_DIRCTORY, dir, 'img')
+    imgFile = os.path.join(NOTES_DIRCTORY, path)
     imgType = mimetypes.guess_type(imgFile)[0]
     img = cat(imgFile, 'rb')
     return [img, imgType]
@@ -187,7 +191,7 @@ def saveImage(img, node):
     imgType = img.mimetype.split('/')[1]
     imgPath = os.path.join(path, '{}.{}'.format(fetchUniqName(), imgType))
     writeFile(imgPath, img, 'wb')
-    src = os.path.relpath(imgPath, BaseConfig.NOTES_DIRCTORY)
+    src = os.path.relpath(imgPath, NOTES_DIRCTORY)
     return src
 
 def writeFile(filePath, content, mode='w'):
@@ -225,13 +229,13 @@ def cat(filePath, mode='r'):
 
 class Sync(object):
     def __init__(self):
-        self.local_repo = BaseConfig.NOTES_DIRCTORY
-        self.remote_url = BaseConfig.REMOTE_URL
+        self.local_repo = NOTES_DIRCTORY
+        self.remote_url = REMOTE_URL
         self.init()
 
     def init(self, init=False):
         if not os.path.exists(self.local_repo):
-            os.mkdir(self.local_repo)
+            os.makedirs(self.local_repo)
 
         if init:
             self.repo = Repo.init(self.local_repo)
@@ -239,12 +243,18 @@ class Sync(object):
             try:
                 self.repo = Repo(path=self.local_repo)
             except InvalidGitRepositoryError as e:
+                shutil.rmtree(self.local_repo)
+                os.mkdir(self.local_repo)
                 self.repo = Repo.clone_from(self.remote_url, self.local_repo)
 
         self.remote = self.repo.remote()
 
     def get(self):
-        self.remote.pull(refspec="master")
+        try:
+            self.remote.pull(refspec="master")
+        except Exception as e:
+            return False
+        return True
 
     def put(self):
         try:
@@ -252,15 +262,15 @@ class Sync(object):
             self.repo.index.commit("同步")
             self.remote.push(refspec="master")
         except Exception as e:
-            print(e.args)
+            return False
+        return True
 
     def run(self):
-        try:
-            self.get()
-        except Exception as e:
-            print(e.args)
-        else:
-            self.put()
+        status = self.get()
+        if status:
+            status = self.put()
+        return status
+
 
 
 

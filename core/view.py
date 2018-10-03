@@ -4,7 +4,8 @@
 # @Author: wangms
 # @Date  : 2018/8/6
 from . import core
-from flask import render_template, request, Response, jsonify
+from flask import render_template, request, Response, \
+    jsonify, flash, current_app
 from app import db
 from model import Catalog
 from control import Table2Json, dropNodeWithChildren, fetchUniqName, \
@@ -112,11 +113,14 @@ def getImage(imgPath):
 @core.route('/sync/<method>', methods=['POST'])
 def sync(method):
     if method == 'download':
-        sync_note.get()
+        status = sync_note.get()
     elif method == 'upload':
-        sync_note.put()
+        status = sync_note.put()
     else:
-        sync_note.run()
-
+        status = sync_note.run()
+    if status:
+        flash("同步成功", "info")
+    else:
+        flash("同步失败, 请手工同步", "error")
     return 'ok', 200
 

@@ -89,8 +89,8 @@
                 editor.inlineattachment({
                     uploadUrl: "{{ url_for('core.uploadImage') }}",
                     urlText: "![image]({filename})",
-                    extraParams: {
-                        nodeId: zTreeObj.getSelectedNodes()[0].id
+                    dynamicParams: {
+                        nodeId: "zTreeObj.getSelectedNodes()[0].id"
                     }
                 });
             },

@@ -4,7 +4,7 @@
 # @Author: wangms
 # @Date  : 2018/8/7
 import os
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 
 class BaseConfig(object):
@@ -21,6 +21,7 @@ class BaseConfig(object):
     DB_USER = "xmings"
     DB_PASS = "xmings"
     REMOTE_URL = "git@github.com:xmings/xmings.github.io.git"
+    LOG_FILE = os.path.join(PROJECT_PATH, "log", "{}.log".format(datetime.now().strftime("%Y-%m-%d")))
 
 
     # db.create_all(bind=['users'])

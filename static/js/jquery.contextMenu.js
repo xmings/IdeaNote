@@ -31,7 +31,7 @@
 
     'use strict';
 
-    // TODO: -
+
     // ARIA stuff: menuitem, menuitemcheckbox und menuitemradio
     // create <menu> structure if $.support[htmlCommand || htmlMenuitem] and !opt.disableNative
 

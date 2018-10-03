@@ -8,6 +8,8 @@ from flask import Flask
 from config import BaseConfig
 from model import db
 from core import core
+import logging
+
 
 import win32api, win32gui
 ct = win32api.GetConsoleTitle()
@@ -18,6 +20,14 @@ win32gui.ShowWindow(hd,0)
 app = Flask(__name__)
 app.config.from_object(BaseConfig)
 db.init_app(app)
+
+logFile = app.config.get("LOG_FILE")
+handler = logging.FileHandler(logFile)
+handler.setFormatter(logging.Formatter(
+    '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+))
+app.logger.addHandler(handler)
+
 app.register_blueprint(core)
 
 # app.app_context().push()
