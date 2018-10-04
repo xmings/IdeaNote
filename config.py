@@ -14,6 +14,7 @@ class BaseConfig(object):
     SQLALCHEMY_ECHO = True
     JSON_AS_ASCII = False
     CATALOG_JSON = ''
+    SECRET_KEY = '123456789'
     SEND_FILE_MAX_AGE_DEFAULT = timedelta(seconds=1)
     NOTES_DIRCTORY = os.path.join(PROJECT_PATH, 'notes')
     SQLALCHEMY_DATABASE_URI = 'sqlite:///{}\\ideanote.db?check_same_thread=False'.format(NOTES_DIRCTORY)

@@ -26,6 +26,9 @@
                 showRemoveBtn: false,
                 showRenameBtn: false
             },
+            view: {
+                selectedMulti: false
+            },
             callback: {
                 onClick: function (event, treeId, node) {
                     $.get(
@@ -37,10 +40,8 @@
                     )
                 },
                 beforeRightClick: function (treeId, treeNode) {
-                    $("a[class^='level']").each(function (ind, ele) {
-                        $(ele).removeClass("curSelectedNode")
-                    });
-                    $("a[id^='" + treeNode.tId + "']").addClass("curSelectedNode");
+                    //treeObj.selectNode(nodes[0]);
+                    zTreeObj.selectNode(treeNode);
                 },
                 onDblClick: function (event, treeId, treeNode) {
                     zTreeObj.editName(treeNode);
@@ -85,7 +86,8 @@
             success: function (jNodes) {
                 zTreeObj = $.fn.zTree.init(catalogTree, setting, jNodes);
                 node = zTreeObj.getNodes()[0];
-                $("a[id^='" + node.tId + "']").click();
+                zTreeObj.selectNode(node);
+                $(".curSelectedNode").click();
                 editor.inlineattachment({
                     uploadUrl: "{{ url_for('core.uploadImage') }}",
                     urlText: "![image]({filename})",
@@ -135,15 +137,35 @@
                     } else if (key === 'rename') {
                         zTreeObj.editName(node);
                     } else if (key === 'sync') {
-                        $.post(url="{{ url_for('core.sync', method="sync") }}");
+                        $.ajax({
+                            url: "{{ url_for('core.sync', method="sync") }}",
+                            type: 'POST',
+                            beforeSend: function () {
+                                toggleFlash("同步中 ... <i class='icon-spinner icon-spin'></i>")
+                            },
+                            success: function () {
+                                toggleFlash("同步成功", true);
+                            },
+                            error: function () {
+                                toggleFlash("同步失败, 请手工同步");
+                            }
+                        })
                     }
                 },
                 items: {
-                    "addChild": {name: "添加子节点", icon: "edit"},
+                    "addChild": {name: "添加子节点", icon: function () {
+                            return ' icon-plus-sign-alt context-menu-awesome'
+                        }},
                     "sep1": "---------",
-                    "rename": {name: "重命名", icon: "cut"},
-                    "drop": {name: "删除", icon: "delete"},
-                    "sync": {name: "同步", icon: "refresh"}
+                    "rename": {name: "重命名", icon: function () {
+                            return 'icon-edit context-menu-awesome';
+                        }},
+                    "drop": {name: "删除", icon: function () {
+                            return 'icon-trash context-menu-awesome'
+                        }},
+                    "sync": {name: "同步", icon: function(){
+                        return 'icon-refresh context-menu-awesome';
+                    }}
                 }
             });
         });

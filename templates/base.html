@@ -4,17 +4,9 @@
     <meta charset="UTF-8">
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <title>IdeaNote</title>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <ul class=flashes>
-        {% for category, message in messages %}
-          <li class="{{ category }}">{{ message }}</li>
-        {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
     {% block body %}{% endblock %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.splitter.css') }}">
 
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
@@ -62,15 +54,53 @@
         .preview {
             padding: 8px 12px;
         }
+
         .preview p {
             margin-bottom: 0;
+            font-size: 14px;
         }
+
+        .flash-message {
+            z-index: 100;
+            position: absolute;
+            width: 30%;
+            left: 30%;
+            top: 30%;
+            background: transparent;
+            display: none;
+        }
+
+
+        .context-menu-awesome::before {
+            display: block;!important;
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 2em;
+            font-size: 1em;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 1;
+            color: #2980b9;
+            text-align: center;
+            -ms-transform: translateY(-50%);
+            -o-transform: translateY(-50%);
+            transform: translateY(-50%);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .context-menu-hover::before {
+            color: white;
+        }
+
+
 
     </style>
     {% block cssdefine %}{% endblock %}
     <script>
         var splitter2, splitter1;
         $(document).ready(function () {
+            eheight = window.innerHeight;
             splitter1 = $('#content').height(eheight).split({
                 orientation: 'vertical',
                 limit: 10,
@@ -78,8 +108,8 @@
                 position: '15%',
                 width: 1,
                 invisible: false,
-                onDrag: function(event) {
-                    if (splitter1.position() < 100){
+                onDrag: function (event) {
+                    if (splitter1.position() < 100) {
                         splitter1.position(0)
                     }
                 }
@@ -91,18 +121,40 @@
                 percent: true,
                 position: '0%',
                 width: 1,
-                onDrag: function(event) {
+                onDrag: function (event) {
                     //console.log(splitter2.position());
-                    if (splitter2.position() < 200){
+                    if (splitter2.position() < 200) {
                         splitter2.position(0)
                     }
                 }
             });
+
+            toggleFlash = function (html, autoExit) {
+                flassMessage = $(".flash-message");
+                if (typeof html === "undefined") {
+                    flassMessage.hide();
+                } else {
+                    $(".flash-message .text").html(html);
+                    flassMessage.show();
+                    if (autoExit === true) {
+                        setTimeout(function () {
+                            flassMessage.hide();
+                        }, 2000);
+                    }
+                }
+            }
+
         })
     </script>
     {% block jsdefinebefore %}{% endblock %}
 </head>
 <body>
+<div class="flash-message">
+    <div class="alert alert-info alert-dismissible" role="alert">
+        <span class="text">同步成功</span>
+    </div>
+</div>
+
 <div class="content" id="content">
     <div class="left-frame">
         {% block leftframe %}{% endblock %}

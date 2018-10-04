@@ -119,8 +119,8 @@ def sync(method):
     else:
         status = sync_note.run()
     if status:
-        flash("同步成功", "info")
+        flash("同步成功", "alert-success")
     else:
-        flash("同步失败, 请手工同步", "error")
+        flash("同步失败, 请手工同步", "alert-warning")
     return 'ok', 200
 
