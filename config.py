@@ -21,7 +21,7 @@ class BaseConfig(object):
     MYTOKEN = os.getenv("MYTOKEN")
     DB_USER = "xmings"
     DB_PASS = "xmings"
-    REMOTE_URL = "git@github.com:xmings/xmings.github.io.git"
+    REMOTE_URL = "git@git.coding.net:wmsgood/Mybase.git"
     LOG_FILE = os.path.join(PROJECT_PATH, "log", "{}.log".format(datetime.now().strftime("%Y-%m-%d")))
 
 
