@@ -36,4 +36,4 @@ app.register_blueprint(core)
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=5555)

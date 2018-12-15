@@ -1,6 +1,6 @@
 .idea/
 __pycache__/
 venv/
-notes/*
+notes
 log/*
 start.bat
