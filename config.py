@@ -8,7 +8,7 @@ from datetime import timedelta, datetime
 
 
 class BaseConfig(object):
-    PROJECT_PATH = os.path.abspath('.')
+    PROJECT_PATH = os.path.dirname(__file__)
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     SQLALCHEMY_RECORD_QUERIES = True
     SQLALCHEMY_ECHO = True
@@ -16,11 +16,8 @@ class BaseConfig(object):
     CATALOG_JSON = ''
     SECRET_KEY = '123456789'
     SEND_FILE_MAX_AGE_DEFAULT = timedelta(seconds=1)
-    NOTES_DIRCTORY = os.path.join(PROJECT_PATH, 'notes')
+    NOTES_DIRCTORY = "E:\\MyNote"
     SQLALCHEMY_DATABASE_URI = 'sqlite:///{}\\ideanote.db?check_same_thread=False'.format(NOTES_DIRCTORY)
-    MYTOKEN = os.getenv("MYTOKEN")
-    DB_USER = "xmings"
-    DB_PASS = "xmings"
     REMOTE_URL = "git@git.coding.net:wmsgood/Mybase.git"
     LOG_FILE = os.path.join(PROJECT_PATH, "log", "{}.log".format(datetime.now().strftime("%Y-%m-%d")))
 

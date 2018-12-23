@@ -36,4 +36,8 @@ app.register_blueprint(core)
 
 
 if __name__ == '__main__':
-    app.run(port=5555)
+    import sys
+    assert len(sys.argv) == 3
+    port, notes = sys.argv[1:]
+    app.config['NOTES_DIRCTORY'] = notes
+    app.run(port=port, threaded=True)

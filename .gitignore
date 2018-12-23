@@ -1,6 +1,3 @@
 .idea/
 __pycache__/
-venv/
-notes
-log/*
-start.bat
+log
