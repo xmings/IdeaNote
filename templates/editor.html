@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block cssdefine %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/highlight-default.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/railscasts.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.contextmenu.min.css') }}">
     <style>
         #catalog-tree {
@@ -27,12 +27,24 @@
             width: 100%;
             margin-right: 10px;
             font-size: 14px;
-            line-height: 20px;
             line-grid: create;
             resize: none;
             border: none;
             outline: none;
-
+            line-height: 24px;
+            tab-size: 4;
+            letter-spacing: 0.05em;
+            white-space: pre-wrap;
+            word-break:break-word;
+            word-wrap:break-word;
+            -webkit-font-smoothing:antialiased;
+            color: #ceccccfc;
+            padding: .5rem .75rem;
+            background-color: #2F3030;
+            -webkit-transition: all 0.2s ease-out;
+             -moz-transition: all 0.2s ease-out;
+               -o-transition: all 0.2s ease-out;
+                  transition: all 0.2s ease-out;
         }
 
         #markdown-editor:hover {
@@ -73,15 +85,25 @@
 
 
 {% block centerframe %}
-    <textarea id="markdown-editor" class="form-control" placeholder="写你想写"></textarea>
+    <textarea id="markdown-editor"
+                  placeholder="写你想写"
+                  onkeydown="editorTab(this)"></textarea>
 {% endblock %}
 
 
 {% block jsdefineafter %}
     <script type="text/javascript">
         $(document).ready(function () {
+            editorTab = function(obj){
+                if (event.keyCode === 9) {
+                    var selectionStart = obj.selectionStart;
+                    obj.value = obj.value.substring(0, selectionStart) + "    " + obj.value.substring(obj.selectionEnd);
+                    obj.selectionEnd = selectionStart + 4;
+                    event.preventDefault();
+                }
+            };
+
             preview = function(content) {
-                //x=content.replace(/#\\n/g, '\n\n');
                 $(".preview").html(marked(content,
                         {
                             highlight: function (code) {
@@ -90,11 +112,14 @@
                             pedantic: false,
                             gfm: true,
                             tables: true,
-                            breaks: false,
+                            breaks: true,
                             sanitize: false,
                             smartLists: true,
                             smartypants: false,
-                            xhtml: false
+                            xhtml: false,
+                            headerIds: true,
+                            langPrefix: 'hljs ',
+                            baseUrl: 'http://localhost:5555/'
                         }
                     )
                 );
@@ -116,8 +141,8 @@
                                 nodeId: node.id,
                                 content: content,
                             },
-                            success: function () {
-
+                            error: function () {
+                                toggleFlash("保存失败", true);
                             },
                             dataType: 'json'
                         })
@@ -127,11 +152,15 @@
                 }
 
             });
-            
+
+            editor[0].addEventListener('scroll',function(){
+              $(".preview")[0].scrollTop = this.scrollTop;
+            });
+
             save = function() {
                 $.post(
 
-                    
+
                 )
             };
 
@@ -148,7 +177,6 @@
             });
 
         });
-
     </script>
 {% endblock %}
 {% block leftframe %}

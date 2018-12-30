@@ -13,9 +13,10 @@
     <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.splitter.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sync-scroll.js') }}"></script>
     <style type="text/css">
         body {
-            font-family: "Microsoft YaHei", "Arial Narrow", sans-serif;
+            font-family: Consolas, Lato, "Helvetica Neue", Helvetica,Helvetica,Arial,sans-serif;
         }
 
         .left-frame {
@@ -53,11 +54,16 @@
 
         .preview {
             padding: 8px 12px;
+            background-color: #f3f3f3;
         }
 
         .preview p {
             margin-bottom: 0;
             font-size: 14px;
+        }
+
+        .preview pre{
+            font-family: Roboto Mono,Lucida Sans Typewriter,Lucida Console,monaco,Courrier,monospace;
         }
 
         .flash-message {
