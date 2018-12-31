@@ -19,15 +19,16 @@ def index():
     sync_note.get()
     return render_template('editor.html')
 
-@core.route('/node/',methods=['GET'])
+@core.route('/nodes',methods=['GET'])
 def getNodes():
     t2j = Table2Json()
     jNodes = t2j.run()
     return jsonify(jNodes)
 
 
-@core.route('/node/<nodeId>',methods=['GET'])
-def getNode(nodeId):
+@core.route('/node/content',methods=['GET'])
+def getContent():
+    nodeId = request.args.get('nodeId')
     node = Catalog.query.filter_by(nodeId=nodeId).first()
     return readContent(node)
 

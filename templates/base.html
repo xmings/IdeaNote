@@ -8,101 +8,14 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.splitter.css') }}">
+    {% block cssdefine %}{% endblock %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/idea-note.css') }}">
 
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.splitter.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/sync-scroll.js') }}"></script>
-    <style type="text/css">
-        body {
-            font-family: Consolas, Lato, "Helvetica Neue", Helvetica,Helvetica,Arial,sans-serif;
-        }
 
-        .left-frame {
-            float: left;
-            width: 200px;
-        }
-
-        ::-webkit-scrollbar {
-            width: 14px;
-            height: 14px;
-            background-color: #F5F5F5;
-        }
-
-        ::-webkit-scrollbar-track,
-        ::-webkit-scrollbar-thumb {
-            border-radius: 999px;
-            border: 5px solid transparent;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: white;
-            box-shadow: white;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            min-height: 20px;
-            width: 18px;
-            background-clip: content-box;
-            box-shadow: 0 0 0 5px rgba(0, 0, 0, .2) inset;
-        }
-
-        ::-webkit-scrollbar-corner {
-            background: transparent;
-        }
-
-        .preview {
-            padding: 8px 12px;
-            background-color: #f3f3f3;
-        }
-
-        .preview p {
-            margin-bottom: 0;
-            font-size: 14px;
-        }
-
-        .preview pre{
-            font-family: Roboto Mono,Lucida Sans Typewriter,Lucida Console,monaco,Courrier,monospace;
-        }
-
-        .flash-message {
-            z-index: 100;
-            position: absolute;
-            width: 30%;
-            left: 30%;
-            top: 30%;
-            background: transparent;
-            display: none;
-        }
-
-
-        .context-menu-awesome::before {
-            display: block;!important;
-            position: absolute;
-            top: 50%;
-            left: 0;
-            width: 2em;
-            font-size: 1em;
-            font-style: normal;
-            font-weight: 400;
-            line-height: 1;
-            color: #2980b9;
-            text-align: center;
-            -ms-transform: translateY(-50%);
-            -o-transform: translateY(-50%);
-            transform: translateY(-50%);
-            -webkit-font-smoothing: antialiased;
-        }
-
-        .context-menu-hover::before {
-            color: white;
-        }
-
-
-
-    </style>
-    {% block cssdefine %}{% endblock %}
     <script>
         var splitter2, splitter1;
         $(document).ready(function () {
@@ -127,24 +40,24 @@
                 percent: true,
                 position: '0%',
                 width: 1,
+                invisible: false,
                 onDrag: function (event) {
-                    //console.log(splitter2.position());
                     if (splitter2.position() < 200) {
                         splitter2.position(0)
                     }
                 }
             });
 
-            toggleFlash = function (html, autoExit) {
-                flassMessage = $(".flash-message");
+            flashMessage = function (html, autoExit) {
+                flash = $(".flash-message");
                 if (typeof html === "undefined") {
-                    flassMessage.hide();
+                    flash.hide();
                 } else {
                     $(".flash-message .text").html(html);
-                    flassMessage.show();
+                    flash.show();
                     if (autoExit === true) {
                         setTimeout(function () {
-                            flassMessage.hide();
+                            flash.hide();
                         }, 2000);
                     }
                 }
@@ -163,13 +76,11 @@
 
 <div class="content" id="content">
     <div class="left-frame">
-        {% block leftframe %}{% endblock %}
+        <ul id="catalog-tree" class="ztree"></ul>
     </div>
     <div class="center-frame" id="center-frame">
         {% block centerframe %}{% endblock %}
-        {% block rightframe %}
-            {% include "preview.html" with context %}
-        {% endblock %}
+        <div class="preview"></div>
     </div>
 </div>
 

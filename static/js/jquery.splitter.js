@@ -144,15 +144,15 @@
                                         if (panel_1.is(':hidden')) {
                                             panel_1.show();
                                         }
-                                        pw = panel_1.css('width', w1 + '%').outerWidth();
-                                        panel_2.css('width', (width - pw - sw) / width * 100 + '%');
-                                        splitter.css('left', (pw / width * 100) + '%');
+                                        panel_1.css('width', w1 + '%');
+                                        panel_2.css('width', (1 - sw/width - w1/100)*100 + '%');
+                                        splitter.css('left', w1 + '%');
                                     }
 
                                 } else {
                                     pw = panel_1.css('width', position - sw2).outerWidth();
-                                    panel_2.width(width - pw - sw);
                                     splitter.css('left', pw);
+                                    panel_2.width(width - pw - sw);
                                 }
                             }
                             panel_1.find('.splitter_panel').eq(0).height(self.height());

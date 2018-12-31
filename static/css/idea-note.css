@@ -1,0 +1,148 @@
+body {
+    font-family: Consolas, Lato, "Helvetica Neue", Helvetica,Helvetica,Arial,sans-serif;
+}
+
+.left-frame {
+    float: left;
+    width: 200px;
+}
+
+::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+    background-color: #F5F5F5;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    border: 5px solid transparent;
+}
+
+::-webkit-scrollbar-track {
+    background: white;
+    box-shadow: white;
+}
+
+::-webkit-scrollbar-thumb {
+    min-height: 20px;
+    width: 18px;
+    background-clip: content-box;
+    box-shadow: 0 0 0 5px rgba(0, 0, 0, .2) inset;
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+.preview {
+    padding: 8px 12px;
+    background-color: #f3f3f3;
+}
+
+.preview p {
+    margin-bottom: 0;
+}
+
+.preview li {
+    font-size: 14px;
+}
+
+.preview pre{
+    font-family: Roboto Mono,Lucida Sans Typewriter,Lucida Console,monaco,Courrier,monospace;
+}
+
+.flash-message {
+    z-index: 100;
+    position: absolute;
+    width: 30%;
+    left: 30%;
+    top: 30%;
+    background: transparent;
+    display: none;
+}
+
+
+.context-menu-awesome::before {
+    display: block;!important;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 2em;
+    font-size: 1em;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+    color: #2980b9;
+    text-align: center;
+    -ms-transform: translateY(-50%);
+    -o-transform: translateY(-50%);
+    transform: translateY(-50%);
+    -webkit-font-smoothing: antialiased;
+}
+
+.context-menu-hover::before {
+    color: white;
+}
+
+
+#catalog-tree {
+    font-size: 12px;
+    margin-left: 0;
+}
+
+#catalog-tree > #root {
+    padding-left: 0;
+}
+
+.contextmenu-item-custom {
+    font-size: 12px;
+    font-family: inherit;
+
+}
+
+.context-menu-active {
+    background-color: #FFE6B0;
+}
+
+#markdown-editor {
+    width: auto;
+    margin-right: 10px;
+    font-size: 14px;
+    line-grid: create;
+    resize: none;
+    border: none;
+    outline: none;
+    line-height: 24px;
+    tab-size: 4;
+    letter-spacing: 0.05em;
+    white-space: pre-wrap;
+    word-break:break-word;
+    word-wrap:break-word;
+    -webkit-font-smoothing:antialiased;
+    color: #ceccccfc;
+    padding: .5rem .75rem;
+    background-color: #2F3030;
+    -webkit-transition: all 0.2s ease-out;
+     -moz-transition: all 0.2s ease-out;
+       -o-transition: all 0.2s ease-out;
+          transition: all 0.2s ease-out;
+}
+
+#markdown-editor:hover {
+    border-color: white;
+    box-shadow: none;
+    outline: 0;
+}
+
+#markdown-editor:visited,
+#markdown-editor:active,
+#markdown-editor:focus {
+    border-color: white;
+    box-shadow: none;
+    outline: 0;
+}
+.splitter_panel .vsplitter {
+    width: 2px;
+    background-color: rgba(128, 128, 128, 0.18);
+}
