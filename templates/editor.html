@@ -95,20 +95,32 @@
             });
 
 
-            hotkeys('ctrl+s,ctrl+i,esc', function (event, handler) {
-                switch (handler.key) {
-                    case "ctrl+s":
-                        $.syncNote();
-                        event.preventDefault();
-                        break;
-                    case "ctrl+i":
-                        splitter2.position("50%");
-                        event.preventDefault();
-                        break;
-                    case "esc":
-                        splitter2.position("0%");
-                        event.preventDefault();
-                        break;
+            document.addEventListener('keydown',function(){
+                if (event.keyCode === 27){
+                    // esc 返回只读模式
+                    splitter2.position("0%");
+                    event.preventDefault();
+                } else if (event.ctrlKey && event.keyCode === 83) {
+                    // ctrl+s pull&&push
+                    $.syncNote();
+                    event.preventDefault();
+                } else if (event.ctrlKey && event.keyCode === 73){
+                    // ctrl+i 进入编辑模式
+                    splitter2.position("50%");
+                    event.preventDefault();
+                } else if (event.shiftKey && event.keyCode === 83) {
+                    // shift+s 切换侧边栏(目录树)
+                    if (splitter1.position()>15){
+                        splitter1.position("0%")
+                    } else {
+                        splitter1.position("15%");
+                    }
+                    event.preventDefault();
+                } else if (event.ctrlKey && event.shiftKey && event.keyCode === 70){
+                    // ctrl+shift+f //全屏编辑+预览
+                    splitter1.position("0%");
+                    splitter2.position("60%");
+                    event.preventDefault();
                 }
             });
 

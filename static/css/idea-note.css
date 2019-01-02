@@ -52,6 +52,17 @@ body {
     font-family: Roboto Mono,Lucida Sans Typewriter,Lucida Console,monaco,Courrier,monospace;
 }
 
+.preview blockquote {
+    color: rgba(0,0,0,.5);
+    padding-left: 4px;
+    border-left: 5px solid rgba(0,0,0,.1);
+    font-size: 14px;
+}
+
+.preview blockquote ul{
+    margin-left: 0;
+}
+
 .flash-message {
     z-index: 100;
     position: absolute;
