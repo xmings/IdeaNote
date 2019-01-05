@@ -37,7 +37,7 @@ body {
 
 .preview {
     padding: 8px 12px;
-    background-color: #f3f3f3;
+    background-color: #f3f3f329;
 }
 
 .preview p {
@@ -61,6 +61,30 @@ body {
 
 .preview blockquote ul{
     margin-left: 0;
+}
+
+.preview table {
+    width: 90%;
+    margin-top: 4px;
+    border: 1px solid #ccc;
+}
+.preview table td{
+    display: table-cell;
+    border-top: 1px solid #dcdcdc;
+    border-right: 1px solid #dcdcdc;
+    padding: 8px 12px;
+}
+.preview table th {
+    text-align: center;
+    display: table-cell;
+    padding: 8px 12px;
+    font-weight: bold;
+    border-right: 1px solid #ccc;
+    background-color: #eff3f5;
+}
+
+.preview table tr:nth-child(2n){
+    background-color: #f7f7f7;
 }
 
 .flash-message {
