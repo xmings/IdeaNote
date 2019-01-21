@@ -258,7 +258,7 @@ class Sync(object):
 
     def put(self):
         try:
-            self.repo.index.add(".")
+            self.repo.index.add("*")
             self.repo.index.commit("同步")
             self.remote.push(refspec="master")
         except Exception as e:
