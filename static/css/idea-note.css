@@ -66,6 +66,7 @@ body {
 .preview table {
     width: 90%;
     margin-top: 4px;
+    margin-bottom: 8px;
     border: 1px solid #ccc;
 }
 .preview table td{
