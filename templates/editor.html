@@ -4,8 +4,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/railscasts.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.contextmenu.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/zTreeStyle.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/codemirror.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/codemirror.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/codemirror.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/codemirror.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/idea.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/monokai.css') }}">
 {% endblock %}
@@ -17,7 +17,7 @@
     <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.ztree.core.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.ztree.exedit.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/idea-note.js') }}"></script>
-    <script type="text/javascript" src="{{ url_for('static', filename='codemirror/codemirror.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='codemirror/codemirror.min.js') }}"></script>
     <script type="text/javascript"
             src="{{ url_for('static', filename='codemirror/mode/markdown-mode.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='codemirror/addone/closetag.js') }}"></script>
@@ -37,10 +37,6 @@
 
 {% block jsdefineafter %}
     <script type="text/javascript">
-        saveContent = function () {
-
-        };
-
         $(document).ready(function () {
 
             catalogTree = $("#catalog-tree");
@@ -53,11 +49,18 @@
                 lineNumbers: true,//显示行号
                 autoCloseTags: true,
                 autofocus: true,
+                value: "写你想写",
                 matchBrackets: true,
+                tabSize: 4,
+                indentUnit: 4,
+                smartIndent: true,
+                spellcheck: false,
+                lineSeparator: ""
             });
 
 
             preview = function (content) {
+                content = content.replace(/\n\n/g,"\n<br>");
                 previewer.html(
                     marked(content, {
                         highlight: function (code) {
@@ -100,12 +103,16 @@
             // 保存数据
             editor.on("change", function () {
                 node = $.zTreeObj.getSelectedNodes()[0];
+                content = editor.getValue();
                 $.ajax({
                     url: "{{ url_for('core.updateNode', type='content') }}",
                     type: "post",
                     data: {
                         nodeId: node.id,
-                        content: editor.getValue(),
+                        content: content,
+                    },
+                    success: function(){
+                        preview(content);
                     },
                     error: function (XMLHttpRequest, textStatus, errorThrown) {
                         settings.flashFunc("保存失败", true);
@@ -115,7 +122,9 @@
 
             // 同步滚动窗口
             editor.on('scroll', function () {
-                previewer[0].scrollTop = this.scrollTop;
+                scrollRate = editor.getScrollInfo().top/editor.getScrollInfo().height;
+                previewer[0].scrollTop = (previewer[0].scrollHeight+600)*scrollRate;
+
             });
 
             // 粘贴图片
@@ -139,7 +148,7 @@
                                 dataType: 'json',
                                 success: function (result) {
                                     console.log("");
-                                    mdUrl = "![image]({url})".replace("url", result['filename']);
+                                    mdUrl = "![image](url)".replace("url", result['filename']);
                                     editor.replaceSelection(mdUrl)
                                 },
                                 error: function () {
@@ -165,6 +174,7 @@
                 } else if (event.ctrlKey && event.keyCode === 73) {
                     // ctrl+i 进入编辑模式
                     splitter2.position("50%");
+                    editor.refresh();
                     event.preventDefault();
                 } else if (event.shiftKey && event.keyCode === 83) {
                     // shift+s 切换侧边栏(目录树)

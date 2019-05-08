@@ -100,7 +100,6 @@
 
     };
 
-
     $.bindTreePopu = function (options) {
         let settings = $.extend({
             nodeSeletor: '',
@@ -184,42 +183,5 @@
             }
         });
     };
-
-
-    $.fn.enhance = function (options) {
-        let settings = $.extend({
-            postUrl: '',
-            previewFunc: $.noop,
-            fashFunc: $.noop
-        }, options || {});
-
-        this.bind('keydown', function () {
-            if (event.keyCode === 9) {
-                selectionStart = this.selectionStart;
-                this.value = this.value.substring(0, selectionStart) + "    " + this.value.substring(this.selectionEnd);
-                this.selectionEnd = selectionStart + 4;
-                event.preventDefault();
-            }
-        }).bind('keyup', function () {
-            content = this.value;
-            if (content !== undefined) {
-                settings.previewFunc(content);
-                node = $.zTreeObj.getSelectedNodes()[0];
-                $.ajax({
-                    url: settings.postUrl,
-                    type: "post",
-                    data: {
-                        nodeId: node.id,
-                        content: content,
-                    },
-                    error: function (XMLHttpRequest, textStatus, errorThrown) {
-                        settings.flashFunc("保存失败", true);
-                    }
-                })
-            }
-        });
-
-
-    }
 
 })(jQuery);
