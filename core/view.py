@@ -94,7 +94,7 @@ def dropNode():
 
 @core.route('/node/upload/', methods=['POST'])
 def uploadImage():
-    img = request.files.get('file')
+    img = request.files.get('image')
     nodeId = request.form.get('nodeId')
     node = Catalog.query.filter_by(nodeId=nodeId).first()
     path = saveImage(img, node)

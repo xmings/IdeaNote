@@ -4,16 +4,23 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/railscasts.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.contextmenu.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/zTreeStyle.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/codemirror.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/codemirror.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/idea.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='codemirror/theme/monokai.css') }}">
 {% endblock %}
 
 {% block jsdefinebefore %}
-    <script src="{{ url_for('static', filename='js/marked.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/highlight.pack.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/jquery.contextmenu.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/jquery.inline-attachment.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/jquery.ztree.core.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/jquery.ztree.exedit.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/idea-note.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/marked.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/highlight.pack.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.contextmenu.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.ztree.core.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.ztree.exedit.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/idea-note.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='codemirror/codemirror.js') }}"></script>
+    <script type="text/javascript"
+            src="{{ url_for('static', filename='codemirror/mode/markdown-mode.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='codemirror/addone/closetag.js') }}"></script>
 
     <script>
         hljs.tabReplace = ' ';
@@ -24,17 +31,33 @@
 
 
 {% block centerframe %}
-    <textarea id="markdown-editor" placeholder="写你想写" spellcheck="false"></textarea>
+    <textarea id="editor" placeholder="写你想写" spellcheck="false"></textarea>
 {% endblock %}
 
 
 {% block jsdefineafter %}
     <script type="text/javascript">
+        saveContent = function () {
+
+        };
+
         $(document).ready(function () {
+
             catalogTree = $("#catalog-tree");
-            editor = $("#markdown-editor");
             previewer = $(".preview");
-            preview = function(content) {
+
+
+            editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
+                theme: 'idea monokai',
+                extraKeys: {"Ctrl": "autocomplete"},//ctrl可以弹出选择项
+                lineNumbers: true,//显示行号
+                autoCloseTags: true,
+                autofocus: true,
+                matchBrackets: true,
+            });
+
+
+            preview = function (content) {
                 previewer.html(
                     marked(content, {
                         highlight: function (code) {
@@ -64,38 +87,74 @@
                 editor: editor
             });
 
-            syncUrl = "{{ url_for('core.sync', method='sync') }}";
 
             $.bindTreePopu({
                 nodeSeletor: "a[class^='level']",
-                syncUrl: syncUrl,
+                syncUrl: "{{ url_for('core.sync', method='sync') }}",
                 dropUrl: "{{ url_for('core.dropNode') }}",
                 addChildUrl: "{{ url_for('core.addNode') }}",
                 flashFunc: flashMessage
             });
 
 
-            editor.enhance({
-                postUrl: "{{ url_for('core.updateNode', type='content') }}",
-                previewFunc: preview,
-                flashFunc: flashMessage
+            // 保存数据
+            editor.on("change", function () {
+                node = $.zTreeObj.getSelectedNodes()[0];
+                $.ajax({
+                    url: "{{ url_for('core.updateNode', type='content') }}",
+                    type: "post",
+                    data: {
+                        nodeId: node.id,
+                        content: editor.getValue(),
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        settings.flashFunc("保存失败", true);
+                    }
+                })
             });
 
-            editor[0].addEventListener('scroll',function(){
-              previewer[0].scrollTop = this.scrollTop;
+            // 同步滚动窗口
+            editor.on('scroll', function () {
+                previewer[0].scrollTop = this.scrollTop;
             });
 
-            editor.inlineattachment({
-                uploadUrl: "{{ url_for('core.uploadImage') }}",
-                urlText: "![image]({filename})",
-                dynamicParams: {
-                    nodeId: "zTreeObj.getSelectedNodes()[0].id"
+            // 粘贴图片
+            editor.on('paste', function (editor, e) {
+                if (typeof e.clipboardData === "object") {
+                    items = e.clipboardData.items || e.clipboardData.files || [];
+
+                    $.each(items, function (index, item) {
+                        if (item.kind === "file" && item.type === "image/png") {
+                            formData = new FormData();
+                            formData.append('image', item.getAsFile());
+                            formData.append('nodeId', zTreeObj.getSelectedNodes()[0].id);
+
+                            $.ajax({
+                                url: "{{ url_for('core.uploadImage') }}",
+                                type: 'POST',
+                                cache: false,
+                                data: formData,
+                                processData: false,
+                                contentType: false,
+                                dataType: 'json',
+                                success: function (result) {
+                                    console.log("");
+                                    mdUrl = "![image]({url})".replace("url", result['filename']);
+                                    editor.replaceSelection(mdUrl)
+                                },
+                                error: function () {
+                                    flashMessage("图片保存失败")
+                                }
+                            })
+
+                        }
+                    });
                 }
             });
 
-
-            document.addEventListener('keydown',function(){
-                if (event.keyCode === 27){
+            // 快捷键
+            document.addEventListener('keydown', function () {
+                if (event.keyCode === 27) {
                     // esc 返回只读模式
                     splitter2.position("0%");
                     event.preventDefault();
@@ -103,19 +162,19 @@
                     // ctrl+s pull&&push
                     $.syncNote();
                     event.preventDefault();
-                } else if (event.ctrlKey && event.keyCode === 73){
+                } else if (event.ctrlKey && event.keyCode === 73) {
                     // ctrl+i 进入编辑模式
                     splitter2.position("50%");
                     event.preventDefault();
                 } else if (event.shiftKey && event.keyCode === 83) {
                     // shift+s 切换侧边栏(目录树)
-                    if (splitter1.position()>15){
+                    if (splitter1.position() > 15) {
                         splitter1.position("0%")
                     } else {
                         splitter1.position("15%");
                     }
                     event.preventDefault();
-                } else if (event.ctrlKey && event.shiftKey && event.keyCode === 70){
+                } else if (event.ctrlKey && event.shiftKey && event.keyCode === 70) {
                     // ctrl+shift+f //全屏编辑+预览
                     splitter1.position("0%");
                     splitter2.position("60%");

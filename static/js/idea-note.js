@@ -1,7 +1,7 @@
 (function ($) {
 
     $.fn.catalog = function (options) {
-        var settings = $.extend({
+        let settings = $.extend({
             treeDataUrl: '',
             flashFunc: $.noop,
             nodeContent: '',
@@ -38,7 +38,7 @@
                             nodeId: node.id
                         },
                         success = function (content) {
-                            settings.editor.val(content);
+                            settings.editor.setValue(content);
                             settings.previewFunc(content);
                         }
                     )
@@ -102,7 +102,7 @@
 
 
     $.bindTreePopu = function (options) {
-        var settings = $.extend({
+        let settings = $.extend({
             nodeSeletor: '',
             dropUrl: '',
             renameUrl: '',
@@ -185,8 +185,9 @@
         });
     };
 
+
     $.fn.enhance = function (options) {
-        var settings = $.extend({
+        let settings = $.extend({
             postUrl: '',
             previewFunc: $.noop,
             fashFunc: $.noop
@@ -194,7 +195,7 @@
 
         this.bind('keydown', function () {
             if (event.keyCode === 9) {
-                var selectionStart = this.selectionStart;
+                selectionStart = this.selectionStart;
                 this.value = this.value.substring(0, selectionStart) + "    " + this.value.substring(this.selectionEnd);
                 this.selectionEnd = selectionStart + 4;
                 event.preventDefault();
@@ -215,8 +216,6 @@
                         settings.flashFunc("保存失败", true);
                     }
                 })
-
-
             }
         });
 

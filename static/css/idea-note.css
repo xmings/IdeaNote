@@ -1,5 +1,49 @@
 body {
-    font-family: Consolas, Lato, "Helvetica Neue", Helvetica,Helvetica,Arial,sans-serif;
+    font-family: Consolas, Lato, "Helvetica Neue", Helvetica, Helvetica, Arial, sans-serif;
+}
+
+@font-face {
+    font-family: 'Fira Code';
+    src: url('font/firacode/eot/FiraCode-Light.eot');
+    src: url('font/firacode/eot/FiraCode-Light.eot') format('embedded-opentype'),
+    url('font/firacode/woff2/FiraCode-Light.woff2') format('woff2'),
+    url('font/firacode/woff/FiraCode-Light.woff') format('woff'),
+    url('font/firacode/ttf/FiraCode-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Fira Code';
+    src: url('font/firacode/eot/FiraCode-Regular.eot');
+    src: url('font/firacode/eot/FiraCode-Regular.eot') format('embedded-opentype'),
+    url('font/firacode/woff2/FiraCode-Regular.woff2') format('woff2'),
+    url('font/firacode/woff/FiraCode-Regular.woff') format('woff'),
+    url('font/firacode/ttf/FiraCode-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Fira Code';
+    src: url('font/firacode/eot/FiraCode-Medium.eot');
+    src: url('font/firacode/eot/FiraCode-Medium.eot') format('embedded-opentype'),
+    url('font/firacode/woff2/FiraCode-Medium.woff2') format('woff2'),
+    url('font/firacode/woff/FiraCode-Medium.woff') format('woff'),
+    url('font/firacode/ttf/FiraCode-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Fira Code';
+    src: url('font/firacode/eot/FiraCode-Bold.eot');
+    src: url('font/firacode/eot/FiraCode-Bold.eot') format('embedded-opentype'),
+    url('font/firacode/woff2/FiraCode-Bold.woff2') format('woff2'),
+    url('font/firacode/woff/FiraCode-Bold.woff') format('woff'),
+    url('font/firacode/ttf/FiraCode-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
 }
 
 .left-frame {
@@ -48,18 +92,18 @@ body {
     font-size: 14px;
 }
 
-.preview pre{
-    font-family: Roboto Mono,Lucida Sans Typewriter,Lucida Console,monaco,Courrier,monospace;
+.preview pre {
+    font-family: Roboto Mono, Lucida Sans Typewriter, Lucida Console, monaco, Courrier, monospace;
 }
 
 .preview blockquote {
-    color: rgba(0,0,0,.5);
+    color: rgba(0, 0, 0, .5);
     padding-left: 4px;
-    border-left: 5px solid rgba(0,0,0,.1);
+    border-left: 5px solid rgba(0, 0, 0, .1);
     font-size: 14px;
 }
 
-.preview blockquote ul{
+.preview blockquote ul {
     margin-left: 0;
 }
 
@@ -69,12 +113,14 @@ body {
     margin-bottom: 8px;
     border: 1px solid #ccc;
 }
-.preview table td{
+
+.preview table td {
     display: table-cell;
     border-top: 1px solid #dcdcdc;
     border-right: 1px solid #dcdcdc;
     padding: 8px 12px;
 }
+
 .preview table th {
     text-align: center;
     display: table-cell;
@@ -84,7 +130,7 @@ body {
     background-color: #eff3f5;
 }
 
-.preview table tr:nth-child(2n){
+.preview table tr:nth-child(2n) {
     background-color: #f7f7f7;
 }
 
@@ -98,9 +144,9 @@ body {
     display: none;
 }
 
-
 .context-menu-awesome::before {
-    display: block;!important;
+    display: block;
+!important;
     position: absolute;
     top: 50%;
     left: 0;
@@ -121,7 +167,6 @@ body {
     color: white;
 }
 
-
 #catalog-tree {
     font-size: 12px;
     margin-left: 0;
@@ -141,43 +186,6 @@ body {
     background-color: #FFE6B0;
 }
 
-#markdown-editor {
-    width: auto;
-    margin-right: 10px;
-    font-size: 14px;
-    line-grid: create;
-    resize: none;
-    border: none;
-    outline: none;
-    line-height: 24px;
-    tab-size: 4;
-    letter-spacing: 0.05em;
-    white-space: pre-wrap;
-    word-break:break-word;
-    word-wrap:break-word;
-    -webkit-font-smoothing:antialiased;
-    color: #ceccccfc;
-    padding: .5rem .75rem;
-    background-color: #2F3030;
-    -webkit-transition: all 0.2s ease-out;
-     -moz-transition: all 0.2s ease-out;
-       -o-transition: all 0.2s ease-out;
-          transition: all 0.2s ease-out;
-}
-
-#markdown-editor:hover {
-    border-color: white;
-    box-shadow: none;
-    outline: 0;
-}
-
-#markdown-editor:visited,
-#markdown-editor:active,
-#markdown-editor:focus {
-    border-color: white;
-    box-shadow: none;
-    outline: 0;
-}
 .splitter_panel .vsplitter {
     width: 2px;
     background-color: rgba(128, 128, 128, 0.18);

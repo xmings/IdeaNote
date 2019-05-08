@@ -11,13 +11,12 @@
     {% block cssdefine %}{% endblock %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/idea-note.css') }}">
 
-    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/jquery.splitter.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}" type="text/javascript"></script>
+    <script src="{{ url_for('static', filename='js/popper.min.js') }}" type="text/javascript"></script>
+    <script src="{{ url_for('static', filename='js/jquery.splitter.js') }}" type="text/javascript"></script>
 
     <script>
-        var splitter2, splitter1;
+        let splitter2, splitter1;
         $(document).ready(function () {
             eheight = window.innerHeight;
             splitter1 = $('#content').height(eheight).split({
@@ -27,7 +26,7 @@
                 position: '15%',
                 width: 1,
                 invisible: false,
-                onDrag: function (event) {
+                onDrag: function () {
                     if (splitter1.position() < 100) {
                         splitter1.position(0)
                     }
@@ -41,7 +40,7 @@
                 position: '0%',
                 width: 1,
                 invisible: false,
-                onDrag: function (event) {
+                onDrag: function () {
                     if (splitter2.position() < 200) {
                         splitter2.position(0)
                     }
@@ -79,7 +78,9 @@
         <ul id="catalog-tree" class="ztree"></ul>
     </div>
     <div class="center-frame" id="center-frame">
-        {% block centerframe %}{% endblock %}
+        <div class="editing">
+            {% block centerframe %}{% endblock %}
+        </div>
         <div class="preview"></div>
     </div>
 </div>
