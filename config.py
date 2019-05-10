@@ -20,6 +20,9 @@ class BaseConfig(object):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///{}\\ideanote.db?check_same_thread=False'.format(NOTES_DIRCTORY)
     REMOTE_URL = "git@git.coding.net:wmsgood/Mybase.git"
     LOG_FILE = os.path.join(PROJECT_PATH, "log", "{}.log".format(datetime.now().strftime("%Y-%m-%d")))
+    JSON_DB_FILE = os.path.join(NOTES_DIRCTORY,"ideanote.json")
+    CREATE_DB_IF_NOT_FOUND = True
+
 
 
     # db.create_all(bind=['users'])

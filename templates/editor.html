@@ -31,7 +31,7 @@
 
 
 {% block centerframe %}
-    <textarea id="editor" placeholder="写你想写" spellcheck="false"></textarea>
+    <textarea id="editor" placeholder="写你想写" spellcheck="false" hidden></textarea>
 {% endblock %}
 
 
@@ -60,7 +60,7 @@
 
 
             preview = function (content) {
-                content = content.replace(/\n\n/g,"\n<br>");
+                content = content.replace(/\n\n/g, "\n<br>");
                 previewer.html(
                     marked(content, {
                         highlight: function (code) {
@@ -111,20 +111,19 @@
                         nodeId: node.id,
                         content: content,
                     },
-                    success: function(){
+                    success: function () {
                         preview(content);
                     },
-                    error: function (XMLHttpRequest, textStatus, errorThrown) {
-                        settings.flashFunc("保存失败", true);
+                    error: function () {
+                        flashMessage("保存失败", true);
                     }
                 })
             });
 
             // 同步滚动窗口
             editor.on('scroll', function () {
-                scrollRate = editor.getScrollInfo().top/editor.getScrollInfo().height;
-                previewer[0].scrollTop = (previewer[0].scrollHeight+600)*scrollRate;
-
+                scrollRate = editor.getScrollInfo().top / editor.getScrollInfo().height;
+                previewer[0].scrollTop = (previewer[0].scrollHeight) * scrollRate;
             });
 
             // 粘贴图片
@@ -133,8 +132,13 @@
                     items = e.clipboardData.items || e.clipboardData.files || [];
 
                     $.each(items, function (index, item) {
-                        if (item.kind === "file" && item.type === "image/png") {
+                        if (item.kind === "file" && item.type.match(/^image/).length > 0) {
                             formData = new FormData();
+                            image = item.getAsFile();
+                            if (image === null){
+                                flashMessage("剪切板中不存在图片",true);
+                                return
+                            }
                             formData.append('image', item.getAsFile());
                             formData.append('nodeId', zTreeObj.getSelectedNodes()[0].id);
 
@@ -147,18 +151,17 @@
                                 contentType: false,
                                 dataType: 'json',
                                 success: function (result) {
-                                    console.log("");
                                     mdUrl = "![image](url)".replace("url", result['filename']);
                                     editor.replaceSelection(mdUrl)
                                 },
                                 error: function () {
-                                    flashMessage("图片保存失败")
+                                    flashMessage("图片保存失败", true)
                                 }
                             })
-
                         }
                     });
                 }
+                e.preventDefault();
             });
 
             // 快捷键

@@ -3,7 +3,7 @@
 # @File  : control.py
 # @Author: wangms
 # @Date  : 2018/8/6
-import os, shutil, mimetypes
+import os, shutil, mimetypes, imghdr
 from datetime import datetime
 from config import BaseConfig
 from model import Catalog, db

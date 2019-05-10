@@ -140,11 +140,15 @@ body {
 .flash-message {
     z-index: 100;
     position: absolute;
+    display: block;
+    background-color: #d1ecf18f;
+    border-color: rgba(211, 235, 240, 0.31);
+    border-radius: 8px;
     width: 30%;
     left: 30%;
     top: 30%;
-    background: transparent;
-    display: none;
+    padding: 20px;
+    visibility: hidden;
 }
 
 .context-menu-awesome::before {
@@ -197,6 +201,10 @@ body {
     height: 100%;
     font-family: song,"Fira Code", Lucida Sans Typewriter, Lucida Console, monaco, Courrier, monospace;
     font-size: 14px;
+}
+
+.CodeMirror-lines {
+    padding: 4px 2px;
 }
 
 .CodeMirror-linenumber{

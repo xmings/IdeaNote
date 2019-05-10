@@ -7,6 +7,7 @@
 from flask import Flask
 from config import BaseConfig
 from model import db
+from catalogdb import CatalogDB
 from core import core
 import logging
 
@@ -21,14 +22,16 @@ app = Flask(__name__)
 app.config.from_object(BaseConfig)
 db.init_app(app)
 
-logFile = app.config.get("LOG_FILE")
-handler = logging.FileHandler(logFile)
+log_file = app.config.get("LOG_FILE")
+handler = logging.FileHandler(log_file)
 handler.setFormatter(logging.Formatter(
     '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
 ))
 app.logger.addHandler(handler)
 
 app.register_blueprint(core)
+
+catalogdb = CatalogDB(app)
 
 # app.app_context().push()
 # db.drop_all()

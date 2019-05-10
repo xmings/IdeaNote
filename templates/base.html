@@ -50,13 +50,13 @@
             flashMessage = function (html, autoExit) {
                 flash = $(".flash-message");
                 if (typeof html === "undefined") {
-                    flash.hide();
+                    flash.css("visibility","hidden");
                 } else {
-                    $(".flash-message .text").html(html);
-                    flash.show();
+                    flash.html(html);
+                    flash.css("visibility","visible");
                     if (autoExit === true) {
                         setTimeout(function () {
-                            flash.hide();
+                            flash.css("visibility","hidden");
                         }, 2000);
                     }
                 }
@@ -67,11 +67,7 @@
     {% block jsdefinebefore %}{% endblock %}
 </head>
 <body>
-<div class="flash-message">
-    <div class="alert alert-info alert-dismissible" role="alert">
-        <span class="text">同步成功</span>
-    </div>
-</div>
+<div class="flash-message">同步成功</div>
 
 <div class="content" id="content">
     <div class="left-frame">

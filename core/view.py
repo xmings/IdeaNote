@@ -23,6 +23,7 @@ def index():
 def getNodes():
     t2j = Table2Json()
     jNodes = t2j.run()
+    print(jNodes)
     return jsonify(jNodes)
 
 
