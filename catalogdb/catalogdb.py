@@ -4,7 +4,8 @@
 # @Author: wangms
 # @Date  : 2019/5/9
 # @Brief: 简述报表功能
-import os, json, tempfile
+import os, json, tempfile, re
+from threading import Lock
 from datetime import datetime
 from catalogdb.model import Item, User
 
@@ -18,6 +19,8 @@ BASE_JSON_DB = {
 }
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+ITEM_ROOT_ID = 0
+lock = Lock()
 
 class CustomEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -27,7 +30,6 @@ class CustomEncoder(json.JSONEncoder):
             return {
                 "id": obj.id,
                 "title": obj.title,
-                "type": obj.type,
                 "parent_id": obj.parent_id,
                 "icon_path": obj.icon_path,
                 "file_path": obj.file_path,
@@ -56,31 +58,40 @@ class CatalogDB(object):
         self._catalog_dict = {}
         self._item_dict = {}
         self._user_dict = {}
+        self._current_item_id = ITEM_ROOT_ID
         self.init_db(app)
 
     def init_db(self, app):
         self.db_file = app.config.get("JSON_DB_FILE")
         create = app.config.get("CREATE_DB_IF_NOT_FOUND")
         if os.path.isdir(self.db_file):
-            if os.path.isfile(os.path.join(self.db_file, self.default_db_file_name)):
-                self.db_file = os.path.join(self.db_file, self.default_db_file_name)
+            child_file = os.path.join(self.db_file, self.default_db_file_name)
+            if os.path.isfile(child_file):
+                self.db_file = child_file
             elif create:
-                self.db_file = os.path.exists(os.path.join(self.db_file, self.default_db_file_name))
-                open(self.db_file, "w", encoding="utf8").close()
+                open(child_file, "w", encoding="utf8").close()
+                self.db_file = child_file
             else:
                 raise Exception("JSON DB FILE NOT FOUND")
 
-        if os.path.isfile(self.db_file):
-            with open(self.db_file, 'r', encoding="utf8") as f:
-                content = f.read()
-        elif os.path.exists(self._temp_db_file):
-            with open(self._temp_db_file, 'r', encoding="utf8") as f:
-                content = f.read()
-        else:
-            raise Exception("JSON DB FILE NOT FOUND")
+        error_count = 0
 
-        self._catalog_dict = BASE_JSON_DB
-        if content != "" :
+        for f in (self.db_file, self._temp_db_file):
+            try:
+                with open(f, 'r', encoding="utf8") as f:
+                    content = f.read()
+                    break
+            except Exception as e:
+                error_count += 1
+                content = ""
+
+        if error_count == 2:
+            raise Exception("THIS FILE IS NOT A PLAIN TEXT")
+
+        if content == "":
+            self._catalog_dict = BASE_JSON_DB
+            self._store()
+        else:
             self._catalog_dict = json.loads(content)
 
         self.select_all_items()
@@ -88,8 +99,7 @@ class CatalogDB(object):
 
 
     def insert_item(self, item:Item, commit=True)->bool:
-        if self.select_item_by_id(item.id):
-            raise Exception("The Key already exists: <{}>".format(item.id))
+        item.id = self.fetch_latest_item_id()
         self._item_dict[item.id] = item
         if commit:
             self._store()
@@ -117,11 +127,14 @@ class CatalogDB(object):
         self._store()
 
     def select_all_items(self):
+        self._current_item_id = ITEM_ROOT_ID
         items_block = self._catalog_dict.get("items")
         if not items_block:
             return {}
         for block in items_block.values():
             item = self._json_block_to_item(block)
+            if item.id > self._current_item_id:
+                self._current_item_id += 1
             self._item_dict[item.id] = item
 
         for parent in self._item_dict.values():
@@ -139,26 +152,37 @@ class CatalogDB(object):
             raise Exception("Not Found the parent_id: <{}>".format(parent_id))
         return parent.children
 
+    def select_items_by_title(self, title, like:bool=False):
+        items = []
+        if like:
+            for item in self._item_dict:
+                if item.title == title:
+                    items.append(item)
+        else:
+            for item in self._item_dict:
+                if re.match(item.title, title):
+                    items.append(item)
+        return items
+
     def _json_block_to_item(self, block):
-        return Item(
-            id=block.get("id"),
+        item = Item(
             title=block.get("title"),
-            type=block.get("type"),
             parent_id=block.get("parent_id"),
             children=[],
             icon_path=block.get("ico_path"),
             file_path=block.get("file_path"),
             file_hash=block.get("file_hash"),
             status=block.get("status"),
-            creation_time=datetime.strptime(block.get("creation_time"), DATETIME_FORMAT),
-            modification_time=datetime.strptime(block.get("modification_time"), DATETIME_FORMAT)
+            creation_time=block.get("creation_time"),
+            modification_time=block.get("modification_time")
         )
+        item.id = block.get("id")
+        return item
 
     def _item_to_json_block(self, item):
         return {
             "id": item.id,
             "title": item.title,
-            "type": item.type,
             "parent_id": item.parent_id,
             "icon_path": item.icon_path,
             "file_path": item.file_path,
@@ -190,11 +214,12 @@ class CatalogDB(object):
             user = User(
                 username=block.get('username'),
                 password=block.get('password'),
-                login_time=datetime.strptime(block.get('login_time'),DATETIME_FORMAT),
-                login_host=block.get('login_host'),
-                edit_item_id=block.get('edit_item_id'),
-                edit_start_time=datetime.strptime(block.get('edit_start_time'),DATETIME_FORMAT)
+                regist_time=block.get('regist_time')
             )
+            user.login_host = block.get('login_host')
+            user.login_time = block.get('login_time')
+            user.edit_item_id = block.get('edit_item_id')
+            user.edit_start_time = block.get('edit_start_time')
             self._user_dict[user.username] = user
         return self._user_dict
 
@@ -223,6 +248,11 @@ class CatalogDB(object):
             self._store()
         return True
 
+    def fetch_latest_item_id(self):
+        with lock:
+            self._current_item_id += 1
+        return self._current_item_id
+
     def _store(self):
         self._catalog_dict["modification_time"] = datetime.now()
         self._catalog_dict["version"] += 1
@@ -231,9 +261,9 @@ class CatalogDB(object):
 
         try:
             with open(self.db_file, 'w', encoding="utf8") as f:
-                json.dump(self._catalog_dict, f, cls=CustomEncoder)
+                json.dump(self._catalog_dict, f, cls=CustomEncoder, indent=4, sort_keys=True)
         except Exception as e:
             with open(self._temp_db_file, 'w', encoding="utf8") as f:
-                json.dump(self._catalog_dict, f, cls=CustomEncoder)
+                json.dump(self._catalog_dict, f, cls=CustomEncoder, indent=4, sort_keys=True)
             raise e
         return True

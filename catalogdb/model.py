@@ -4,8 +4,12 @@
 # @Author: wangms
 # @Date  : 2019/5/9
 # @Brief: 简述报表功能
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, field
 from datetime import datetime
+
+from dateutil.parser import parse as datetimeparser
+
 
 @dataclass(order=True)
 class Catalog(object):
@@ -16,30 +20,51 @@ class Catalog(object):
     lock_item_ids: list
     users: dict
 
+    def __setattr__(self, key, value):
+        if isinstance(value, str) and key.endswith("time"):
+            self.__dict__[key] = datetimeparser(value)
+            return
+        self.__dict__[key] = value
 
 @dataclass(order=True)
 class Item(object):
-    id: int
     title: str
-    type: str
     parent_id: int
-    children: list
-    icon_path: str
-    file_path: str
-    file_hash: str
-    status: int
-    creation_time: datetime
-    modification_time: datetime
+    icon_path: str = ""
+    file_path: str = ""
+    file_hash: str = ""
+    id: int = None
+    status: int = 1
+    children: list = field(repr=False, default_factory=list)
+    creation_time: datetime = datetime.now()
+    modification_time: datetime = datetime.now()
+
+    def __setattr__(self, key, value):
+        if isinstance(value, str) and key.endswith("time"):
+            self.__dict__[key] = datetimeparser(value)
+            return
+        self.__dict__[key] = value
 
 
 @dataclass(order=True)
 class User(object):
     username: str
     password: str
-    login_time: datetime
-    login_host: str
-    edit_item_id: int
-    edit_start_time: datetime
+    regist_time: datetime
+    login_time: datetime = None
+    login_host: str = None
+    edit_item_id: int = None
+    edit_start_time = None
 
 
+    def __setattr__(self, key, value):
+        if isinstance(value, str) and key.endswith("time"):
+            self.__dict__[key] = datetimeparser(value)
+            return
+        self.__dict__[key] = value
 
+if __name__ == '__main__':
+    user = User(
+        username='w', password='w', regist_time='2019-05-12 12:00:00'
+    )
+    print(user)

@@ -21,9 +21,7 @@ class TestCatalogDB():
 
     def test_insert_item(self):
         catalog.insert_item(Item(
-            id=2,
             title="test2",
-            type="file",
             parent_id=0,
             children=[],
             icon_path="",
@@ -35,54 +33,27 @@ class TestCatalogDB():
         ))
 
     def test_update_item(self):
-        catalog.update_item(Item(
-            id=2,
-            title="test",
-            type="directory",
-            parent_id=0,
-            children=[],
-            icon_path="",
-            file_hash="",
-            file_path="",
-            status=1,
-            creation_time=datetime.now(),
-            modification_time=datetime.now()
-        ))
+        item = catalog.select_item_by_id(1)
+        item.title="test2"
+        catalog.update_item(item)
 
     def test_delete_item(self):
-        catalog.delete_item(Item(
-            id=3,
-            title="test",
-            type="directory",
-            parent_id=0,
-            children=[],
-            icon_path="",
-            file_hash="",
-            file_path="",
-            status=1,
-            creation_time=datetime.now(),
-            modification_time=datetime.now()
-        ))
+        item = catalog.select_item_by_id(1)
+        catalog.delete_item(item)
 
     def test_select_item_by_id(self):
         print(catalog.select_item_by_id(1))
 
     def test_insert_user(self):
-        catalog.insert_user(User(
+        user = User(
             username='w',
             password='w',
-            login_host='my',
-            login_time=datetime.now(),
-            edit_start_time=datetime.now(),
-            edit_item_id=1
-        ))
+            regist_time= datetime.now()
+        )
+        catalog.insert_user(user)
 
     def test_update_user(self):
-        catalog.update_user(User(
-            username='w',
-            password='w123',
-            login_host='my',
-            login_time=datetime.now(),
-            edit_start_time=datetime.now(),
-            edit_item_id=2
-        ))
+        user = catalog.select_user_by_username("w")
+        user.edit_item_id = 1
+        catalog.update_user(user)
+
