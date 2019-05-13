@@ -21,7 +21,7 @@ class TestCatalogDB():
 
     def test_insert_item(self):
         catalog.insert_item(Item(
-            title="test2",
+            title="test10",
             parent_id=0,
             children=[],
             icon_path="",
@@ -34,7 +34,7 @@ class TestCatalogDB():
 
     def test_update_item(self):
         item = catalog.select_item_by_id(1)
-        item.title="test2"
+        item.title="test3"
         catalog.update_item(item)
 
     def test_delete_item(self):
@@ -42,7 +42,7 @@ class TestCatalogDB():
         catalog.delete_item(item)
 
     def test_select_item_by_id(self):
-        print(catalog.select_item_by_id(1))
+        print(catalog.select_item_by_id(2))
 
     def test_insert_user(self):
         user = User(
@@ -54,6 +54,6 @@ class TestCatalogDB():
 
     def test_update_user(self):
         user = catalog.select_user_by_username("w")
-        user.edit_item_id = 1
+        user.edit_item_id = 2
         catalog.update_user(user)
 

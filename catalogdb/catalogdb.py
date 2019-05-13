@@ -22,11 +22,14 @@ DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 ITEM_ROOT_ID = 0
 lock = Lock()
 
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+
 class CustomEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, datetime):
-            return obj.strftime(DATETIME_FORMAT)
-        elif isinstance(obj, Item):
+        if isinstance(obj, Item):
             return {
                 "id": obj.id,
                 "title": obj.title,
@@ -35,18 +38,21 @@ class CustomEncoder(json.JSONEncoder):
                 "file_path": obj.file_path,
                 "file_hash": obj.file_hash,
                 "status": obj.status,
-                "creation_time": obj.creation_time.strftime(DATETIME_FORMAT),
-                "modification_time": obj.modification_time.strftime(DATETIME_FORMAT)
+                "creation_time": obj.creation_time.strftime(DATETIME_FORMAT) if obj.creation_time else None,
+                "modification_time": obj.modification_time.strftime(DATETIME_FORMAT) if obj.modification_time else None
             }
         elif isinstance(obj, User):
             return {
                 "username": obj.username,
                 "password": obj.password,
-                "login_time": obj.login_time.strftime(DATETIME_FORMAT),
+                "regist_time": obj.regist_time.strftime(DATETIME_FORMAT) if obj.regist_time else None,
+                "login_time": obj.login_time.strftime(DATETIME_FORMAT) if obj.login_time else None,
                 "login_host": obj.login_host,
                 "edit_item_id": obj.edit_item_id,
-                "edit_start_time": obj.edit_start_time.strftime(DATETIME_FORMAT)
+                "edit_start_time": obj.edit_start_time.strftime(DATETIME_FORMAT) if obj.edit_start_time else None
             }
+        elif isinstance(obj, datetime):
+            return obj.strftime(DATETIME_FORMAT)
         return json.JSONEncoder.default(self, obj)
 
 
@@ -74,31 +80,26 @@ class CatalogDB(object):
             else:
                 raise Exception("JSON DB FILE NOT FOUND")
 
-        error_count = 0
-
-        for f in (self.db_file, self._temp_db_file):
-            try:
-                with open(f, 'r', encoding="utf8") as f:
-                    content = f.read()
-                    break
-            except Exception as e:
-                error_count += 1
-                content = ""
-
-        if error_count == 2:
-            raise Exception("THIS FILE IS NOT A PLAIN TEXT")
-
-        if content == "":
-            self._catalog_dict = BASE_JSON_DB
-            self._store()
-        else:
+        try:
+            with open(self.db_file, 'r', encoding="utf8") as f:
+                content = f.read()
             self._catalog_dict = json.loads(content)
+        except:
+            with open(self._temp_db_file, "rb") as f:
+                self._catalog_dict = pickle.load(f)
+
+        if not self._catalog_dict:
+            self._catalog_dict = BASE_JSON_DB
 
         self.select_all_items()
         self.select_all_users()
 
 
+
     def insert_item(self, item:Item, commit=True)->bool:
+        parent = self.select_item_by_id(item.parent_id)
+        if not (item.parent_id == 0 or parent):
+            raise Exception("PARENT ITEM DOES'T EXISTS")
         item.id = self.fetch_latest_item_id()
         self._item_dict[item.id] = item
         if commit:
@@ -121,7 +122,6 @@ class CatalogDB(object):
         if commit:
             self._store()
         return True
-
 
     def commit(self):
         self._store()
@@ -261,9 +261,12 @@ class CatalogDB(object):
 
         try:
             with open(self.db_file, 'w', encoding="utf8") as f:
-                json.dump(self._catalog_dict, f, cls=CustomEncoder, indent=4, sort_keys=True)
+                content = json.dumps(self._catalog_dict,cls=CustomEncoder, indent=4, sort_keys=True)
+                f.write(content)
         except Exception as e:
-            with open(self._temp_db_file, 'w', encoding="utf8") as f:
-                json.dump(self._catalog_dict, f, cls=CustomEncoder, indent=4, sort_keys=True)
-            raise e
+            with open(self.db_file, 'wb') as f:
+                content = pickle.dumps(self._catalog_dict)
+                f.write(content)
+            raise Exception("Failed to save catalog data, but write these to tempfile."
+                            "Pelase resolve the malfunction before restarting this app")
         return True
