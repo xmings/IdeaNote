@@ -82,10 +82,10 @@
             };
 
             catalogTree.catalog({
-                treeDataUrl: "{{ url_for('core.getNodes') }}",
-                renameUrl: "{{ url_for('core.updateNode', type='rename') }}",
+                treeDataUrl: "{{ url_for('core.fetch_notes') }}",
+                renameUrl: "{{ url_for('core.update_note', type='rename') }}",
                 flashFunc: flashMessage,
-                nodeContent: "{{ url_for('core.getContent') }}",
+                nodeContent: "{{ url_for('core.fetch_content') }}",
                 previewFunc: preview,
                 editor: editor
             });
@@ -94,8 +94,8 @@
             $.bindTreePopu({
                 nodeSeletor: "a[class^='level']",
                 syncUrl: "{{ url_for('core.sync', method='sync') }}",
-                dropUrl: "{{ url_for('core.dropNode') }}",
-                addChildUrl: "{{ url_for('core.addNode') }}",
+                dropUrl: "{{ url_for('core.drop_note') }}",
+                addChildUrl: "{{ url_for('core.add_note') }}",
                 flashFunc: flashMessage
             });
 
@@ -105,10 +105,10 @@
                 node = $.zTreeObj.getSelectedNodes()[0];
                 content = editor.getValue();
                 $.ajax({
-                    url: "{{ url_for('core.updateNode', type='content') }}",
+                    url: "{{ url_for('core.update_note', type='content') }}",
                     type: "post",
                     data: {
-                        nodeId: node.id,
+                        id: node.id,
                         content: content,
                     },
                     success: function () {
@@ -140,10 +140,10 @@
                                 return
                             }
                             formData.append('image', item.getAsFile());
-                            formData.append('nodeId', zTreeObj.getSelectedNodes()[0].id);
+                            formData.append('id', zTreeObj.getSelectedNodes()[0].id);
 
                             $.ajax({
-                                url: "{{ url_for('core.uploadImage') }}",
+                                url: "{{ url_for('core.upload_image') }}",
                                 type: 'POST',
                                 cache: false,
                                 data: formData,
@@ -161,7 +161,7 @@
                         }
                     });
                 }
-                e.preventDefault();
+
             });
 
             // 快捷键

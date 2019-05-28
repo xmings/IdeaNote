@@ -2,127 +2,109 @@
 # -*- coding: utf-8 -*-
 # @File  : view.py
 # @Author: wangms
-# @Date  : 2018/8/6
+# @Date  : 2019/5/16
+# @Brief: 简述报表功能
 from . import core
-from flask import render_template, request, Response, \
-    jsonify, flash, current_app
-from app import db
-from model import Catalog
-from control import Table2Json, dropNodeWithChildren, fetchUniqName, \
-    dropDirWithChildren, moveDirWithChildren, changeFile2Folder, \
-    saveContent, readContent, saveImage, readImage, Sync
+from flask import render_template, request, Response, jsonify, current_app
+from .service import NoteService
 
-sync_note = Sync()
+note_service = NoteService()
 
-@core.route('/')
+@core.route("/")
 def index():
-    sync_note.get()
     return render_template('editor.html')
 
-@core.route('/nodes',methods=['GET'])
-def getNodes():
-    t2j = Table2Json()
-    jNodes = t2j.run()
-    print(jNodes)
-    return jsonify(jNodes)
+
+@core.route('/notes',methods=['GET'])
+def fetch_notes():
+    catalog = note_service.fetch_all_items_to_json()
+    return jsonify(catalog)
 
 
-@core.route('/node/content',methods=['GET'])
-def getContent():
-    nodeId = request.args.get('nodeId')
-    node = Catalog.query.filter_by(nodeId=nodeId).first()
-    return readContent(node)
+@core.route('/note/content',methods=['GET'])
+def fetch_content():
+    item_id = request.args.get('id')
+    try:
+        content = note_service.read_item_content(item_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return Response(401)
+    return content
+
+@core.route('/note/add', methods=['POST'])
+def add_note():
+    title = request.form.get('title')
+    pid = request.form.get('pid')
+    try:
+        item = note_service.add_item(title, pid)
+    except Exception as e:
+        current_app.logger.error(e)
+        return Response(401)
+    return jsonify({"id": item.id})
 
 
-@core.route('/node/add', methods=['POST'])
-def addNode():
-    info = {
-        'nodeTitle': request.form.get('nodeTitle'),
-        'nodePid': request.form.get('nodePid'),
-        'nodeType': 'file',
-        'fileName': fetchUniqName()
-    }
-    pnode = Catalog.query.filter_by(nodeId=info['nodePid']).first()
-    if pnode.nodeType == 'file':
-        status = changeFile2Folder(pnode)
-        if not status:
-            return 'error', 500
-        pnode.nodeType = 'folder'
-    info['level'] = pnode.level + 1
-    node = Catalog(**info)
-    db.session.add(node)
-    db.session.commit()
-    saveContent(node, '')
-    return jsonify({"nodeId": node.nodeId })
+@core.route('/note/update/<type>', methods=['POST'])
+def update_note(type):
+    id = request.form.get('id')
+    try:
+        if type == "rename":
+            title = request.form.get('title')
+            note_service.update_item_title(id, title)
+        elif type == "position":
+            pass
+        elif type == "content":
+            content = request.form.get('content')
+            note_service.update_item_content(id, content)
+    except Exception as e:
+        current_app.logger.error(e)
+        return "error", 500
 
-
-@core.route('/node/update/<type>', methods=['POST'])
-def updateNode(type):
-    nodeId = request.form.get('nodeId')
-    node = Catalog.query.filter_by(nodeId=nodeId).first()
-    if type == "rename":
-        node.nodeTitle = request.form.get('nodeTitle')
-    elif type == "position":
-        nodePid = request.form.get('nodePid')
-        pnode = Catalog.query.filter_by(nodeId=nodePid).first()
-        status = moveDirWithChildren(node, pnode)
-        if not status:
-            return 'error', 500
-        node.nodePid = nodePid
-    elif type == "content":
-        content = request.form.get('content')
-        status = saveContent(node, content)
-        if not status:
-            return 'error', 500
-    else:
-        node.nodeImg = request.form.get('nodeImg')
-        node.status = request.form.get('status')
-    db.session.commit()
     return 'OK', 200
 
 
-@core.route('/node/drop', methods=['POST'])
-def dropNode():
-    nodeId = request.form.get('nodeId')
-    node = Catalog.query.filter_by(nodeId=nodeId).first()
-    if node.level == 0:
-        return 'FORBIDDEN', 403
-
-    dropDirWithChildren(node)
-    dropNodeWithChildren(node)
+@core.route('/note/drop', methods=['POST'])
+def drop_note():
+    id = request.form.get('id')
+    try:
+        note_service.drop_item(id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return "error", 500
     return 'OK', 200
 
 
-@core.route('/node/upload/', methods=['POST'])
-def uploadImage():
-    img = request.files.get('image')
-    nodeId = request.form.get('nodeId')
-    node = Catalog.query.filter_by(nodeId=nodeId).first()
-    path = saveImage(img, node)
+@core.route('/note/upload/', methods=['POST'])
+def upload_image():
+    id = request.form.get('id')
+    image = request.files.get('image')
+    try:
+        url_path = note_service.write_item_image(id, image)
+    except Exception as e:
+        current_app.logger.error(e)
+        return "error", 500
 
-    return jsonify({'filename': path.replace('\\','/')}), 200
+    return jsonify({'filename': url_path}), 200
 
-@core.route('/<path:imgPath>')
-def getImage(imgPath):
-    result = readImage(imgPath)
-    if result:
-        img, imgType = result
-        resp = Response(img, mimetype=imgType)
-        return resp
-    return 'FORBIDDEN', 403
+@core.route('/<item_id>/<image_name>')
+def download_image(item_id, image_name):
+    try:
+        image, mime_type = note_service.read_item_image(item_id, image_name)
+        assert image and mime_type, "UNKNOWN IMAGE TYPE"
+    except Exception as e:
+        current_app.logger.error(e)
+        return Response(403)
+    return Response(image, mimetype=mime_type)
 
 
 @core.route('/sync/<method>', methods=['POST'])
 def sync(method):
     if method == 'download':
-        status = sync_note.get()
+        status = note_service.note_pull()
     elif method == 'upload':
-        status = sync_note.put()
+        status = note_service.note_push()
     else:
-        status = sync_note.run()
-    if status:
-        flash("同步成功", "alert-success")
-    else:
-        flash("同步失败, 请手工同步", "alert-warning")
-    return 'ok', 200
+        status = note_service.note_sync()
+    if not status:
+        return Response(401)
+    return Response(200)
 

@@ -35,7 +35,7 @@
                     $.get(
                         url = settings.nodeContent,
                         data = {
-                            nodeId: node.id
+                            id: node.id
                         },
                         success = function (content) {
                             settings.editor.setValue(content);
@@ -48,8 +48,8 @@
                         url: settings.renameUrl,
                         type: 'POST',
                         data: {
-                            nodeTitle: treeNode.name,
-                            nodeId: treeNode.id
+                            title: treeNode.name,
+                            id: treeNode.id
                         },
                         error: function (XMLHttpRequest, textStatus, errorThrown) {
                             settings.flashFunc("修改结点名称失败", true);
@@ -63,11 +63,11 @@
                     if (targetNode !== null && isCopy===false){
                         if (moveType === 'inner'){
                             $.ajax({
-                                url: "{{ url_for('core.updateNode', type='position') }}",
+                                url: "{{ url_for('core.update_note', type='position') }}",
                                 type: 'POST',
                                 data: {
-                                    nodeId: treeNodes[0].id,
-                                    nodePid: targetNode.id
+                                    id: treeNodes[0].id,
+                                    pid: targetNode.id
                                 },
                                 success: function () {
 
@@ -136,7 +136,7 @@
                 if (key === 'drop') {
                     $.post(url = settings.dropUrl,
                         data = {
-                            nodeId: node.id
+                            id: node.id
                         },
                         success = function (response) {
                             zTreeObj.removeNode(node);
@@ -149,11 +149,11 @@
                     $.post(
                         url = settings.addChildUrl,
                         data = {
-                            nodeTitle: "新建节点",
-                            nodePid: node.id
+                            title: "新建节点",
+                            pid: node.id
                         },
                         success = function (response) {
-                            newNode.id = response.nodeId;
+                            newNode.id = response.id;
                             zTreeObj.updateNode(newNode)
                         },
                         dataType = 'json'

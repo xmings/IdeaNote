@@ -39,6 +39,7 @@ class Item(BaseModel):
     file_path: str = ""
     file_hash: str = ""
     id: int = None
+    type: str = "file"
     status: int = 1
     children: list = field(repr=False, default_factory=list)
     creation_time: datetime = datetime.now()

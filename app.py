@@ -5,11 +5,12 @@
 # @Date  : 2018/8/6
 
 from flask import Flask
+from flask.logging import default_handler
 from config import BaseConfig
 from model import db
-from catalogdb import CatalogDB
+from core.service import db_operator, file_operator, sync_operator
 from core import core
-import logging
+from logging.config import dictConfig as loggerConfig
 
 
 import win32api, win32gui
@@ -23,15 +24,37 @@ app.config.from_object(BaseConfig)
 db.init_app(app)
 
 log_file = app.config.get("LOG_FILE")
-handler = logging.FileHandler(log_file)
-handler.setFormatter(logging.Formatter(
-    '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
-))
-app.logger.addHandler(handler)
+
+loggerConfig({
+    'version': 1,
+    'formatters': {'default': {
+        'format': '%(asctime)s %(levelname)s %(module)s %(lineno)d: %(message)s',
+    }},
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'default',
+            'level': 'INFO'
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'formatter': 'default',
+            'filename': app.config.get("LOG_FILE"),
+            'level': 'INFO'
+    }},
+    'root': {
+        'level': 'INFO',
+        'handlers': ['console']
+    }
+})
+
 
 app.register_blueprint(core)
 
-catalogdb = CatalogDB(app)
+db_operator.init_db(app)
+file_operator.init_file(app)
+sync_operator.init_sync(app)
+app.logger.removeHandler(default_handler)
 
 # app.app_context().push()
 # db.drop_all()

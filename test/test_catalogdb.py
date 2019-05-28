@@ -5,7 +5,7 @@
 # @Date  : 2019/5/10
 # @Brief: 简述报表功能
 
-from catalogdb import CatalogDB
+from catalogdb import DBOperator
 from catalogdb.model import Item,User
 from datetime import datetime
 
@@ -15,7 +15,7 @@ class app():
 app.config = {}
 app.config["JSON_DB_FILE"] = "d:\\"
 app.config["CREATE_DB_IF_NOT_FOUND"] = True
-catalog = CatalogDB(app)
+catalog = DBOperator(app)
 
 class TestCatalogDB():
 

@@ -1,6 +1,6 @@
 #!/bin/python
 # -*- coding: utf-8 -*-
-# @File  : catalogdb.py
+# @File  : dboperator.py
 # @Author: wangms
 # @Date  : 2019/5/9
 # @Brief: 简述报表功能
@@ -10,6 +10,7 @@ from datetime import datetime
 from catalogdb.model import Item, User
 
 BASE_JSON_DB = {
+    "title": "MyBase",
     "items": {},
     "lock_item_ids": [],
     "items_hash": "",
@@ -27,12 +28,14 @@ try:
 except ImportError:
     import pickle
 
-class CustomEncoder(json.JSONEncoder):
+
+class JsonEncoderForPersistence(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Item):
             return {
                 "id": obj.id,
                 "title": obj.title,
+                "type": obj.type,
                 "parent_id": obj.parent_id,
                 "icon_path": obj.icon_path,
                 "file_path": obj.file_path,
@@ -56,8 +59,26 @@ class CustomEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-class CatalogDB(object):
-    def __init__(self, app):
+class JsonEncoderForFrontEnd(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, Item):
+            if o.children:
+                return {
+                    "id": o.id,
+                    "name": o.title,
+                    "open": False,
+                    "children": o.children
+                }
+            return {
+                "id": o.id,
+                "name": o.title,
+                "open": False
+            }
+        return super().default(o)
+
+
+class DBOperator(object):
+    def __init__(self, app=None):
         self.default_db_file_name = "json.db"
         self._temp_db_file = os.path.join(tempfile.gettempdir(), self.default_db_file_name)
         self.db_file = None
@@ -65,7 +86,8 @@ class CatalogDB(object):
         self._item_dict = {}
         self._user_dict = {}
         self._current_item_id = ITEM_ROOT_ID
-        self.init_db(app)
+        if app:
+            self.init_db(app)
 
     def init_db(self, app):
         self.db_file = app.config.get("JSON_DB_FILE")
@@ -82,42 +104,61 @@ class CatalogDB(object):
 
         try:
             with open(self.db_file, 'r', encoding="utf8") as f:
-                content = f.read()
-            self._catalog_dict = json.loads(content)
+                self._catalog_dict = json.loads(f.read())
         except:
             with open(self._temp_db_file, "rb") as f:
-                self._catalog_dict = pickle.load(f)
+                content = f.read()
+                self._catalog_dict = pickle.loads(f.read()) if content else []
 
         if not self._catalog_dict:
             self._catalog_dict = BASE_JSON_DB
 
-        self.select_all_items()
+        self.select_all_items(reload=True)
         self.select_all_users()
 
-
-
-    def insert_item(self, item:Item, commit=True)->bool:
+    def insert_item(self, item: Item, commit=True) -> bool:
         parent = self.select_item_by_id(item.parent_id)
-        if not (item.parent_id == 0 or parent):
-            raise Exception("PARENT ITEM DOES'T EXISTS")
+
+        if item.parent_id > 0:
+            assert parent, "PARENT ITEM DOESN'T EXIST"
+            assert not parent.children or item not in parent.children, \
+                "ITEM ALREADY EXISTS IN THEN CHILDREN LIST OF PARENT ITEM"
+
         item.id = self.fetch_latest_item_id()
         self._item_dict[item.id] = item
+        if item.parent_id > 0:
+            parent.children.append(item)
+            parent.type = "folder"
         if commit:
             self._store()
         return True
 
-    def delete_item(self, item: Item, commit=True)->bool:
+    def delete_item(self, item: Item, commit=True) -> bool:
         if not self.select_item_by_id(item.id):
             return True
+        parent = self.select_item_by_id(item.parent_id)
+        if item.parent_id > 0:
+            assert parent, "PARENT ITEM DOESN'T EXIST"
+            assert parent.children and item in parent.children, \
+                "ITEM DOESN'T EXIST IN THE CHILDREN LIST OF PARENT ITEM"
+            parent.children.remove(item)
+            if not parent.children:
+                parent.type = "file"
+
         self._item_dict.pop(item.id)
         if commit:
             self._store()
         return True
 
-    def update_item(self, item: Item, commit=True)->bool:
-        if not self.select_item_by_id(item.id):
-            raise Exception("The Key doesn't exist: <{}>".format(item.id))
+    def update_item(self, item: Item, commit=True) -> bool:
+        if not self.select_item_by_id(item.id) and item.id > 0:
+            raise Exception("THIS ITEM DOESN'T EXIST: <{}>".format(item.id))
 
+        parent = self.select_item_by_id(item.parent_id)
+        if item.parent_id > 0:
+            assert parent, "PARENT ITEM DOESN'T EXIST"
+        # no need to update the children list of parent item, as this item data is
+        # synchronization between children list of parent item and self._item_dict.
         self._item_dict[item.id] = item
         if commit:
             self._store()
@@ -126,7 +167,10 @@ class CatalogDB(object):
     def commit(self):
         self._store()
 
-    def select_all_items(self):
+    def select_all_items(self, reload=False):
+        if reload == False and self._item_dict is not None:
+            return self._item_dict
+
         self._current_item_id = ITEM_ROOT_ID
         items_block = self._catalog_dict.get("items")
         if not items_block:
@@ -134,7 +178,7 @@ class CatalogDB(object):
         for block in items_block.values():
             item = self._json_block_to_item(block)
             if item.id > self._current_item_id:
-                self._current_item_id += 1
+                self._current_item_id = item.id
             self._item_dict[item.id] = item
 
         for parent in self._item_dict.values():
@@ -147,12 +191,18 @@ class CatalogDB(object):
         return self._item_dict.get(id)
 
     def select_items_by_parent_id(self, parent_id):
+        items = []
+        if parent_id == 0:
+            for item in self._item_dict.values():
+                if item.parent_id == 0:
+                    items.append(item)
+            return items
+
         parent = self.select_item_by_id(parent_id)
-        if not parent:
-            raise Exception("Not Found the parent_id: <{}>".format(parent_id))
+        assert parent, "Not Found the parent_id: <{}>".format(parent_id)
         return parent.children
 
-    def select_items_by_title(self, title, like:bool=False):
+    def select_items_by_title(self, title, like: bool = False):
         items = []
         if like:
             for item in self._item_dict:
@@ -164,9 +214,14 @@ class CatalogDB(object):
                     items.append(item)
         return items
 
+    def fetch_catalog_for_font_end(self):
+        items = self.select_items_by_parent_id(0)
+        return json.loads(json.dumps(items, cls=JsonEncoderForFrontEnd))
+
     def _json_block_to_item(self, block):
         item = Item(
             title=block.get("title"),
+            type=block.get("type"),
             parent_id=block.get("parent_id"),
             children=[],
             icon_path=block.get("ico_path"),
@@ -194,14 +249,14 @@ class CatalogDB(object):
 
     def _insert_lock_item_id(self, item_id):
         if not self.select_item_by_id(item_id):
-            raise Exception("The Key doesn't exist: <{}>".format(item_id))
+            raise Exception("THE KEY DOESN'T EXIST: <{}>".format(item_id))
         if item_id not in self._catalog_dict["lock_item_ids"]:
             self._catalog_dict["lock_item_ids"].append(item_id)
         return True
 
     def _delete_lock_item_id(self, item_id):
         if not self.select_item_by_id(item_id):
-            raise Exception("The Key doesn't exist: <{}>".format(item_id))
+            raise Exception("THE KEY DOESN'T EXIST: <{}>".format(item_id))
         if item_id in self._catalog_dict["lock_item_ids"]:
             self._catalog_dict["lock_item_ids"].remove(item_id)
         return True
@@ -228,7 +283,7 @@ class CatalogDB(object):
 
     def insert_user(self, user: User, commit=True):
         if self.select_user_by_username(user.username):
-            raise Exception("User already exists: <{}>".format(user))
+            raise Exception("USER ALREADY EXISTS: <{}>".format(user))
         self._user_dict[user.username] = user
 
         if commit:
@@ -248,6 +303,14 @@ class CatalogDB(object):
             self._store()
         return True
 
+    def update_catalog_title(self, title):
+        self._catalog_dict["title"] = title
+        self._store()
+        return True
+
+    def select_catalog_title(self):
+        return self._catalog_dict.get("title")
+
     def fetch_latest_item_id(self):
         with lock:
             self._current_item_id += 1
@@ -261,12 +324,14 @@ class CatalogDB(object):
 
         try:
             with open(self.db_file, 'w', encoding="utf8") as f:
-                content = json.dumps(self._catalog_dict,cls=CustomEncoder, indent=4, sort_keys=True)
+                content = json.dumps(self._catalog_dict,
+                                     cls=JsonEncoderForPersistence,
+                                     indent=4, sort_keys=True, ensure_ascii=False)
                 f.write(content)
         except Exception as e:
             with open(self.db_file, 'wb') as f:
-                content = pickle.dumps(self._catalog_dict)
-                f.write(content)
-            raise Exception("Failed to save catalog data, but write these to tempfile."
-                            "Pelase resolve the malfunction before restarting this app")
+                f.write(pickle.dumps(self._catalog_dict))
+            raise e
+            # raise Exception("Failed to save catalog data, but write these to tempfile."
+            #                 "Pelase resolve the malfunction before restarting this app")
         return True
