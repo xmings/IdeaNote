@@ -55,9 +55,9 @@
                 indentUnit: 4,
                 smartIndent: true,
                 spellcheck: false,
-                lineSeparator: ""
+                lineSeparator: "",
+                scrollbarStyle: null
             });
-
 
             preview = function (content) {
                 content = content.replace(/\n\n/g, "\n<br>");
@@ -79,6 +79,7 @@
                         //baseUrl: 'http://localhost:5555/'
                     })
                 );
+                $("#toc").toc({content: ".preview", headings: "h1,h2,h3,h4"});
             };
 
             catalogTree.catalog({
@@ -135,8 +136,8 @@
                         if (item.kind === "file" && item.type.match(/^image/).length > 0) {
                             formData = new FormData();
                             image = item.getAsFile();
-                            if (image === null){
-                                flashMessage("剪切板中不存在图片",true);
+                            if (image === null) {
+                                flashMessage("剪切板中不存在图片", true);
                                 return
                             }
                             formData.append('image', item.getAsFile());

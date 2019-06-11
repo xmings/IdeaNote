@@ -14,6 +14,8 @@
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}" type="text/javascript"></script>
     <script src="{{ url_for('static', filename='js/popper.min.js') }}" type="text/javascript"></script>
     <script src="{{ url_for('static', filename='js/jquery.splitter.js') }}" type="text/javascript"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}" type="text/javascript"></script>
+    <script src="{{ url_for('static', filename='js/jquery.toc.js') }}" type="text/javascript"></script>
 
     <script>
         let splitter2, splitter1;
@@ -50,13 +52,13 @@
             flashMessage = function (html, autoExit) {
                 flash = $(".flash-message");
                 if (typeof html === "undefined") {
-                    flash.css("visibility","hidden");
+                    flash.css("visibility", "hidden");
                 } else {
                     flash.html(html);
-                    flash.css("visibility","visible");
+                    flash.css("visibility", "visible");
                     if (autoExit === true) {
                         setTimeout(function () {
-                            flash.css("visibility","hidden");
+                            flash.css("visibility", "hidden");
                         }, 2000);
                     }
                 }
@@ -66,18 +68,34 @@
     </script>
     {% block jsdefinebefore %}{% endblock %}
 </head>
-<body>
+<body  data-spy="scroll" data-target="#toc">
 <div class="flash-message">同步成功</div>
 
 <div class="content" id="content">
     <div class="left-frame">
-        <ul id="catalog-tree" class="ztree"></ul>
+        <ul class="nav nav-tabs nav-justified">
+            <li class="nav-item">
+                <a class="nav-link active" href="#catalog" data-toggle="tab">目录</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#outline" data-toggle="tab">大纲</a>
+            </li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane active" id="catalog">
+                <ul id="catalog-tree" class="ztree"></ul>
+            </div>
+            <div class="tab-pane" id="outline">
+                <ul id="toc" data-toc="content" data-toc-headings="headings"></ul>
+            </div>
+        </div>
+
     </div>
     <div class="center-frame" id="center-frame">
         <div class="editing">
             {% block centerframe %}{% endblock %}
         </div>
-        <div class="preview"></div>
+        <div class="preview" ></div>
     </div>
 </div>
 
