@@ -137,6 +137,23 @@ body {
     background-color: #f7f7f7;
 }
 
+#toc {
+    font-size: 14px;
+    margin-left: 10px;
+}
+
+#toc .list-unstyled {
+    margin-left: 10px;
+}
+
+#toc a {
+    text-decoration: none;
+}
+
+#toc a:focus{
+    color: rgba(0, 0, 0, 0.23);
+}
+
 .flash-message {
     z-index: 100;
     position: absolute;

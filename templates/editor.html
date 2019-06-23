@@ -16,7 +16,7 @@
     <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.contextmenu.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.ztree.core.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.ztree.exedit.min.js') }}"></script>
-    <script type="text/javascript" src="{{ url_for('static', filename='js/idea-note.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/ideanote.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='codemirror/codemirror.min.js') }}"></script>
     <script type="text/javascript"
             src="{{ url_for('static', filename='codemirror/mode/markdown-mode.min.js') }}"></script>
@@ -114,6 +114,9 @@
                     },
                     success: function () {
                         preview(content);
+                        $("#toc").toc({
+                            content: previewer
+                        })
                     },
                     error: function () {
                         flashMessage("保存失败", true);

@@ -21,7 +21,7 @@
             edit: {
                 drag: {
                     isCopy: false,
-			        isMove: true,
+                    isMove: true,
                 },
                 enable: true,
                 showRemoveBtn: false,
@@ -43,7 +43,7 @@
                         }
                     )
                 },
-                onRename: function(event, treeId, treeNode) {
+                onRename: function (event, treeId, treeNode) {
                     $.ajax({
                         url: settings.renameUrl,
                         type: 'POST',
@@ -60,8 +60,8 @@
                     zTreeObj.selectNode(treeNode);
                 },
                 onDrop: function (event, treeId, treeNodes, targetNode, moveType, isCopy) {
-                    if (targetNode !== null && isCopy===false){
-                        if (moveType === 'inner'){
+                    if (targetNode !== null && isCopy === false) {
+                        if (moveType === 'inner') {
                             $.ajax({
                                 url: "{{ url_for('core.update_note', type='position') }}",
                                 type: 'POST',
@@ -109,7 +109,7 @@
             flashFunc: $.noop,
         }, options || {});
 
-        $.syncNote = function(){
+        $.syncNote = function () {
             $.ajax({
                 url: settings.syncUrl,
                 type: 'POST',
@@ -167,21 +167,65 @@
                 }
             },
             items: {
-                "addChild": {name: "添加子节点", icon: function () {
+                "addChild": {
+                    name: "添加子节点", icon: function () {
                         return ' icon-plus-sign-alt context-menu-awesome'
-                    }},
+                    }
+                },
                 "sep1": "---------",
-                "rename": {name: "重命名", icon: function () {
+                "rename": {
+                    name: "重命名", icon: function () {
                         return 'icon-edit context-menu-awesome';
-                    }},
-                "drop": {name: "删除", icon: function () {
+                    }
+                },
+                "drop": {
+                    name: "删除", icon: function () {
                         return 'icon-trash context-menu-awesome'
-                    }},
-                "sync": {name: "同步", icon: function(){
-                    return 'icon-refresh context-menu-awesome';
-                }}
+                    }
+                },
+                "sync": {
+                    name: "同步", icon: function () {
+                        return 'icon-refresh context-menu-awesome';
+                    }
+                }
             }
         });
     };
 
+    $.fn.toc = function (options) {
+        let settings = $.extend({
+            content: 'body',
+            heading: 'h1,h2,h3,h4,h5,h6,h7'
+        }, options || {});
+
+        lastLevel = -1;
+        tocHtmlString = "";
+        id = 1000;
+        settings.heading = settings.heading.toUpperCase();
+        headingList = settings.heading.split(",");
+        $(settings.content).find(settings.heading).each(function () {
+            level = headingList.indexOf(this.tagName);
+
+            if (lastLevel >= 0) {
+                for (let i = 0; i < Math.abs(lastLevel - level); i++) {
+                    if (lastLevel < level) {
+                        tocHtmlString = tocHtmlString.replace(/<\/li>$/,"");
+                        tocHtmlString += "<ul class='list-unstyled'>"
+                    } else if (lastLevel > level) {
+                        tocHtmlString += "</li></ul>"
+                    } else {
+                        tocHtmlString += "</li>"
+                    }
+                }
+            }
+
+            $(this).attr("id", id);
+            tocHtmlString += "<li><a href='#" + id + "'>" + $(this).text() + "</a></li>";
+
+            lastLevel = level;
+            id += 1;
+        });
+
+        $(this).html(tocHtmlString);
+    };
 })(jQuery);

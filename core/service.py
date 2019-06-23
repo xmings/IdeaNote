@@ -7,6 +7,7 @@
 import os, mimetypes
 from catalogdb import DBOperator, FileOperator, Item
 from sync.git import Sync
+from flask import current_app
 
 db_operator = DBOperator()
 file_operator = FileOperator()
@@ -129,7 +130,8 @@ class NoteService(object):
                 file_path = self._auto_complete_path(item.id)
                 file_operator.rename_file(file_path, title)
         except Exception as e:
-            raise e
+            current_app.logger.error(e)
+            return False
         item.title = title
         return db_operator.update_item(item)
 
@@ -155,13 +157,28 @@ class NoteService(object):
         return "/{}/{}".format(item.id, image_name)
 
     def note_push(self):
-        sync_operator.put()
+        try:
+            sync_operator.put()
+        except Exception as e:
+            current_app.logger.error(e)
+            return False
+        return True
 
     def note_pull(self):
-        sync_operator.get()
+        try:
+            sync_operator.get()
+        except Exception as e:
+            current_app.logger.error(e)
+            return False
+        return True
 
     def note_sync(self):
-        sync_operator.run()
+        try:
+            sync_operator.run()
+        except Exception as e:
+            current_app.logger.error(e)
+            return False
+        return True
 
 
     def _auto_complete_path(self, id: int, auto=True):

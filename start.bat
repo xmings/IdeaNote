@@ -7,25 +7,25 @@ echo    ^| $$  ^| $$  ^| $$^| $$$$$$$$  /$$$$$$$^| $$  $$$$^| $$  \ $$  ^| $$   
 echo    ^| $$  ^| $$  ^| $$^| $$_____/ /$$__  $$^| $$\  $$$^| $$  ^| $$  ^| $$ /$$^| $$_____/
 echo   /$$$$$$^|  $$$$$$$^|  $$$$$$$^|  $$$$$$$^| $$ \  $$^|  $$$$$$/  ^|  $$$$/^|  $$$$$$$
 echo  ^|______/ \_______/ \_______/ \_______/^|__/  \__/ \______/    \___/   \_______/
-echo 准备启动IdeaNote,请稍后...
+echo ???????IdeaNote,?????...
 echo=
-echo 1. 关闭IdeaNote
+echo 1. ???IdeaNote
 wmic process where "CommandLine like '%%IdeaNote%%' and name='python.exe'" call terminate
 echo=
-echo 2. 更新IdeaNote
+echo 2. ????IdeaNote
 git pull origin
 
-rem 定义笔记目录
+rem ????????
 set NoteDir=E:\MyNote
 
-rem 定义服务端口
+rem ?????????
 set Port=5555
 
-rem 定义IdeaNote的主程序文件
+rem ????IdeaNote???????????
 set NoteApp=E:\Source\Python\IdeaNote\app.py
 
-echo 3. 启动IdeaNote
+echo 3. ????IdeaNote
 start /b python %NoteApp% %Port% %NoteDir%
 
-echo IdeaNote启动成功, 准备退出
+echo IdeaNote???????, ??????
 pause

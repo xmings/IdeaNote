@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.splitter.css') }}">
     {% block cssdefine %}{% endblock %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/idea-note.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ideanote.css') }}">
 
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}" type="text/javascript"></script>
     <script src="{{ url_for('static', filename='js/popper.min.js') }}" type="text/javascript"></script>
@@ -86,7 +86,7 @@
                 <ul id="catalog-tree" class="ztree"></ul>
             </div>
             <div class="tab-pane" id="outline">
-                <ul id="toc" data-toc="content" data-toc-headings="headings"></ul>
+                <ul id="toc" class="list-unstyled" data-toc="content" data-toc-headings="headings"></ul>
             </div>
         </div>
 

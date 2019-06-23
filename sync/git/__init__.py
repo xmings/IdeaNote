@@ -34,23 +34,13 @@ class Sync(object):
         self.remote = self.repo.remote()
 
     def get(self):
-        try:
-            self.remote.pull(refspec="master")
-        except Exception as e:
-            return False
-        return True
+        self.remote.pull(refspec="master")
 
     def put(self):
-        try:
-            self.repo.index.add("*")
-            self.repo.index.commit("同步")
-            self.remote.push(refspec="master")
-        except Exception as e:
-            return False
-        return True
+        self.repo.index.add("*")
+        self.repo.index.commit("同步")
+        self.remote.push(refspec="master")
 
     def run(self):
-        status = self.get()
-        if status:
-            status = self.put()
-        return status
+        self.get()
+        self.put()
