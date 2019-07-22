@@ -60,7 +60,7 @@
             });
 
             preview = function (content) {
-                content = content.replace(/\n\n/g, "\n<br>");
+                //content = content.replace(/\n\n/g, "\n<br>");
                 previewer.html(
                     marked(content, {
                         highlight: function (code) {
@@ -102,7 +102,11 @@
 
 
             // 保存数据
-            editor.on("change", function () {
+            editor.on("changes", function () {
+                if (editor.reinit === true) {
+                    editor.reinit = false;
+                    return
+                }
                 node = $.zTreeObj.getSelectedNodes()[0];
                 content = editor.getValue();
                 $.ajax({

@@ -28,7 +28,7 @@ def fetch_content():
         content = note_service.read_item_content(item_id)
     except Exception as e:
         current_app.logger.error(e)
-        return Response(401)
+        return Response(status=401)
     return content
 
 @core.route('/note/add', methods=['POST'])
@@ -39,7 +39,7 @@ def add_note():
         item = note_service.add_item(title, pid)
     except Exception as e:
         current_app.logger.error(e)
-        return Response(401)
+        return Response(status=401)
     return jsonify({"id": item.id})
 
 
@@ -92,7 +92,7 @@ def download_image(item_id, image_name):
         assert image and mime_type, "UNKNOWN IMAGE TYPE"
     except Exception as e:
         current_app.logger.error(e)
-        return Response(403)
+        return Response(status=403)
     return Response(image, mimetype=mime_type)
 
 
@@ -105,6 +105,6 @@ def sync(method):
     else:
         status = note_service.note_sync()
     if not status:
-        return Response(401)
-    return Response(200)
+        return Response(status=401)
+    return Response(status=200)
 

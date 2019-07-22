@@ -38,6 +38,8 @@
                             id: node.id
                         },
                         success = function (content) {
+                            settings.editor.doc.clearHistory();
+                            settings.editor.__proto__.reinit = true;
                             settings.editor.setValue(content);
                             settings.previewFunc(content);
                         }
@@ -51,8 +53,8 @@
                             title: treeNode.name,
                             id: treeNode.id
                         },
-                        error: function (XMLHttpRequest, textStatus, errorThrown) {
-                            settings.flashFunc("修改结点名称失败", true);
+                        error: function (XMLHttpRequest) {
+                            settings.flashFunc("修改结点名称失败: " + XMLHttpRequest.toString() , true);
                         }
                     })
                 },
@@ -146,18 +148,24 @@
                 } else if (key === 'addChild') {
                     newNodes = zTreeObj.addNodes(node, -1, {name: "新建节点"});
                     newNode = zTreeObj.getNodeByTId(newNodes[0].tId);
-                    $.post(
-                        url = settings.addChildUrl,
-                        data = {
+
+                    $.ajax({
+                        url: settings.addChildUrl,
+                        data: {
                             title: "新建节点",
                             pid: node.id
                         },
-                        success = function (response) {
+                        type: 'POST',
+                        dataType: 'json',
+                        success: function (response) {
                             newNode.id = response.id;
                             zTreeObj.updateNode(newNode)
                         },
-                        dataType = 'json'
-                    )
+                        error: function (err) {
+                            settings.flashFunc(err);
+                        }
+
+                    })
 
                 } else if (key === 'rename') {
                     zTreeObj.editName(node);

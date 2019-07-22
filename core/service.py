@@ -73,10 +73,11 @@ class NoteService(object):
         else:
             # create item file
             try:
+                assert not file_operator.is_file(item_path), \
+                    "File already exists: <{}>".format(item_path)
                 file_operator.write_file(item_path, "")
             except Exception as e:
                 db_operator.delete_item(item)
-                file_operator.delete_file(item_path)
                 raise e
 
         return item
@@ -86,8 +87,9 @@ class NoteService(object):
             return False
 
         item = self.fetch_item_by_id(int(id))
+        item_type = item.type
         parent = self.fetch_item_by_id(item.parent_id)
-        item_path = self._auto_complete_path(item.id, auto=False)
+        item_path = self._auto_complete_path(item.id)
 
         # first, we attempt to delete all children
         for child in item.children:
@@ -101,8 +103,9 @@ class NoteService(object):
         if item.children:
             return False
 
-        if item.type == "folder":
-            file_operator.delete_folder(item_path)
+        if item_type == "folder":
+            file_operator.delete_file(item_path)
+            file_operator.delete_folder(os.path.dirname(item_path))
         else:
             file_operator.delete_file(item_path)
         db_operator.delete_item(item)
