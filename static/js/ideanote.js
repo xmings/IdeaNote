@@ -1,15 +1,28 @@
-(function ($) {
+export function flashMessage(content, level) {
+    let flash = $(".flash-message");
+    flash.find(".content").html(content);
+    if (typeof level === "undefined" || ["success", "negative"].indexOf(level) === -1) level = "success";
+    flash.removeClass("success").removeClass("negative").addClass(level);
+    flash.addClass("visible");
+    if (level === "success") {
+        setTimeout(function () {
+            flash.transition('fade');
+        }, 2000);
+    }
+}
 
-    $.fn.catalog = function (options) {
-        let settings = $.extend({
-            treeDataUrl: '',
-            flashFunc: $.noop,
-            nodeContent: '',
-            previewFunc: $.noop,
-            editor: ''
-        }, options || {});
-
-        treeAttr = {
+export class Catalog {
+    constructor(container, contextmenu, fetchDataUri,
+                fetchContentUri, updateNoteUri, dropNoteUri, editorObj) {
+        this.container = $(container);
+        this.contextmenu = $(contextmenu);
+        this.fetchDataUri = fetchDataUri;
+        this.fetchContentUri = fetchContentUri;
+        this.updateNoteUri = updateNoteUri;
+        this.dropNoteUri = dropNoteUri;
+        this.editorObj = editorObj;
+        this.selectedItem = null;
+        this.attribution = {
             check: {
                 enable: false
             },
@@ -31,41 +44,41 @@
                 selectedMulti: false
             },
             callback: {
-                onClick: function (event, treeId, node) {
-                    $.get(
-                        url = settings.nodeContent,
-                        data = {
+                onClick: (event, treeId, node) => {
+                    $.ajax({
+                        url: this.fetchContentUri,
+                        data: {
                             id: node.id
                         },
-                        success = function (content) {
-                            settings.editor.doc.clearHistory();
-                            settings.editor.__proto__.reinit = true;
-                            settings.editor.setValue(content);
-                            settings.previewFunc(content);
+                        success: content => {
+                            this.editorObj.doc.clearHistory();
+                            this.editorObj.firstOpen = true;
+                            this.editorObj.setValue(content);
                         }
-                    )
+                    })
                 },
-                onRename: function (event, treeId, treeNode) {
+                onRename: (event, treeId, treeNode) => {
                     $.ajax({
-                        url: settings.renameUrl,
+                        url: this.updateNoteUri,
                         type: 'POST',
                         data: {
                             title: treeNode.name,
                             id: treeNode.id
                         },
                         error: function (XMLHttpRequest) {
-                            settings.flashFunc("修改结点名称失败: " + XMLHttpRequest.toString() , true);
+                            flashMessage("修改结点名称失败: "
+                                + XMLHttpRequest.responseText, "negative");
                         }
                     })
                 },
-                beforeRightClick: function (treeId, treeNode) {
-                    zTreeObj.selectNode(treeNode);
+                beforeRightClick: (treeId, treeNode) => {
+                    this.treeObj.selectNode(treeNode);
                 },
                 onDrop: function (event, treeId, treeNodes, targetNode, moveType, isCopy) {
                     if (targetNode !== null && isCopy === false) {
                         if (moveType === 'inner') {
                             $.ajax({
-                                url: "{{ url_for('core.update_note', type='position') }}",
+                                url: this.dropNoteUri,
                                 type: 'POST',
                                 data: {
                                     id: treeNodes[0].id,
@@ -84,156 +97,171 @@
                 }
             }
         };
+    }
 
-        treeRoot = this;
-        $.ajax({
-            url: settings.treeDataUrl,
-            type: 'GET',
-            dataType: 'json',
-            success: function (jNodes) {
-                zTreeObj = $.fn.zTree.init(treeRoot, treeAttr, jNodes);
-                node = zTreeObj.getNodes()[0];
-                zTreeObj.selectNode(node);
-                $.zTreeObj = zTreeObj;
-                treeRoot.find(".curSelectedNode").click();
-            },
-
+    #initContextmenu() {
+        this.container.find("a[class^='level']").contextmenu(e => {
+            console.log("oij");
+            this.contextmenu.css({"left": e.x, "top": e.y}).show();
+            e.preventDefault();
         });
 
-    };
+        $(document).click(e => {
+            this.contextmenu.hide();
+        });
 
-    $.bindTreePopu = function (options) {
-        let settings = $.extend({
-            nodeSeletor: '',
-            dropUrl: '',
-            renameUrl: '',
-            addChildUrl: '',
-            flashFunc: $.noop,
-        }, options || {});
+        $(document).contextmenu(e => {
+            this.contextmenu.hide();
+        });
+    }
 
-        $.syncNote = function () {
+    buildTree() {
+        $.ajax({
+            url: this.fetchDataUri,
+            type: "GET",
+            dataType: "json",
+            success: data => {
+                this.treeObj = $.fn.zTree.init(this.container, this.attribution, data);
+                this.root = this.treeObj.getNodes()[0];
+                this.treeObj.selectNode(this.root);
+                this.container.find(".curSelectedNode").click();
+                this.initContextmenu();
+            },
+            error: XMLHttpRequest => {
+                flashMessage(XMLHttpRequest.responseText, "negative")
+            }
+        });
+
+    }
+
+
+}
+
+export class ContentArea {
+    constructor(editContainer, viewContainer, outlineContainer, submitContentUri, submitImageUri) {
+        this.editContainer = $(editContainer);
+        this.viewContainer = $(viewContainer);
+        this.outlineContainer = $(outlineContainer);
+        this.submitContentUri = submitContentUri;
+        this.submitImageUri = submitImageUri;
+        this.currentNoteId = null;
+        this.attribution = {
+            theme: 'idea monokai',
+            extraKeys: {"Ctrl": "autocomplete"},//ctrl可以弹出选择项
+            lineNumbers: true,//显示行号
+            autoCloseTags: true,
+            autofocus: true,
+            value: "写你想写",
+            matchBrackets: true,
+            tabSize: 4,
+            indentUnit: 4,
+            smartIndent: true,
+            spellcheck: false,
+            lineSeparator: "",
+            scrollbarStyle: null
+        };
+        this.editorObj = CodeMirror.fromTextArea(this.editContainer, this.attribution);
+        this.firstOpen = true;
+
+        this.editorObj.on("changes", e => {
+            let content = this.editorObj.getValue();
+            this.previewContent(content);
+            this.freshOutline();
+
+            if (this.firstOpen === true) {
+                this.firstOpen = false;
+                return
+            }
+
             $.ajax({
-                url: settings.syncUrl,
-                type: 'POST',
-                beforeSend: function () {
-                    settings.flashFunc("同步中 ... <i class='icon-spinner icon-spin'></i>")
-                },
-                success: function () {
-                    settings.flashFunc("同步成功", true);
+                url: this.submitContentUri,
+                type: "POST",
+                data: {
+                    id: this.currentNoteId,
+                    content: content,
                 },
                 error: function () {
-                    settings.flashFunc("同步失败, 请手工同步");
+                    flashMessage("保存失败", "negative");
                 }
+            });
+
+        });
+
+
+        this.editorObj.on('scroll', e => {
+            let scrollRate = this.editorObj.getScrollInfo().top / this.editorObj.getScrollInfo().height;
+            this.viewContainer[0].scrollTop = (this.viewContainer[0].scrollHeight) * scrollRate;
+        });
+
+        this.editorObj.on('paste', function (editor, e) {
+            if (typeof e.clipboardData === "object") {
+                let items = e.clipboardData.items || e.clipboardData.files || [];
+
+                $.each(items, function (index, item) {
+                    if (item.kind === "file" && item.type.match(/^image/).length > 0) {
+                        let formData = new FormData(),
+                            image = item.getAsFile();
+                        if (image === null) {
+                            flashMessage("剪切板中不存在图片");
+                            return
+                        }
+                        formData.append('image', item.getAsFile());
+                        formData.append('id', zTreeObj.getSelectedNodes()[0].id);
+
+                        $.ajax({
+                            url: this.submitImageUri,
+                            type: 'POST',
+                            cache: false,
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            dataType: 'json',
+                            success: result => {
+                                let mdUrl = "![image](url)".replace("url", result['filename']);
+                                this.editorObj.replaceSelection(mdUrl)
+                            },
+                            error: function () {
+                                flashMessage("图片保存失败", true)
+                            }
+                        })
+                    }
+                });
+            }
+
+        });
+
+
+    }
+
+
+    previewContent(content) {
+        //content = content.replace(/\n\n/g, "\n<br>");
+        this.viewContainer.html(
+            marked(content, {
+                highlight: function (code) {
+                    return hljs.highlightAuto(code).value;
+                },
+                pedantic: false,
+                gfm: true,
+                tables: true,
+                breaks: true,
+                sanitize: false,
+                smartLists: true,
+                smartypants: false,
+                xhtml: false,
+                headerIds: true,
+                langPrefix: 'hljs ',
+                //baseUrl: 'http://localhost:5555/'
             })
-        };
+        );
 
-        $.contextMenu({
-            selector: settings.nodeSeletor,
-            trigger: 'right',
-            className: 'contextmenu-item-custom',
-            callback: function (key, options) {
-                test = options;
-                nodeId = options.$trigger[0].parentNode.id;
-                node = zTreeObj.getNodeByTId(nodeId);
-                if (key === 'drop') {
-                    $.post(url = settings.dropUrl,
-                        data = {
-                            id: node.id
-                        },
-                        success = function (response) {
-                            zTreeObj.removeNode(node);
-                        }
-                    )
+    }
 
-                } else if (key === 'addChild') {
-                    newNodes = zTreeObj.addNodes(node, -1, {name: "新建节点"});
-                    newNode = zTreeObj.getNodeByTId(newNodes[0].tId);
-
-                    $.ajax({
-                        url: settings.addChildUrl,
-                        data: {
-                            title: "新建节点",
-                            pid: node.id
-                        },
-                        type: 'POST',
-                        dataType: 'json',
-                        success: function (response) {
-                            newNode.id = response.id;
-                            zTreeObj.updateNode(newNode)
-                        },
-                        error: function (err) {
-                            settings.flashFunc(err);
-                        }
-
-                    })
-
-                } else if (key === 'rename') {
-                    zTreeObj.editName(node);
-
-                } else if (key === 'sync') {
-                    $.syncNote();
-                }
-            },
-            items: {
-                "addChild": {
-                    name: "添加子节点", icon: function () {
-                        return ' icon-plus-sign-alt context-menu-awesome'
-                    }
-                },
-                "sep1": "---------",
-                "rename": {
-                    name: "重命名", icon: function () {
-                        return 'icon-edit context-menu-awesome';
-                    }
-                },
-                "drop": {
-                    name: "删除", icon: function () {
-                        return 'icon-trash context-menu-awesome'
-                    }
-                },
-                "sync": {
-                    name: "同步", icon: function () {
-                        return 'icon-refresh context-menu-awesome';
-                    }
-                }
+    freshOutline() {
+        this.outlineContainer.toc({
+                content: ".preview",
+                headings: "h1,h2,h3,h4"
             }
-        });
-    };
-
-    $.fn.toc = function (options) {
-        let settings = $.extend({
-            content: 'body',
-            heading: 'h1,h2,h3,h4,h5,h6,h7'
-        }, options || {});
-
-        lastLevel = -1;
-        tocHtmlString = "";
-        id = 1000;
-        settings.heading = settings.heading.toUpperCase();
-        headingList = settings.heading.split(",");
-        $(settings.content).find(settings.heading).each(function () {
-            level = headingList.indexOf(this.tagName);
-
-            if (lastLevel >= 0) {
-                for (let i = 0; i < Math.abs(lastLevel - level); i++) {
-                    if (lastLevel < level) {
-                        tocHtmlString = tocHtmlString.replace(/<\/li>$/,"");
-                        tocHtmlString += "<ul class='list-unstyled'>"
-                    } else if (lastLevel > level) {
-                        tocHtmlString += "</li></ul>"
-                    } else {
-                        tocHtmlString += "</li>"
-                    }
-                }
-            }
-
-            $(this).attr("id", id);
-            tocHtmlString += "<li><a href='#" + id + "'>" + $(this).text() + "</a></li>";
-
-            lastLevel = level;
-            id += 1;
-        });
-
-        $(this).html(tocHtmlString);
-    };
-})(jQuery);
+        );
+    }
+}

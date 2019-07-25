@@ -34,7 +34,7 @@ class FileOperator(object):
 
     def rename_folder(self, path: str, title: str):
         path = self._combin_path(path)
-        assert os.path.isdir(path)
+        assert os.path.isdir(path), f"This file is not a folder: <{path}>"
         new_path = os.path.join(os.path.dirname(path), title)
         os.rename(path, new_path)
         return True
@@ -68,7 +68,7 @@ class FileOperator(object):
 
     def rename_file(self, path, title):
         path = self._combin_path(path)
-        assert os.path.isfile(path)
+        assert os.path.isfile(path), f"This file doesn't exist: {path}"
         new_path = os.path.join(os.path.dirname(path), "{}{}".format(title, self.item_file_suffix))
         os.rename(path, new_path)
         return True

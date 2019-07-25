@@ -6,6 +6,7 @@
 # @Brief: 简述报表功能
 import os, mimetypes
 from catalogdb import DBOperator, FileOperator, Item
+from common import Result
 from sync.git import Sync
 from flask import current_app
 
@@ -132,11 +133,14 @@ class NoteService(object):
             else:
                 file_path = self._auto_complete_path(item.id)
                 file_operator.rename_file(file_path, title)
+
+            item.title = title
+            db_operator.update_item(item)
         except Exception as e:
             current_app.logger.error(e)
-            return False
-        item.title = title
-        return db_operator.update_item(item)
+            return Result(False, e)
+
+        return Result(True)
 
     def read_item_content(self, id):
         item = self.fetch_item_by_id(int(id))
@@ -144,9 +148,14 @@ class NoteService(object):
         return file_operator.read_file(file_path)
 
     def update_item_content(self, id, content):
-        item = self.fetch_item_by_id(int(id))
-        file_path = self._auto_complete_path(item.id)
-        return file_operator.write_file(file_path, content)
+        try:
+            item = self.fetch_item_by_id(int(id))
+            file_path = self._auto_complete_path(item.id)
+            file_operator.write_file(file_path, content)
+        except Exception as e:
+            current_app.logger.error(e)
+            return Result(False, e)
+        return Result(True)
 
     def read_item_image(self, id, image_name):
         item = self.fetch_item_by_id(int(id))

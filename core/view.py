@@ -49,15 +49,19 @@ def update_note(type):
     try:
         if type == "rename":
             title = request.form.get('title')
-            note_service.update_item_title(id, title)
-        elif type == "position":
-            pass
+            result = note_service.update_item_title(id, title)
+        # elif type == "position":
+        #     pass
         elif type == "content":
             content = request.form.get('content')
-            note_service.update_item_content(id, content)
+            result = note_service.update_item_content(id, content)
+        else:
+            raise Exception(f"UNKNOWN PARAMETER: {type}")
+
+        assert result.status, result.content
     except Exception as e:
         current_app.logger.error(e)
-        return "error", 500
+        return Response(str(e), status=403, mimetype="")
 
     return 'OK', 200
 

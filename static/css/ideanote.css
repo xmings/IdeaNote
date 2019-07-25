@@ -168,28 +168,6 @@ body {
     visibility: hidden;
 }
 
-.context-menu-awesome::before {
-    display: block;!important;
-    position: absolute;
-    top: 50%;
-    left: 0;
-    width: 2em;
-    font-size: 1em;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 1;
-    color: #2980b9;
-    text-align: center;
-    -ms-transform: translateY(-50%);
-    -o-transform: translateY(-50%);
-    transform: translateY(-50%);
-    -webkit-font-smoothing: antialiased;
-}
-
-.context-menu-hover::before {
-    color: white;
-}
-
 #catalog-tree {
     font-size: 12px;
     margin-left: 0;
@@ -197,16 +175,6 @@ body {
 
 #catalog-tree > #root {
     padding-left: 0;
-}
-
-.contextmenu-item-custom {
-    font-size: 12px;
-    font-family: inherit;
-
-}
-
-.context-menu-active {
-    background-color: #FFE6B0;
 }
 
 .splitter_panel .vsplitter {
@@ -230,4 +198,17 @@ body {
 
 .cm-s-monokai .CodeMirror-linenumber{
     color: #d0d0d066;
+}
+
+.ui.bottom.attached.tab {
+    border: none;
+}
+
+.ui.message.flash-message {
+    position: absolute
+}
+
+.contextmenu {
+    position: fixed;
+    display: none;
 }
