@@ -218,3 +218,36 @@ body {
     padding-right: 30px;
 
 }
+
+.ztree li a input.rename:focus {
+    border-color: #85b7d9;
+    background: #fff;
+    color: rgba(0, 0, 0, .8);
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
+
+.ztree li a input.rename:focus {
+    margin: 0;
+    padding: 0;
+    max-width: 100%;
+    -webkit-box-flex: 1;
+    -ms-flex: 1 0 auto;
+    flex: 1 0 auto;
+    outline: 0;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+    text-align: left;
+    height: 18px;
+    width: 100px;
+    border: 1px solid rgba(34, 36, 38, .15);
+    border-radius: .15rem;
+    border-color: #85b7d9;
+    background: #fff;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
+.ztree li a.curSelectedNode_Edit {
+    background: none;
+    border: none;
+    padding: 0;
+}

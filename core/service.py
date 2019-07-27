@@ -88,27 +88,30 @@ class NoteService(object):
             return False
 
         item = self.fetch_item_by_id(int(id))
+        item_path = self._auto_complete_path(item.id, auto=False)
         item_type = item.type
         parent = self.fetch_item_by_id(item.parent_id)
-        item_path = self._auto_complete_path(item.id)
+        parent_content_file = self._auto_complete_path(parent.id)
+        parent_path = self._auto_complete_path(parent.id, auto=False)
+        grandfather_path = self._auto_complete_path(parent.parent_id, auto=False)
+
+        # if there is any item from this item children is a folder,
+        # then refuse to drop this item.
+        for child in item.children:
+            assert not child.children, \
+                "There are one or more folders under this item: {}".format(item_path)
 
         # first, we attempt to delete all children
         for child in item.children:
-            if child.children:
-                continue
             file_path = self._auto_complete_path(child.id)
             file_operator.delete_file(file_path)
             db_operator.delete_item(child)
-        # then, if the children list of this item is empty,
-        # we need to delete this folder, otherwise, to return indirectly.
-        if item.children:
-            return False
 
-        if item_type == "folder":
+        # then, drop this item and corresponding folder
+        if item_type == "file":
             file_operator.delete_file(item_path)
-            file_operator.delete_folder(os.path.dirname(item_path))
         else:
-            file_operator.delete_file(item_path)
+            file_operator.delete_folder(item_path)
         db_operator.delete_item(item)
 
         # lastly, if the children list of parent item is empty
@@ -117,11 +120,13 @@ class NoteService(object):
         # note: permit to delete root item.
         if parent.id <= 0:
             return True
-        grandfather_path = self._auto_complete_path(parent.parent_id, auto=False)
-        parent_path = self._auto_complete_path(parent.id)
-        if parent.type == "file" and file_operator.is_folder(parent_path):
-            file_operator.move_file(parent_path, os.path.join(grandfather_path, parent.title))
-            file_operator.delete_folder(os.path.dirname(parent_path))
+
+        if not parent.children:
+            item_file = os.path.join(grandfather_path,
+                                     "{}{}".format(parent.title, file_operator.item_file_suffix))
+            file_operator.move_file(parent_content_file, item_file)
+            file_operator.delete_folder(parent_path)
+
         return True
 
     def update_item_title(self, id, title):

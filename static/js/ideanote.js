@@ -17,7 +17,7 @@ class MessageBox {
         }
         this.container.find(".content").html(content);
         this.container.removeClass("success").removeClass("negative").addClass(level);
-        this.container.show();
+        this.container.transition("fade");
 
         if (level === "success") {
             setTimeout(() => {
@@ -82,11 +82,19 @@ class Catalog {
                     this.rename()
                 },
                 onRightClick: (event, treeId, treeNode) => {
-                    this.treeContainer.find("#" + treeNode.tId + " a").click();
-                    this.contextmenu.css({
-                        "left": event.originalEvent.x,
-                        "top": event.originalEvent.y
-                    }).show();
+                    if (treeNode) {
+                        this.treeContainer.find("#" + treeNode.tId + ">a").click();
+                        let y = event.originalEvent.y;
+                        if (y + this.contextmenu.height() >= window.innerHeight) {
+                            y = $(document).innerHeight() - this.contextmenu.height() - 10;
+                        }
+                        this.contextmenu.css({
+                            "left": event.originalEvent.x,
+                            "top": y
+                        }).show();
+                    }else{
+                        this.contextmenu.hide();
+                    }
                 }
             }
         };
@@ -114,7 +122,13 @@ class Catalog {
         $(document).contextmenu(e => {
             this.contextmenu.hide();
         });
-
+        $(document).keydown(event => {
+            if (event.ctrlKey && event.keyCode === 83) {
+                // ctrl+s pull&&push
+                this.sync();
+                event.preventDefault();
+            }
+        });
     }
 
     buildTree() {
@@ -128,7 +142,7 @@ class Catalog {
                 this.treeContainer.find("#" + this.root.tId + ">a").click();
             },
             error: XMLHttpRequest => {
-                messageBox.show(XMLHttpRequest.responseText, "negative")
+                messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative")
             }
         });
 
@@ -146,6 +160,9 @@ class Catalog {
                 this.contentArea.firstOpen = true;
                 this.contentArea.currentNoteId = this.selectedNode.id;
                 this.contentArea.editorObj.setValue(content);
+            },
+            error: XMLHttpRequest => {
+                messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
             }
         })
     }
@@ -165,8 +182,8 @@ class Catalog {
                 newNode.id = response.id;
                 this.treeObj.updateNode(newNode)
             },
-            error: err => {
-                messageBox.show(err);
+            error: XMLHttpRequest => {
+                messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
             }
 
         })
@@ -175,11 +192,15 @@ class Catalog {
     dropNote() {
         $.ajax({
             url: this.dropNoteUri,
+            type: "POST",
             data: {
                 id: this.selectedNode.id
             },
             success: response => {
                 this.treeObj.removeNode(this.selectedNode);
+            },
+            error: XMLHttpRequest => {
+                messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
             }
         })
     }
@@ -190,7 +211,7 @@ class Catalog {
             type: 'POST',
             data: {
                 title: this.selectedNode.name,
-                type: "title",
+                type: "rename",
                 id: this.selectedNode.id
             },
             error: function (XMLHttpRequest) {
@@ -201,15 +222,15 @@ class Catalog {
     }
 
     sync() {
-        messageBox.show("同步中 ... <i class='icon-spinner icon-spin'></i>");
+        messageBox.show("<i class='notched circle loading icon'></i>同步中 ...");
         $.ajax({
             url: this.syncUri,
             type: 'POST',
             success: () => {
                 messageBox.show("同步成功");
             },
-            error: () => {
-                messageBox.show("同步失败, 请手工同步", "negative");
+            error: XMLHttpRequest => {
+                messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
             }
         })
     }
@@ -232,6 +253,8 @@ class ContentArea {
         this.submitContentUri = options.submitContentUri;
         this.submitImageUri = options.submitImageUri;
         this.currentNoteId = null;
+        this.splitter1 = null;
+        this.splitter2 = null;
         this.attribution = {
             theme: 'idea monokai',
             extraKeys: {"Ctrl": "autocomplete"},//ctrl可以弹出选择项
@@ -269,8 +292,8 @@ class ContentArea {
                     type: "content",
                     content: content,
                 },
-                error: function () {
-                    messageBox.show("保存失败", "negative");
+                error: XMLHttpRequest => {
+                    messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
                 }
             });
 
@@ -308,8 +331,8 @@ class ContentArea {
                                 let mdUrl = "![image](url)".replace("url", result['filename']);
                                 this.editorObj.replaceSelection(mdUrl)
                             },
-                            error: function () {
-                                messageBox.show("图片保存失败", true)
+                            error: XMLHttpRequest => {
+                                messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
                             }
                         })
                     }
@@ -322,31 +345,58 @@ class ContentArea {
 
     initWindowSplit(firstContainer, secondContainer) {
         let eheight = window.innerHeight;
-        let splitter1 = $(firstContainer).height(eheight).split({
+        this.splitter1 = $(firstContainer).height(eheight).split({
             orientation: 'vertical',
             limit: 10,
             percent: true,
             position: '15%',
             width: 1,
             invisible: false,
-            onDrag: function () {
-                if (splitter1.position() < 100) {
-                    splitter1.position(0)
+            onDrag: () => {
+                if (this.splitter1.position() < 100) {
+                    this.splitter1.position(0)
                 }
             }
         });
 
-        let splitter2 = $(secondContainer).height(eheight).split({
+        this.splitter2 = $(secondContainer).height(eheight).split({
             orientation: 'vertical',
             limit: 0,
             percent: true,
             position: '0%',
             width: 1,
             invisible: false,
-            onDrag: function () {
-                if (splitter2.position() < 200) {
-                    splitter2.position(0)
+            onDrag: () => {
+                if (this.splitter2.position() < 200) {
+                    this.splitter2.position(0)
                 }
+            }
+        });
+
+        // 快捷键
+        $(document).keydown(event => {
+            if (event.keyCode === 27) {
+                // esc 返回只读模式
+                this.splitter2.position("0%");
+                event.preventDefault();
+            } else if (event.ctrlKey && event.keyCode === 73) {
+                // ctrl+i 进入编辑模式
+                this.splitter2.position("50%");
+                this.editorObj.refresh();
+                event.preventDefault();
+            } else if (event.shiftKey && event.keyCode === 83) {
+                // shift+s 切换侧边栏(目录树)
+                if (this.splitter1.position() > 15) {
+                    this.splitter1.position("0%")
+                } else {
+                    this.splitter1.position("15%");
+                }
+                event.preventDefault();
+            } else if (event.ctrlKey && event.shiftKey && event.keyCode === 70) {
+                // ctrl+shift+f //全屏编辑+预览
+                this.splitter1.position("0%");
+                this.splitter2.position("60%");
+                event.preventDefault();
             }
         });
 
@@ -421,4 +471,4 @@ class Toc {
 
 }
 
-export { Catalog, ContentArea };
+export {Catalog, ContentArea};

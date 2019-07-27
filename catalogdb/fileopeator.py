@@ -28,7 +28,7 @@ class FileOperator(object):
 
     def create_folder(self, path: str):
         path = self._combin_path(path)
-        assert os.path.isdir(os.path.dirname(path))
+        assert self.is_folder(os.path.dirname(path))
         os.mkdir(path)
         return True
 
@@ -50,12 +50,15 @@ class FileOperator(object):
     def delete_folder(self, path):
         path = self._combin_path(path)
         if os.path.isabs(path):
+            folder_file = os.path.join(path, self.folder_content_file)
+            if os.path.isfile(folder_file):
+                self.delete_file(folder_file)
             os.removedirs(path)
         return True
 
     def read_file(self, path: str):
         path = self._combin_path(path)
-        assert os.path.isfile(path)
+        assert os.path.isfile(path), "File doesn't exist: {}".format(path)
         with open(path, "r", encoding="utf8") as f:
             return f.read()
 

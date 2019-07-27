@@ -45,13 +45,14 @@
             submitImageUri: "{{ url_for('core.upload_image') }}"
         });
 
-        contentArea.initWindowSplit("#content", "#center-frame");
+        contentArea.initWindowSplit("#workspace-ui", "#center-frame");
 
         let catalog = new Catalog({
             treeContainer: "#catalog-tree",
             contextmenu: ".contextmenu",
             fetchDataUri: "{{ url_for('core.fetch_notes') }}",
             fetchContentUri: "{{ url_for('core.fetch_content') }}",
+            addNoteUri: "{{ url_for('core.add_note') }}",
             updateNoteUri: "{{ url_for('core.update_note') }}",
             dropNoteUri: "{{ url_for('core.drop_note') }}",
             syncUri: "{{ url_for('core.sync', method='sync') }}",
@@ -59,39 +60,6 @@
         });
 
         catalog.buildTree();
-
-
-        // 快捷键
-        $(document).keydown(function (event) {
-            if (event.keyCode === 27) {
-                // esc 返回只读模式
-                splitter2.position("0%");
-                event.preventDefault();
-            } else if (event.ctrlKey && event.keyCode === 83) {
-                // ctrl+s pull&&push
-                catalog.sync();
-                event.preventDefault();
-            } else if (event.ctrlKey && event.keyCode === 73) {
-                // ctrl+i 进入编辑模式
-                splitter2.position("50%");
-                contentArea.editorObj.refresh();
-                event.preventDefault();
-            } else if (event.shiftKey && event.keyCode === 83) {
-                // shift+s 切换侧边栏(目录树)
-                if (splitter1.position() > 15) {
-                    splitter1.position("0%")
-                } else {
-                    splitter1.position("15%");
-                }
-                event.preventDefault();
-            } else if (event.ctrlKey && event.shiftKey && event.keyCode === 70) {
-                // ctrl+shift+f //全屏编辑+预览
-                splitter1.position("0%");
-                splitter2.position("60%");
-                event.preventDefault();
-            }
-        });
-
     });
 </script>
 {% endblock %}

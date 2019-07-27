@@ -28,7 +28,7 @@ def fetch_content():
         content = note_service.read_item_content(item_id)
     except Exception as e:
         current_app.logger.error(e)
-        return Response(status=401)
+        return Response(str(e), status=401)
     return content
 
 @core.route('/note/add', methods=['POST'])
@@ -39,7 +39,7 @@ def add_note():
         item = note_service.add_item(title, pid)
     except Exception as e:
         current_app.logger.error(e)
-        return Response(status=401)
+        return Response(e, status=401)
     return jsonify({"id": item.id})
 
 
@@ -62,7 +62,7 @@ def update_note():
         assert result.status, result.content
     except Exception as e:
         current_app.logger.error(e)
-        return Response(str(e), status=403, mimetype="")
+        return Response(str(e), status=403)
 
     return 'OK', 200
 
@@ -74,8 +74,8 @@ def drop_note():
         note_service.drop_item(id)
     except Exception as e:
         current_app.logger.error(e)
-        return "error", 500
-    return 'OK', 200
+        return Response(str(e), status=500)
+    return Response(status=200)
 
 
 @core.route('/note/upload/', methods=['POST'])
