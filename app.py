@@ -4,7 +4,7 @@
 # @Author: wangms
 # @Date  : 2018/8/6
 
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask.logging import default_handler
 from config import BaseConfig
 from model import db
@@ -24,6 +24,11 @@ app.config.from_object(BaseConfig)
 db.init_app(app)
 
 log_file = app.config.get("LOG_FILE")
+
+
+@app.route('/static/js/<path:path>', methods=["GET"])
+def send_js(path):
+    return send_from_directory('static/js', path, mimetype="application/javascript")
 
 loggerConfig({
     'version': 1,

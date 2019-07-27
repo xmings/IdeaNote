@@ -1,27 +1,57 @@
-export function flashMessage(content, level) {
-    let flash = $(".flash-message");
-    flash.find(".content").html(content);
-    if (typeof level === "undefined" || ["success", "negative"].indexOf(level) === -1) level = "success";
-    flash.removeClass("success").removeClass("negative").addClass(level);
-    flash.addClass("visible");
-    if (level === "success") {
-        setTimeout(function () {
-            flash.transition('fade');
-        }, 2000);
+class MessageBox {
+    constructor(options) {
+        options = Object.assign({
+            container: "#flash-message"
+        }, options);
+
+        this.container = $(options.container);
+        this.container.find(".close").click(() => {
+            this.container.transition('fade');
+        });
+    }
+
+    show(content, level) {
+        if (typeof level === "undefined"
+            || ["success", "negative"].indexOf(level) === -1) {
+            level = "success";
+        }
+        this.container.find(".content").html(content);
+        this.container.removeClass("success").removeClass("negative").addClass(level);
+        this.container.show();
+
+        if (level === "success") {
+            setTimeout(() => {
+                this.container.transition('fade');
+            }, 2000);
+        }
     }
 }
 
+let messageBox = new MessageBox();
+
 export class Catalog {
-    constructor(container, contextmenu, fetchDataUri,
-                fetchContentUri, updateNoteUri, dropNoteUri, editorObj) {
-        this.container = $(container);
-        this.contextmenu = $(contextmenu);
-        this.fetchDataUri = fetchDataUri;
-        this.fetchContentUri = fetchContentUri;
-        this.updateNoteUri = updateNoteUri;
-        this.dropNoteUri = dropNoteUri;
-        this.editorObj = editorObj;
-        this.selectedItem = null;
+    constructor(options) {
+        options = Object.assign({
+            treeContainer: "#tree",
+            contextmenu: "#contextmenu",
+            fetchDataUri: null,
+            fetchContentUri: null,
+            updateNoteUri: null,
+            syncUri: null,
+            dropNoteUri: null,
+            addNoteUri: null,
+            contentArea: null
+        }, options);
+        this.treeContainer = $(options.treeContainer);
+        this.contextmenu = $(options.contextmenu);
+        this.fetchDataUri = options.fetchDataUri;
+        this.fetchContentUri = options.fetchContentUri;
+        this.updateNoteUri = options.updateNoteUri;
+        this.dropNoteUri = options.dropNoteUri;
+        this.addNoteUri = options.addNoteUri;
+        this.syncUri = options.syncUri;
+        this.contentArea = options.contentArea;
+        this.selectedNode = null;
         this.attribution = {
             check: {
                 enable: false
@@ -44,66 +74,37 @@ export class Catalog {
                 selectedMulti: false
             },
             callback: {
-                onClick: (event, treeId, node) => {
-                    $.ajax({
-                        url: this.fetchContentUri,
-                        data: {
-                            id: node.id
-                        },
-                        success: content => {
-                            this.editorObj.doc.clearHistory();
-                            this.editorObj.firstOpen = true;
-                            this.editorObj.setValue(content);
-                        }
-                    })
+                onClick: (event, treeId, treeNode) => {
+                    this.selectedNode = treeNode;
+                    this.fetchNote();
                 },
-                onRename: (event, treeId, treeNode) => {
-                    $.ajax({
-                        url: this.updateNoteUri,
-                        type: 'POST',
-                        data: {
-                            title: treeNode.name,
-                            id: treeNode.id
-                        },
-                        error: function (XMLHttpRequest) {
-                            flashMessage("修改结点名称失败: "
-                                + XMLHttpRequest.responseText, "negative");
-                        }
-                    })
+                onRename: () => {
+                    this.rename()
                 },
-                beforeRightClick: (treeId, treeNode) => {
-                    this.treeObj.selectNode(treeNode);
-                },
-                onDrop: function (event, treeId, treeNodes, targetNode, moveType, isCopy) {
-                    if (targetNode !== null && isCopy === false) {
-                        if (moveType === 'inner') {
-                            $.ajax({
-                                url: this.dropNoteUri,
-                                type: 'POST',
-                                data: {
-                                    id: treeNodes[0].id,
-                                    pid: targetNode.id
-                                },
-                                success: function () {
-
-                                },
-                                error: function () {
-
-                                }
-
-                            })
-                        }
-                    }
+                onRightClick: (event, treeId, treeNode) => {
+                    this.treeContainer.find("#" + treeNode.tId + " a").click();
+                    this.contextmenu.css({
+                        "left": event.originalEvent.x,
+                        "top": event.originalEvent.y
+                    }).show();
                 }
             }
         };
-    }
 
-    #initContextmenu() {
-        this.container.find("a[class^='level']").contextmenu(e => {
-            console.log("oij");
-            this.contextmenu.css({"left": e.x, "top": e.y}).show();
-            e.preventDefault();
+        this.contextmenu.find(".add-note").click(() => {
+            this.addNote();
+        });
+
+        this.contextmenu.find(".drop-note").click(() => {
+            this.dropNote();
+        });
+
+        this.contextmenu.find(".rename").click(() => {
+            this.treeObj.editName(this.selectedNode);
+        });
+
+        this.contextmenu.find(".sync").click(() => {
+            this.sync()
         });
 
         $(document).click(e => {
@@ -113,6 +114,7 @@ export class Catalog {
         $(document).contextmenu(e => {
             this.contextmenu.hide();
         });
+
     }
 
     buildTree() {
@@ -121,29 +123,114 @@ export class Catalog {
             type: "GET",
             dataType: "json",
             success: data => {
-                this.treeObj = $.fn.zTree.init(this.container, this.attribution, data);
+                this.treeObj = $.fn.zTree.init(this.treeContainer, this.attribution, data);
                 this.root = this.treeObj.getNodes()[0];
-                this.treeObj.selectNode(this.root);
-                this.container.find(".curSelectedNode").click();
-                this.initContextmenu();
+                this.treeContainer.find("#" + this.root.tId + ">a").click();
             },
             error: XMLHttpRequest => {
-                flashMessage(XMLHttpRequest.responseText, "negative")
+                messageBox.show(XMLHttpRequest.responseText, "negative")
             }
         });
 
     }
 
 
+    fetchNote() {
+        $.ajax({
+            url: this.fetchContentUri,
+            data: {
+                id: this.selectedNode.id
+            },
+            success: content => {
+                this.contentArea.editorObj.doc.clearHistory();
+                this.contentArea.firstOpen = true;
+                this.contentArea.currentNoteId = this.selectedNode.id;
+                this.contentArea.editorObj.setValue(content);
+            }
+        })
+    }
+
+    addNote() {
+        let newNodes = this.treeObj.addNodes(this.selectedNode, -1, {name: "新建节点"}),
+            newNode = this.treeObj.getNodeByTId(newNodes[0].tId);
+        $.ajax({
+            url: this.addNoteUri,
+            data: {
+                title: "新建节点",
+                pid: this.selectedNode.id
+            },
+            type: 'POST',
+            dataType: 'json',
+            success: response => {
+                newNode.id = response.id;
+                this.treeObj.updateNode(newNode)
+            },
+            error: err => {
+                messageBox.show(err);
+            }
+
+        })
+    }
+
+    dropNote() {
+        $.ajax({
+            url: this.dropNoteUri,
+            data: {
+                id: this.selectedNode.id
+            },
+            success: response => {
+                this.treeObj.removeNode(this.selectedNode);
+            }
+        })
+    }
+
+    rename() {
+        $.ajax({
+            url: this.updateNoteUri,
+            type: 'POST',
+            data: {
+                title: this.selectedNode.name,
+                type: "title",
+                id: this.selectedNode.id
+            },
+            error: function (XMLHttpRequest) {
+                messageBox.show("修改结点名称失败: "
+                    + XMLHttpRequest.responseText, "negative");
+            }
+        })
+    }
+
+    sync() {
+        messageBox.show("同步中 ... <i class='icon-spinner icon-spin'></i>");
+        $.ajax({
+            url: this.syncUri,
+            type: 'POST',
+            success: () => {
+                messageBox.show("同步成功");
+            },
+            error: () => {
+                messageBox.show("同步失败, 请手工同步", "negative");
+            }
+        })
+    }
+
 }
 
 export class ContentArea {
-    constructor(editContainer, viewContainer, outlineContainer, submitContentUri, submitImageUri) {
-        this.editContainer = $(editContainer);
-        this.viewContainer = $(viewContainer);
-        this.outlineContainer = $(outlineContainer);
-        this.submitContentUri = submitContentUri;
-        this.submitImageUri = submitImageUri;
+    constructor(options) {
+        options = Object.assign({
+            editContainer: "#editor",
+            viewContainer: "#preview",
+            outlineContainer: "#toc",
+            submitContentUri: null,
+            submitImageUri: null
+        }, options);
+
+        this.editContainer = $(options.editContainer).get(0);
+        this.viewContainer = $(options.viewContainer);
+        this.outlineContainer = $(options.outlineContainer);
+        this.submitContentUri = options.submitContentUri;
+        this.submitImageUri = options.submitImageUri;
         this.currentNoteId = null;
         this.attribution = {
             theme: 'idea monokai',
@@ -161,12 +248,13 @@ export class ContentArea {
             scrollbarStyle: null
         };
         this.editorObj = CodeMirror.fromTextArea(this.editContainer, this.attribution);
-        this.firstOpen = true;
+        this.editorObj.firstOpen = true;
+        this.toc = new Toc();
 
         this.editorObj.on("changes", e => {
             let content = this.editorObj.getValue();
             this.previewContent(content);
-            this.freshOutline();
+            this.toc.build();
 
             if (this.firstOpen === true) {
                 this.firstOpen = false;
@@ -178,15 +266,15 @@ export class ContentArea {
                 type: "POST",
                 data: {
                     id: this.currentNoteId,
+                    type: "content",
                     content: content,
                 },
                 error: function () {
-                    flashMessage("保存失败", "negative");
+                    messageBox.show("保存失败", "negative");
                 }
             });
 
         });
-
 
         this.editorObj.on('scroll', e => {
             let scrollRate = this.editorObj.getScrollInfo().top / this.editorObj.getScrollInfo().height;
@@ -202,7 +290,7 @@ export class ContentArea {
                         let formData = new FormData(),
                             image = item.getAsFile();
                         if (image === null) {
-                            flashMessage("剪切板中不存在图片");
+                            messageBox.show("剪切板中不存在图片");
                             return
                         }
                         formData.append('image', item.getAsFile());
@@ -221,7 +309,7 @@ export class ContentArea {
                                 this.editorObj.replaceSelection(mdUrl)
                             },
                             error: function () {
-                                flashMessage("图片保存失败", true)
+                                messageBox.show("图片保存失败", true)
                             }
                         })
                     }
@@ -230,9 +318,39 @@ export class ContentArea {
 
         });
 
-
     }
 
+    initWindowSplit(firstContainer, secondContainer) {
+        let eheight = window.innerHeight;
+        let splitter1 = $(firstContainer).height(eheight).split({
+            orientation: 'vertical',
+            limit: 10,
+            percent: true,
+            position: '15%',
+            width: 1,
+            invisible: false,
+            onDrag: function () {
+                if (splitter1.position() < 100) {
+                    splitter1.position(0)
+                }
+            }
+        });
+
+        let splitter2 = $(secondContainer).height(eheight).split({
+            orientation: 'vertical',
+            limit: 0,
+            percent: true,
+            position: '0%',
+            width: 1,
+            invisible: false,
+            onDrag: function () {
+                if (splitter2.position() < 200) {
+                    splitter2.position(0)
+                }
+            }
+        });
+
+    }
 
     previewContent(content) {
         //content = content.replace(/\n\n/g, "\n<br>");
@@ -256,12 +374,49 @@ export class ContentArea {
         );
 
     }
+}
 
-    freshOutline() {
-        this.outlineContainer.toc({
-                content: ".preview",
-                headings: "h1,h2,h3,h4"
-            }
-        );
+class Toc {
+    constructor(options) {
+        options = Object.assign({
+            tocContainer: '#toc',
+            contentContainer: '#preview',
+            heading: 'h1,h2,h3,h4,h5,h6,h7'
+        }, options);
+        this.tocContainer = $(options.tocContainer);
+        this.contentContainer = $(options.contentContainer);
+        this.heading = options.heading.toUpperCase();
+        this.headingList = options.heading.split(",");
     }
+
+    build() {
+        let lastLevel = -1,
+            tocHtmlString = "",
+            id = 1000;
+        this.contentContainer.find(this.heading).each((index, ele) => {
+            let level = this.headingList.indexOf(ele.tagName);
+
+            if (lastLevel >= 0) {
+                for (let i = 0; i < Math.abs(lastLevel - level); i++) {
+                    if (lastLevel < level) {
+                        tocHtmlString = tocHtmlString.replace(/<\/li>$/, "");
+                        tocHtmlString += "<ul class='list-unstyled'>"
+                    } else if (lastLevel > level) {
+                        tocHtmlString += "</li></ul>"
+                    } else {
+                        tocHtmlString += "</li>"
+                    }
+                }
+            }
+
+            $(ele).attr("id", id);
+            tocHtmlString += "<li><a href='#" + id + "'>" + $(ele).text() + "</a></li>";
+
+            lastLevel = level;
+            id += 1;
+        });
+
+        this.tocContainer.html(tocHtmlString);
+    }
+
 }

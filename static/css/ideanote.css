@@ -84,7 +84,7 @@ body {
     padding: 4px 12px;
     background-color: #f3f3f329;
     font-size: 14px;
-    font-family: song,"Fira Code", Lucida Sans Typewriter, Lucida Console, monaco, Courrier, monospace;
+    font-family: song, "Fira Code", Lucida Sans Typewriter, Lucida Console, monaco, Courrier, monospace;
 }
 
 .preview p {
@@ -150,7 +150,7 @@ body {
     text-decoration: none;
 }
 
-#toc a:focus{
+#toc a:focus {
     color: rgba(0, 0, 0, 0.23);
 }
 
@@ -182,9 +182,9 @@ body {
     background-color: rgba(128, 128, 128, 0.18);
 }
 
-.CodeMirror{
+.CodeMirror {
     height: 100%;
-    font-family: song,"Fira Code", Lucida Sans Typewriter, Lucida Console, monaco, Courrier, monospace;
+    font-family: song, "Fira Code", Lucida Sans Typewriter, Lucida Console, monaco, Courrier, monospace;
     font-size: 14px;
 }
 
@@ -192,11 +192,11 @@ body {
     padding: 4px 2px;
 }
 
-.CodeMirror-linenumber{
+.CodeMirror-linenumber {
     text-align: left;
 }
 
-.cm-s-monokai .CodeMirror-linenumber{
+.cm-s-monokai .CodeMirror-linenumber {
     color: #d0d0d066;
 }
 
@@ -208,7 +208,13 @@ body {
     position: absolute
 }
 
-.contextmenu {
+.ui.vertical.menu.contextmenu {
     position: fixed;
     display: none;
+}
+
+.ui.vertical.menu.contextmenu .item > i.icon {
+    float: left;
+    padding-right: 30px;
+
 }

@@ -43,9 +43,10 @@ def add_note():
     return jsonify({"id": item.id})
 
 
-@core.route('/note/update/<type>', methods=['POST'])
-def update_note(type):
+@core.route('/note/update/', methods=['POST'])
+def update_note():
     id = request.form.get('id')
+    type = request.form.get("type")
     try:
         if type == "rename":
             title = request.form.get('title')
