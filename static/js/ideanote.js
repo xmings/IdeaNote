@@ -29,7 +29,7 @@ class MessageBox {
 
 let messageBox = new MessageBox();
 
-export class Catalog {
+class Catalog {
     constructor(options) {
         options = Object.assign({
             treeContainer: "#tree",
@@ -216,7 +216,7 @@ export class Catalog {
 
 }
 
-export class ContentArea {
+class ContentArea {
     constructor(options) {
         options = Object.assign({
             editContainer: "#editor",
@@ -420,3 +420,5 @@ class Toc {
     }
 
 }
+
+export { Catalog, ContentArea };
