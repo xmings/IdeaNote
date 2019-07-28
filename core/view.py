@@ -10,18 +10,20 @@ from .service import NoteService
 
 note_service = NoteService()
 
+
 @core.route("/")
 def index():
+    note_service.note_sync()
     return render_template('editor.html')
 
 
-@core.route('/notes',methods=['GET'])
+@core.route('/notes', methods=['GET'])
 def fetch_notes():
     catalog = note_service.fetch_all_items_to_json()
     return jsonify(catalog)
 
 
-@core.route('/note/content',methods=['GET'])
+@core.route('/note/content', methods=['GET'])
 def fetch_content():
     item_id = request.args.get('id')
     try:
@@ -30,6 +32,7 @@ def fetch_content():
         current_app.logger.error(e)
         return Response(str(e), status=401)
     return content
+
 
 @core.route('/note/add', methods=['POST'])
 def add_note():
@@ -89,6 +92,7 @@ def upload_image():
         return "error", 500
 
     return jsonify({'filename': url_path}), 200
+
 
 @core.route('/<item_id>/<image_name>')
 def download_image(item_id, image_name):

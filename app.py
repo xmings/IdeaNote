@@ -10,6 +10,7 @@ from config import BaseConfig
 from model import db
 from core.service import db_operator, file_operator, sync_operator
 from core import core
+from onedrive import onedrive
 from logging.config import dictConfig as loggerConfig
 
 
@@ -55,6 +56,7 @@ loggerConfig({
 
 
 app.register_blueprint(core)
+app.register_blueprint(onedrive)
 
 db_operator.init_db(app)
 file_operator.init_file(app)
