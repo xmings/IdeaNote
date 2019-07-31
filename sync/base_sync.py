@@ -10,18 +10,28 @@
 
 class BaseSync(object):
     def __init__(self):
+        self.remote_metadata = {}
+        self.local_metadata = {}
+
+    def fetch_remote_metadata(self):
         pass
 
-    def fetchSrvMetaData(self):
+    def metadata_version_interval(self, local_metadata):
         pass
 
-    def isSameMainVer(self):
+    def merge_metadata(self):
         pass
 
-    def fetchDiffRecord(self):
+    def create_diff_record(self):
         pass
 
-    def fetchNoteContentById(self, id):
+    def fetch_remote_path_content(self, path):
+        pass
+
+    def update_remote_note_content(self, path, sha, content):
+        pass
+
+    def delete_remote_note(self, path, sha):
         pass
 
 

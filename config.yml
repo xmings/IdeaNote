@@ -1,14 +1,17 @@
 IdeaNote:
-  local:
+  metadata_file: ideanote.json
   sync:
     remote:
-      method: onedrive
+      method: github
       connection:
-        tenant: common
-        client_id: 0d6887cb-6a47-4e62-beee-73e7642b0e02
-        response_type: code
-        redirect_uri: http://localhost:5000
-        response_mode: query
-        scope: Device.ReadWrite.All Files.Read.All Files.ReadWrite.All User.Read
-        state: 1234
-        secret: r+?kZxNJ-IcX+Q33dfw5ZWb8LT96.fuh
+        owner: bmark-sync
+        email: thankall@yeah.net
+        repo: test_github_api
+        access_token: af9a3e3b83b72faa89c56846c50b20e921030b6d
+        branch: master
+
+  note_data_path: E:\\MyNote
+  log_dir: log
+
+
+

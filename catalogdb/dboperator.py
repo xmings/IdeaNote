@@ -13,7 +13,8 @@ BASE_JSON_DB = {
     "title": "MyBase",
     "items": {},
     "lock_item_ids": [],
-    "items_hash": "",
+    "last_sync_sha": "",
+    "last_sync_time": "",
     "users": {},
     "version": 0,
     "modification_time": ""
@@ -315,6 +316,10 @@ class DBOperator(object):
         with lock:
             self._current_item_id += 1
         return self._current_item_id
+
+    def update_last_sync_sha(self, sha):
+        self._catalog_dict["last_sync_sha"] = sha
+        self._catalog_dict["last_sync_time"] = datetime.now()
 
     def _store(self):
         self._catalog_dict["modification_time"] = datetime.now()

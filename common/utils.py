@@ -16,5 +16,13 @@ class ConfigLoader(object):
     def remote_connection_info(self):
         return self.config.get("IdeaNote").get("sync").get("remote").get("connection")
 
+    @property
+    def metadata_file(self):
+        return self.config.get("IdeaNote").get("metadata_file")
+
+    @property
+    def note_data_path(self):
+        return self.config.get("IdeaNote").get("note_data_path")
+
 
 conf = ConfigLoader()

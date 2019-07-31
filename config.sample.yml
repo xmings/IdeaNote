@@ -1,0 +1,14 @@
+IdeaNote:
+  local:
+  sync:
+    remote:
+      method: onedrive
+      connection:
+        tenant: common
+        client_id: 0d6887cb-6a47-4e62-beee-73e7642b0e02
+        response_type: code
+        redirect_uri: http://localhost:5000
+        response_mode: query
+        scope: Device.ReadWrite.All Files.Read.All Files.ReadWrite.All User.Read
+        state: 1234
+        secret: r+?kZxNJ-IcX+Q33dfw5ZWb8LT96.fuh
