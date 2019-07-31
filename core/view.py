@@ -7,15 +7,11 @@
 from . import core
 from flask import render_template, request, Response, jsonify, current_app
 from .service import NoteService
-from threading import Thread
 note_service = NoteService()
 
 
 @core.route("/")
 def index():
-    sync = Thread(target=note_service.note_auto_sync, args=())
-    sync.daemon = True
-    sync.start()
     return render_template('editor.html')
 
 

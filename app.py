@@ -49,7 +49,7 @@ loggerConfig({
             'level': 'INFO'
     }},
     'root': {
-        'level': 'INFO',
+        'level': 'DEBUG',
         'handlers': ['console']
     }
 })

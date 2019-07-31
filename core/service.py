@@ -198,12 +198,6 @@ class NoteService(object):
             return False
         return True
 
-    def note_auto_sync(self):
-        import time
-        while True:
-            status = self.note_sync()
-            current_app.logger.info(f"sync per five minutes: {status}")
-            time.sleep(30)
 
     def sync(self):
         # GithubSync()

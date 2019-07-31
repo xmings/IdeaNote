@@ -92,7 +92,7 @@ class Catalog {
                             "left": event.originalEvent.x,
                             "top": y
                         }).show();
-                    }else{
+                    } else {
                         this.contextmenu.hide();
                     }
                 }
@@ -129,6 +129,19 @@ class Catalog {
                 event.preventDefault();
             }
         });
+
+        setInterval(() => {
+            $.ajax({
+            url: this.syncUri,
+            type: 'POST',
+            success: () => {
+                console.log("同步成功")
+            },
+            error: XMLHttpRequest => {
+                console.log(XMLHttpRequest.responseText || XMLHttpRequest.statusText);
+            }
+        })
+        }, 30000);
     }
 
     buildTree() {
