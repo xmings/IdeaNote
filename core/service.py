@@ -8,6 +8,7 @@ import os, mimetypes
 from catalogdb import DBOperator, FileOperator, Item
 from common import Result
 from sync.git import Sync
+from sync.github_sync import GithubSync
 from flask import current_app
 
 db_operator = DBOperator()
@@ -197,6 +198,16 @@ class NoteService(object):
             return False
         return True
 
+    def note_auto_sync(self):
+        import time
+        while True:
+            status = self.note_sync()
+            current_app.logger.info(f"sync per five minutes: {status}")
+            time.sleep(30)
+
+    def sync(self):
+        # GithubSync()
+        pass
 
     def _auto_complete_path(self, id: int, auto=True):
         path = ''
