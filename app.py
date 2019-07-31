@@ -5,10 +5,9 @@
 # @Date  : 2018/8/6
 
 from flask import Flask, send_from_directory
+from flask_sqlalchemy import SQLAlchemy
 from flask.logging import default_handler
 from config import BaseConfig
-from model import db
-from core.service import db_operator, file_operator, sync_operator
 from core import core
 from onedrive import onedrive
 from logging.config import dictConfig as loggerConfig
@@ -22,6 +21,7 @@ win32gui.ShowWindow(hd,0)
 
 app = Flask(__name__)
 app.config.from_object(BaseConfig)
+db = SQLAlchemy()
 db.init_app(app)
 
 log_file = app.config.get("LOG_FILE")
@@ -58,9 +58,6 @@ loggerConfig({
 app.register_blueprint(core)
 app.register_blueprint(onedrive)
 
-db_operator.init_db(app)
-file_operator.init_file(app)
-sync_operator.init_sync(app)
 app.logger.removeHandler(default_handler)
 
 # app.app_context().push()

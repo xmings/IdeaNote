@@ -4,7 +4,12 @@
 # @Author: wangms
 # @Date  : 2019/7/27
 import os
+from dataclasses import dataclass, field
+from datetime import datetime, date
+
 import yaml
+import json
+
 
 class ConfigLoader(object):
     def __init__(self):
@@ -26,3 +31,29 @@ class ConfigLoader(object):
 
 
 conf = ConfigLoader()
+
+
+@dataclass(order=True)
+class Item(object):
+    id: int
+    title: str
+    parent_id: int
+    children: list = field(repr=False, default_factory=list)
+
+
+class JsonEncoderForFrontEnd(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, Item):
+            if o.children:
+                return {
+                    "id": o.id,
+                    "name": o.title,
+                    "open": False,
+                    "children": o.children
+                }
+            return {
+                "id": o.id,
+                "name": o.title,
+                "open": False
+            }
+        return super().default(o)

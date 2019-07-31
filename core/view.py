@@ -6,8 +6,9 @@
 # @Brief: 简述报表功能
 from . import core
 from flask import render_template, request, Response, jsonify, current_app
-from .service import NoteService
-note_service = NoteService()
+from core.model import Catalog, Image
+from app import db
+import mimetypes
 
 
 @core.route("/")
@@ -17,19 +18,34 @@ def index():
 
 @core.route('/notes', methods=['GET'])
 def fetch_notes():
-    catalog = note_service.fetch_all_items_to_json()
+    notes = Catalog.query.filter_by(status=1).order_by(Catalog.parent_id, Catalog.seq_no)
+    notes_dict = {}
+    for n in notes:
+        notes_dict[n.id] = {
+            "id": n.id,
+            "name": n.title,
+            "open": False,
+            "children": [],
+            "parent_id": n.parent_id
+        }
+
+    for id, v in notes_dict.items():
+        notes_dict[v["parent_id"]]["children"].append(v)
+
+    catalog = notes_dict[0]
+    catalog["open"] = True
     return jsonify(catalog)
 
 
 @core.route('/note/content', methods=['GET'])
 def fetch_content():
-    item_id = request.args.get('id')
+    note_id = request.args.get('id')
     try:
-        content = note_service.read_item_content(item_id)
+        note = Catalog.query.filter_by(id=int(note_id), status=1).first()
     except Exception as e:
         current_app.logger.error(e)
         return Response(str(e), status=401)
-    return content
+    return note.content
 
 
 @core.route('/note/add', methods=['POST'])
@@ -37,30 +53,36 @@ def add_note():
     title = request.form.get('title')
     pid = request.form.get('pid')
     try:
-        item = note_service.add_item(title, pid)
+        note = Catalog(title=title, parent_id=pid)
+        db.session.add(note)
+        db.session.commit()
     except Exception as e:
         current_app.logger.error(e)
         return Response(e, status=401)
-    return jsonify({"id": item.id})
+    return jsonify({"id": note.id})
 
 
 @core.route('/note/update/', methods=['POST'])
 def update_note():
     id = request.form.get('id')
     type = request.form.get("type")
+    note = Catalog.query.filter_by(id=int(id), status=1).first()
     try:
         if type == "rename":
             title = request.form.get('title')
-            result = note_service.update_item_title(id, title)
+            note.title = title
+            db.session.commit()
         # elif type == "position":
         #     pass
         elif type == "content":
             content = request.form.get('content')
-            result = note_service.update_item_content(id, content)
+            if content == "":
+                raise Exception("It's dangerous to clear up a item, think twice please!")
+            note.title = content
+            db.session.commit()
         else:
             raise Exception(f"UNKNOWN PARAMETER: {type}")
 
-        assert result.status, result.content
     except Exception as e:
         current_app.logger.error(e)
         return Response(str(e), status=403)
@@ -72,7 +94,9 @@ def update_note():
 def drop_note():
     id = request.form.get('id')
     try:
-        note_service.drop_item(id)
+        note = Catalog.query.filter_by(id=int(id), status=1).first()
+        note.status = -1
+        db.session.commit()
     except Exception as e:
         current_app.logger.error(e)
         return Response(str(e), status=500)
@@ -84,34 +108,28 @@ def upload_image():
     id = request.form.get('id')
     image = request.files.get('image')
     try:
-        url_path = note_service.write_item_image(id, image)
+        img = Image(note_id=id, image=image)
+        db.session.add(img)
+        db.session.commit()
     except Exception as e:
         current_app.logger.error(e)
         return "error", 500
 
-    return jsonify({'filename': url_path}), 200
+    return jsonify({'filename': f"/{id}/{img.id}"}), 200
 
 
-@core.route('/<item_id>/<image_name>')
-def download_image(item_id, image_name):
+@core.route('/<note_id>/<image_name>')
+def download_image(note_id, image_name):
     try:
-        image, mime_type = note_service.read_item_image(item_id, image_name)
-        assert image and mime_type, "UNKNOWN IMAGE TYPE"
+        img = Image.query.filter_by(note_id=note_id, id=image_name)
+        assert img , "UNKNOWN IMAGE TYPE"
     except Exception as e:
         current_app.logger.error(e)
         return Response(status=403)
-    return Response(image, mimetype=mime_type)
+    return Response(img, mimetype="image/png")
 
 
 @core.route('/sync/<method>', methods=['POST'])
 def sync(method):
-    if method == 'download':
-        status = note_service.note_pull()
-    elif method == 'upload':
-        status = note_service.note_push()
-    else:
-        status = note_service.note_sync()
-    if not status:
-        return Response(status=401)
     return Response(status=200)
 

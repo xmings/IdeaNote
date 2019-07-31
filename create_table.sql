@@ -1,26 +1,36 @@
 CREATE TABLE t_catalog (
-	node_id INTEGER NOT NULL,
-	node_title VARCHAR(100),
-	node_type VARCHAR(10),
-	node_pid INTEGER,
-	node_img BLOB,
-	file_name VARCHAR(100),
-	file_hash VARCHAR(100),
-	level INTEGER,
-	status VARCHAR(2) NOT NULL,
-	create_time DATETIME,
-	modify_time DATETIME,
-	PRIMARY KEY (node_id),
-	FOREIGN KEY(node_pid) REFERENCES t_catalog (node_id),
-	UNIQUE (file_name)
+	id                       INTEGER PRIMARY KEY AUTOINCREMENT,
+	title                    VARCHAR ( 100 ),
+	icon                     BLOB,
+	parent_id                INTEGER,
+	content                  TEXT,
+    content_sha              VARCHAR ( 100 ),
+    seq_no                   INTEGER,
+	status                   INTEGER NOT NULL,
+	creation_time            DATETIME,
+	modification_time        DATETIME
 );
 
-CREATE TABLE operation (
-	oper_id INTEGER NOT NULL,
-	seq_no INTEGER,
-	command VARCHAR(200),
-	status VARCHAR(2) NOT NULL,
-	create_time DATETIME,
-	modify_time DATETIME,
-	PRIMARY KEY (oper_id)
+CREATE TABLE t_note_reference_image (
+    id                       INTEGER PRIMARY KEY AUTOINCREMENT,
+    note_id                  INTEGER REFERENCES t_catalog (id),
+    image                    BLOB,
+	status                   INTEGER NOT NULL,
+	creation_time            DATETIME,
+	modification_time        DATETIME
+)
+
+CREATE TABLE t_content_snap (
+	id                       INTEGER PRIMARY KEY AUTOINCREMENT,
+	note_id                  INTEGER REFERENCES t_catalog (id),
+	content                  TEXT,
+	creation_time            DATETIME,
+	modification_time        DATETIME
+);
+
+CREATE TABLE t_sync_log (
+    id                       INTEGER PRIMARY KEY AUTOINCREMENT,
+    sync_sha                 VARCHAR ( 100 ),
+    creation_time            DATETIME,
+	modification_time        DATETIME
 );

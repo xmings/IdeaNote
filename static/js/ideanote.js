@@ -141,7 +141,7 @@ class Catalog {
                 console.log(XMLHttpRequest.responseText || XMLHttpRequest.statusText);
             }
         })
-        }, 30000);
+        }, 300000);
     }
 
     buildTree() {
