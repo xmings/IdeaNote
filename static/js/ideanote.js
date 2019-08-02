@@ -130,18 +130,6 @@ class Catalog {
             }
         });
 
-        setInterval(() => {
-            $.ajax({
-            url: this.syncUri,
-            type: 'POST',
-            success: () => {
-                console.log("同步成功")
-            },
-            error: XMLHttpRequest => {
-                console.log(XMLHttpRequest.responseText || XMLHttpRequest.statusText);
-            }
-        })
-        }, 300000);
     }
 
     buildTree() {
@@ -317,11 +305,11 @@ class ContentArea {
             this.viewContainer[0].scrollTop = (this.viewContainer[0].scrollHeight) * scrollRate;
         });
 
-        this.editorObj.on('paste', function (editor, e) {
+        this.editorObj.on('paste', (editor, e) => {
             if (typeof e.clipboardData === "object") {
                 let items = e.clipboardData.items || e.clipboardData.files || [];
 
-                $.each(items, function (index, item) {
+                $.each(items, (index, item) => {
                     if (item.kind === "file" && item.type.match(/^image/).length > 0) {
                         let formData = new FormData(),
                             image = item.getAsFile();
@@ -330,7 +318,7 @@ class ContentArea {
                             return
                         }
                         formData.append('image', item.getAsFile());
-                        formData.append('id', zTreeObj.getSelectedNodes()[0].id);
+                        formData.append('id', this.currentNoteId);
 
                         $.ajax({
                             url: this.submitImageUri,

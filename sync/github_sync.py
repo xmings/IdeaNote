@@ -1,6 +1,6 @@
 #!/bin/python
 # -*- coding: utf-8 -*-
-# @File  : github_sync.py
+# @File  : github_center.py
 # @Author: wangms
 # @Date  : 2019/7/29
 # @Brief: 简述报表功能
@@ -12,7 +12,7 @@ from datetime import datetime
 from base64 import b64encode, b64decode
 
 class GithubSync(BaseSync):
-    def __init__(self, local_metadata):
+    def __init__(self):
         super(GithubSync, self).__init__()
         conn = utils.conf.remote_connection_info()
         self.owner = conn.get("owner")
@@ -21,10 +21,7 @@ class GithubSync(BaseSync):
         self.access_token = conn.get("access_token")
         self.branch = conn.get("branch")
         self.metadata_file = utils.conf.metadata_file
-        self.local_metadata = local_metadata
         self.fetch_remote_metadata()
-        self.version_interval = self.metadata_version_interval(self.local_metadata)
-        assert self.version_interval > 0, f"VERSION INTERVAL EXCEPTIION: {self.version_interval}"
 
         self.base_url = f"https://api.github.com/repos/{self.owner}/{self.repo}"
         self.sync_batch = str(datetime.now())
@@ -38,43 +35,57 @@ class GithubSync(BaseSync):
         self.remote_metadata = b64decode(resp.json()["content"].encode("utf8")).decode("utf8")
         return self.remote_metadata
 
-    def metadata_version_interval(self, local_metadata):
-        local_version = self.local_metadata["sha"]
-        remote_version = self.remote_metadata["sha"]
+    def _metadata_version_interval(self):
+        remote_sha = self.remote_metadata["sha"]
         url = f"{self.base_url}/commits"
 
         resp = requests.get(url)
         sha_list = [i["sha"] for i in resp]
-        local_version_index = sha_list.index(local_version)
-        remote_version_index = sha_list.index(remote_version)
+        local_version_index = sha_list.index(self.local_sha)
+        remote_version_index = sha_list.index(remote_sha)
 
         return local_version_index - remote_version_index
 
     def create_diff_record(self):
-        last_sync_time = self.local_metadata["last_sync_time"]
-
+        interval = self._metadata_version_interval()
+        assert interval <= 0, f"UNKNOWN VERSION INTERVAL: {interval}"
         new_notes = {}
         change_notes = {}
         delete_notes = {}
 
-        for id, v in self.local_metadata.get("items").items():
-            if v["create_time"] >= last_sync_time:
-                new_notes[id] = self._auto_complete_path(id)
-            elif v["modification_time"] >= last_sync_time:
-                change_notes[id] = self._auto_complete_path(id)
+        if interval == 0:
+            for k, v in self.local_change:
+                if k == "update":
+                    sha = self.update_remote_note_content(v["path"], v["sha"], v["content"])
+                    self.local_change[k]["new_sha"] = sha
+                elif k == "delete":
+                    self.delete_remote_note(v["path"], v["sha"])
+                self.local_change[k]["status"] = 1
 
-        if self.version_interval == 0:
-            # 落后1个以上的版本，不会再处理删除
-            for id, v in self.remote_metadata.get("items").items():
-                if id not in self.local_metadata:
-                    delete_notes[id] = self._auto_complete_path(id, "remote")
+            # 更新远程metadata文件
+
+        else:
+            # 应用最近sync以来的远程服务器变更到本地，如果某note本地副本内容也发生改变，则提示
+            # 上传本地其他变更或删除note到服务器，并先由用户确认
+
+            pass
+
+
+        # 上传图片
+
+
 
         return Result(True, {
-            "version_interval": self.version_interval,
+            "version_interval": interval,
             "new": new_notes,
             "change": change_notes,
             "delete": delete_notes
         })
+
+
+    def run(self):
+        pass
+
 
     def fetch_remote_path_content(self, path):
         url = f"{self.base_url}/contents/{path}"
@@ -122,7 +133,6 @@ class GithubSync(BaseSync):
 
         return resp.ok
 
-
     def delete_remote_note(self, path, sha):
         url = f"{self.base_url}/contents/{path}"
         resp = requests.delete(url, data=json.dumps({
@@ -134,19 +144,6 @@ class GithubSync(BaseSync):
         })
         return resp.ok
 
-
-    def _auto_complete_path(self, id: int, where="local"):
-        path = ''
-        metadata = self.local_metadata if where == "local" else self.remote_metadata
-        item = metadata.get(int(id))
-        while item["id"] > 0:
-            path = f"{item['title']}/{path}" if path else item["title"]
-            item = metadata.get(item["parent_id"])
-
-        if where == "local":
-            path = path.replace("/", "\\")
-
-        return path
 
 
 

@@ -8,8 +8,6 @@ from flask import Flask, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask.logging import default_handler
 from config import BaseConfig
-from core import core
-from onedrive import onedrive
 from logging.config import dictConfig as loggerConfig
 
 
@@ -21,8 +19,7 @@ win32gui.ShowWindow(hd,0)
 
 app = Flask(__name__)
 app.config.from_object(BaseConfig)
-db = SQLAlchemy()
-db.init_app(app)
+db = SQLAlchemy(app)
 
 log_file = app.config.get("LOG_FILE")
 
@@ -54,7 +51,8 @@ loggerConfig({
     }
 })
 
-
+from core import core
+from onedrive import onedrive
 app.register_blueprint(core)
 app.register_blueprint(onedrive)
 

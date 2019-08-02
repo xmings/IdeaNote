@@ -16,20 +16,10 @@ class BaseConfig(object):
     CATALOG_JSON = ''
     SECRET_KEY = '123456789'
     SEND_FILE_MAX_AGE_DEFAULT = timedelta(seconds=1)
-    NOTES_DIRCTORY = "E:\\MyNote"
-    IMAGE_FOLDER = ".img"
-    ITEM_FILE_SUFFIX = ".md"
-    FOLDER_CONTENT_FILE = "init.md"
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///{}\\ideanote.db?check_same_thread=False'.format(NOTES_DIRCTORY)
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///{}\\ideanote.db?check_same_thread=False'.format("E:\\MyNote")
     REMOTE_URL = "git@git.coding.net:wmsgood/MyNote2.git"
     LOG_FILE = os.path.join(PROJECT_PATH, "log", "{}.log".format(datetime.now().strftime("%Y-%m-%d")))
-    JSON_DB_FILE = os.path.join(NOTES_DIRCTORY, "ideanote.json")
     CREATE_DB_IF_NOT_FOUND = True
-
-
-
-    # db.create_all(bind=['users'])
-    # __bind_key__ = 'users'
 
 
 class ProductConfig(BaseConfig):
