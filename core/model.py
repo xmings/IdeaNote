@@ -16,7 +16,6 @@ class Catalog(db.Model):
     parent_id = db.Column(db.String)
     content = db.Column(db.Binary)
     remote_content = db.Column(db.Binary)
-    sha = db.Column(db.String(100))
     seq_no = db.Column(db.Integer)
     status = db.Column(db.Integer, default=1)
     creation_time = db.Column(db.DateTime, default=datetime.now())

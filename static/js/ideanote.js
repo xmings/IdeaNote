@@ -149,7 +149,6 @@ class Catalog {
 
     }
 
-
     fetchNote() {
         $.ajax({
             url: this.fetchContentUri,
@@ -157,10 +156,7 @@ class Catalog {
                 id: this.selectedNode.id
             },
             success: content => {
-                this.contentArea.editorObj.doc.clearHistory();
-                this.contentArea.firstOpen = true;
-                this.contentArea.currentNoteId = this.selectedNode.id;
-                this.contentArea.editorObj.setValue(content);
+                this.contentArea.switchDoc(this.selectedNode.id, content);
             },
             error: XMLHttpRequest => {
                 messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
@@ -257,13 +253,17 @@ class ContentArea {
         this.splitter1 = null;
         this.splitter2 = null;
         this.attribution = {
+            mode: 'markdown',
             theme: 'idea monokai',
             extraKeys: {"Ctrl": "autocomplete"},//ctrl可以弹出选择项
             lineNumbers: true,//显示行号
             autoCloseTags: true,
-            autofocus: true,
-            value: "写你想写",
             matchBrackets: true,
+            autoCloseBrackets: true,
+            showCursorWhenSelecting: true,
+            autofocus: true,
+            lineWrapping: true,
+            value: "写你想写",
             tabSize: 4,
             indentUnit: 4,
             smartIndent: true,
@@ -271,19 +271,14 @@ class ContentArea {
             lineSeparator: "",
             scrollbarStyle: null
         };
+        this.docBuffer = {};
         this.editorObj = CodeMirror.fromTextArea(this.editContainer, this.attribution);
-        this.editorObj.firstOpen = true;
         this.toc = new Toc();
 
-        this.editorObj.on("changes", e => {
-            let content = this.editorObj.getValue();
+        this.editorObj.on("changes", (instance, changes) => {
+            let content = this.editorObj.doc.getValue();
             this.previewContent(content);
             this.toc.build();
-
-            if (this.firstOpen === true) {
-                this.firstOpen = false;
-                return
-            }
 
             $.ajax({
                 url: this.submitContentUri,
@@ -424,6 +419,18 @@ class ContentArea {
             })
         );
 
+    }
+
+    switchDoc(id, content) {
+        if (id in this.docBuffer) {
+            this.editorObj.swapDoc(this.docBuffer[id]);
+        } else {
+            this.docBuffer[id] = CodeMirror.Doc(content, "markdown");
+            this.editorObj.swapDoc(this.docBuffer[id]);
+        }
+        this.currentNoteId = id;
+        this.previewContent(content);
+        this.toc.build();
     }
 }
 

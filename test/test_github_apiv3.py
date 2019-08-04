@@ -61,7 +61,6 @@ def test_read_content():
 def test_fetch_file_sha():
     return test_read_content()["sha"]
 
-
 def test_update_content():
     url = "https://api.github.com/repos/bmark-sync/test_github_api/contents/idea/init.md"
     content = b64encode("cde".encode("utf8")).decode("utf8")
@@ -81,4 +80,14 @@ def test_update_content():
     })
 
     print(json.dumps(resp.json(), indent=4))
+
+def test_create_image():
+    "GET /repos/:owner/:repo/git/blobs/:file_sha"
+    url = "https://api.github.com/repos/xmings/JobFlow/contents/static/image/abc.png"
+    resp = requests.get(url, data={
+        "ref": "master"
+    })
+    print(json.dumps(resp.json(), indent=4))
+    return resp.json()
+
 
