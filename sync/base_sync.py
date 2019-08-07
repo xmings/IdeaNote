@@ -4,11 +4,8 @@
 # @Author: wangms
 # @Date  : 2019/7/27
 from core.model import Catalog, SyncRecord, Image, db
-from sqlalchemy import or_
-import os
 import zlib
-import json
-from uuid import uuid1
+import os
 from hashlib import sha1
 from common import utils
 from datetime import datetime
@@ -18,9 +15,9 @@ class BaseSync(object):
     def __init__(self):
         self.remote_metadata = {}
         self.metadata_file = utils.conf.metadata_file
-        last_sync = SyncRecord.query.order_by(SyncRecord.creation_time.desc).first()
-        self.local_last_sync_sha = last_sync.sync_sha
-        self.local_last_sync_time = last_sync.creation_time
+        self.last_sync = SyncRecord.query.order_by(SyncRecord.creation_time.desc()).first()
+        if not self.last_sync:
+            self.init_sync()
 
     def is_note_content_equal(self, note_id, local_content):
         remote_sha = self.remote_metadata[note_id]["sha"]
@@ -33,17 +30,25 @@ class BaseSync(object):
     def _auto_gen_note_path(self, note_id):
         path = ''
         note = Catalog.query.filter(Catalog.id == note_id).first()
-        while note.id > 1:
+        while note.parent_id != "self":
             path = f"{note.title}/{path}" if path else note.title
             note = Catalog.query.filter(Catalog.id == note.parent_id).first()
 
+        if Catalog.query.filter(Catalog.parent_id==note_id).all():
+            return f"{path}/init.md" if path else "init.md"
         return f"{path}.md"
 
     def _auto_gen_image_path(self, note_id, image_id):
-        return self._auto_gen_note_path(note_id).split(".")[0] + "/.img/" + image_id
+        dir = os.path.dirname(self._auto_gen_note_path(note_id))
+        return  f"{dir}/.img/{image_id}" if dir else f".img/{image_id}"
 
     def run(self):
         self.remote_metadata, self.remote_metadata_sha = self.fetch_metadata_and_sha()
+        if not self.remote_metadata:
+            return self.init_sync()
+
+        self.local_last_sync_sha = self.last_sync.sync_sha
+        self.local_last_sync_time = self.last_sync.creation_time
 
         if self.remote_metadata_sha == self.local_last_sync_sha:
             # put-create
@@ -123,7 +128,7 @@ class BaseSync(object):
                 self.remote_metadata.pop(n.id)
 
             # 更新remote-metadata
-            self.update_metadata(self.remote_metadata)
+            self.update_metadata()
 
         else:
             # 先同步remote到本地，再应用本地变更（只应用update和create，delete）
@@ -212,42 +217,53 @@ class BaseSync(object):
 
             db.session.commit()
 
-    @NotImplemented
+    def init_sync(self):
+        for n in Catalog.query.filter(Catalog.status==1).all():
+            self.remote_metadata[n.id] = {
+                "title": n.title,
+                "images": {},
+                "status": 1,
+                "parent_id": n.parent_id,
+                "seq_no": n.seq_no,
+                "creation_time": str(n.creation_time),
+                "modification_time": str(n.modification_time)
+            }
+            self.create_remote_note(n.id, zlib.decompress(n.content))
+
+            for img in Image.query.filter(Image.note_id==n.id).all():
+                self.remote_metadata[n.id]["images"][img.id] = {
+                    "mime_type": img.mime_type
+                }
+                self.create_remote_image(n.id, img.id, zlib.decompress(img.image))
+
+        self.update_metadata()
+
     def fetch_metadata_and_sha(self):
-        pass
+        raise NotImplementedError
 
-    @NotImplemented
-    def update_metadata(self, metadata):
-        pass
+    def update_metadata(self):
+        raise NotImplementedError
 
-    @NotImplemented
     def fetch_remote_note(self, note_id):
-        pass
+        raise NotImplementedError
 
-    @NotImplemented
     def create_remote_note(self, note_id, content):
-        pass
+        raise NotImplementedError
 
-    @NotImplemented
     def update_remote_note(self, note_id, content):
-        pass
+        raise NotImplementedError
 
-    @NotImplemented
     def delete_remote_note(self, note_id):
-        pass
+        raise NotImplementedError
 
-    @NotImplemented
     def fetch_remote_image(self, note_id, image_id):
-        pass
+        raise NotImplementedError
 
-    @NotImplemented
     def create_remote_image(self, note_id, image_id, content):
-        pass
+        raise NotImplementedError
 
-    @NotImplemented
     def update_remote_image(self, note_id, image_id, content):
-        pass
+        raise NotImplementedError
 
-    @NotImplemented
     def delete_remote_image(self, note_id, image_id):
-        pass
+        raise NotImplementedError

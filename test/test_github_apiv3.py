@@ -15,9 +15,8 @@ def test_list_folder():
     print(json.dumps(resp.json(), indent=4))
 
 def test_create_folder():
-    url = "https://api.github.com/repos/bmark-sync/test_github_api/contents/test_create.md"
+    url = "https://api.github.com/repos/bmark-sync/test_github_api/contents/abc/test_create.md"
     content = b64encode("abcdef".encode("utf8")).decode("utf8")
-    print("\ncontent: " + content)
     resp = requests.put(url, data=json.dumps({
         "message": "创建idea目录及内容文件",
         "committer": {
@@ -27,7 +26,7 @@ def test_create_folder():
         "content": f"{content}",
         "branch": "master"
     }), params={
-        "access_token": "be96fbcac43d1f6a6af2ec1a03e78d1557f1bd32"
+        "access_token": "c64b06c644660e1819f9077163f5f670c680dad7"
     })
 
     print(json.dumps(resp.json(), indent=4))
@@ -39,19 +38,28 @@ def test_create_file():
     test_create_folder()
 
 def test_delete_file():
-    url = "https://api.github.com/repos/bmark-sync/test_github_api/contents/idea/init.md"
-    sha = test_fetch_file_sha()
-    resp = requests.delete(url, data=json.dumps({
-        "message": "delete a file or folder",
-        "sha": f"{sha}",
-        "branch": "master"
-    }), params={
-        "access_token": "be96fbcac43d1f6a6af2ec1a03e78d1557f1bd32"
-    })
-    print(resp.json())
+    file_list = [
+        "Docker.md",
+        ".img/cd33eef0b8e011e99880a402b9518744"
+    ]
+    for filename in file_list:
+        url = "https://api.github.com/repos/bmark-sync/notesync/contents/{}".format(filename)
+        resp = requests.get(url, data={
+            "ref": "master"
+        })
+        url = "https://api.github.com/repos/bmark-sync/notesync/contents/{}".format(filename)
+        sha = resp.json()["sha"]
+        resp = requests.delete(url, data=json.dumps({
+            "message": "delete a file or folder",
+            "sha": f"{sha}",
+            "branch": "master"
+        }), params={
+            "access_token": "c64b06c644660e1819f9077163f5f670c680dad7"
+        })
+        print(resp.json())
 
 def test_read_content():
-    url = "https://api.github.com/repos/bmark-sync/test_github_api/contents/idea/init.md"
+    url = "https://api.github.com/repos/bmark-sync/notesync/contents/init.md"
     resp = requests.get(url, data={
         "ref": "master"
     })
