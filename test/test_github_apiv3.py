@@ -15,8 +15,8 @@ def test_list_folder():
     print(json.dumps(resp.json(), indent=4))
 
 def test_create_folder():
-    url = "https://api.github.com/repos/bmark-sync/test_github_api/contents/idea/init.md"
-    content = b64encode("abc".encode("utf8")).decode("utf8")
+    url = "https://api.github.com/repos/bmark-sync/test_github_api/contents/test_create.md"
+    content = b64encode("abcdef".encode("utf8")).decode("utf8")
     print("\ncontent: " + content)
     resp = requests.put(url, data=json.dumps({
         "message": "创建idea目录及内容文件",

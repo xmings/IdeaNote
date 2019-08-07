@@ -90,11 +90,11 @@ def upload_image():
         core.logger.error(e)
         return "error", 500
 
-    return jsonify({'filename': f"/{id}/{img_id}"}), 200
+    return jsonify({'filename': f".img/{img_id}"}), 200
 
 
-@core.route('/<note_id>/<image_id>')
-def download_image(note_id, image_id):
+@core.route('/.img/<image_id>')
+def download_image(image_id):
     try:
         content, mimetype = NoteService.fetch_image(image_id=image_id)
     except Exception as e:

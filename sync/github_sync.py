@@ -11,6 +11,7 @@ import json
 from datetime import datetime
 from base64 import b64encode, b64decode
 
+
 class GithubSync(BaseSync):
     def __init__(self):
         super(GithubSync, self).__init__()
@@ -20,65 +21,135 @@ class GithubSync(BaseSync):
         self.repo = conn.get("repo")
         self.access_token = conn.get("access_token")
         self.branch = conn.get("branch")
+        self.commit_comment = str(datetime.now())
         self.base_url = f"https://api.github.com/repos/{self.owner}/{self.repo}"
 
-    def remote_fetch_metadata(self):
+    def fetch_metadata_and_sha(self):
         url = f"{self.base_url}/contents/{self.metadata_file}"
         resp = requests.get(url, data={
             "ref": self.branch
         })
+        result = resp.json()
+        return json.loads(b64decode(result["content"].encode("utf8")).decode("utf8")), result["sha"]
 
-        self.remote_metadata = b64decode(resp.json()["content"].encode("utf8")).decode("utf8")
-        return json.loads(self.remote_metadata)
-
-    def remote_fetch(self, relative_path, type):
-        if type == "metadata":
-            relative_path = relative_path
-        elif type == "node":
-            relative_path += ".md"
-        elif type == "image":
-            relative_path += type
-
-        url = f"{self.base_url}/contents/{relative_path}"
-        resp = requests.get(url, data={
-            "ref": self.branch
-        })
-        result = b64decode(resp.json()["content"].encode("utf8"))
-        return result.decode("utf8") if type != "image" else result
-
-    def update_remote_note_content(self, path, sha, content):
-        url = f"{self.base_url}/contents/{path}"
-        content = b64encode("cde".encode("utf8")).decode("utf8")
+    def update_metadata(self, metadata):
+        url = f"{self.base_url}/contents/{self.metadata_file}"
         resp = requests.put(url, data=json.dumps({
-            "message": self.sync_batch,
+            "message": self.commit_comment,
             "committer": {
                 "name": self.owner,
                 "email": self.email
             },
-            "sha": sha,
-            "content": content,
+            "sha": self.remote_metadata_sha,
+            "content": b64encode(metadata.encode("utf8")).decode("utf8"),
             "branch": self.branch
         }), params={
             "access_token": self.access_token
         })
-
         return resp.ok
 
-    def delete_remote_note(self, path, sha):
-        url = f"{self.base_url}/contents/{path}"
+    def fetch_remote_note(self, note_id):
+        url = f"{self.base_url}/contents/{self.remote_metadata[note_id]['relative_path']}"
+        resp = requests.get(url, data={
+            "ref": self.branch
+        })
+        return b64decode(resp.json()["content"].encode("utf8")).decode("utf8")
+
+    def create_remote_note(self, note_id, content):
+        relative_path = self._auto_gen_note_path(note_id=note_id)
+        url = f"{self.base_url}/contents/{relative_path}"
+        resp = requests.put(url, data=json.dumps({
+            "message": self.commit_comment,
+            "committer": {
+                "name": self.owner,
+                "email": self.email
+            },
+            "content": b64encode(content.encode("utf8")).decode("utf8"),
+            "branch": self.branch
+        }), params={
+            "access_token": self.access_token
+        })
+        self.remote_metadata[note_id]["sha"] = resp.json()["sha"]
+        self.remote_metadata[note_id]["relative_path"] = relative_path
+        return resp.ok
+
+    def update_remote_note(self, note_id, content):
+        url = f"{self.base_url}/contents/{self.remote_metadata[note_id]['relative_path']}"
+        resp = requests.put(url, data=json.dumps({
+            "message": self.commit_comment,
+            "committer": {
+                "name": self.owner,
+                "email": self.email
+            },
+            "sha": self.remote_metadata[note_id]["sha"],
+            "content": b64encode(content.encode("utf8")).decode("utf8"),
+            "branch": self.branch
+        }), params={
+            "access_token": self.access_token
+        })
+        self.remote_metadata[note_id]["sha"] = resp.json()["sha"]
+        return resp.ok
+
+    def delete_remote_note(self, note_id):
+        url = f"{self.base_url}/contents/{self.remote_metadata[note_id]['relative_path']}"
         resp = requests.delete(url, data=json.dumps({
-            "message": self.sync_batch,
-            "sha": sha,
+            "message": self.commit_comment,
+            "sha": self.remote_metadata[note_id]["sha"],
             "branch": self.branch
         }), params={
             "access_token": self.access_token
         })
         return resp.ok
 
+    def fetch_remote_image(self, note_id, image_id):
+        url = f"{self.base_url}/contents/{self.remote_metadata[note_id][image_id]['img_rel_path']}"
+        resp = requests.get(url, data={
+            "ref": self.branch
+        })
+        return b64decode(resp.json()["content"].encode("utf8"))
 
+    def create_remote_image(self, note_id, image_id, content):
+        img_rel_path = self._auto_gen_image_path(note_id, image_id)
+        url = f"{self.base_url}/contents/{img_rel_path}"
+        resp = requests.put(url, data=json.dumps({
+            "message": self.commit_comment,
+            "committer": {
+                "name": self.owner,
+                "email": self.email
+            },
+            "content": b64encode(content).decode("utf8"),
+            "branch": self.branch
+        }), params={
+            "access_token": self.access_token
+        })
+        self.remote_metadata[note_id][image_id]["sha"] = resp.json()["sha"]
+        self.remote_metadata[note_id][image_id]["img_rel_path"] = img_rel_path
+        return resp.ok
 
+    def update_remote_image(self, note_id, image_id, content):
+        url = f"{self.base_url}/contents/{self.remote_metadata[note_id][image_id]['img_rel_path']}"
+        resp = requests.put(url, data=json.dumps({
+            "message": self.commit_comment,
+            "committer": {
+                "name": self.owner,
+                "email": self.email
+            },
+            "sha": self.remote_metadata[note_id]["sha"],
+            "content": b64encode(content).decode("utf8"),
+            "branch": self.branch
+        }), params={
+            "access_token": self.access_token
+        })
+        self.remote_metadata[note_id]["sha"] = resp.json()["sha"]
+        return resp.ok
 
-
-
-
-
+    def delete_remote_image(self, note_id, image_id):
+        url = f"{self.base_url}/contents/{self.remote_metadata[note_id][image_id]['img_rel_path']}"
+        resp = requests.delete(url, data=json.dumps({
+            "message": self.commit_comment,
+            "sha": self.remote_metadata[note_id][image_id]["sha"],
+            "branch": self.branch
+        }), params={
+            "access_token": self.access_token
+        })
+        return resp.ok

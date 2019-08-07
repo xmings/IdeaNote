@@ -52,9 +52,7 @@ loggerConfig({
 })
 
 from core import core
-from onedrive import onedrive
 app.register_blueprint(core)
-app.register_blueprint(onedrive)
 
 app.logger.removeHandler(default_handler)
 
