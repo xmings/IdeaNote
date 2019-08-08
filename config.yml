@@ -6,8 +6,8 @@ IdeaNote:
       connection:
         owner: bmark-sync
         email: thankall@yeah.net
-        repo: note-sync
-        access_token:
+        repo: note-sync-2
+        access_token: 20a50aa67bfb987a0743a0068c4e3ddb76d21780
         branch: master
 
   note_data_path: E:\\MyNote

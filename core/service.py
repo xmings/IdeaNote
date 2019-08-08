@@ -4,7 +4,7 @@
 # @Author: wangms
 # @Date  : 2019/8/3
 import zlib
-from core.model import Catalog, Image, Snap, SyncRecord, db
+from core.model import Catalog, Image, Snap, db
 from datetime import datetime
 from app import app
 from threading import Thread

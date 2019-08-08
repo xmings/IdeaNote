@@ -30,6 +30,8 @@ class GithubSync(BaseSync):
             "ref": self.branch
         })
         result = resp.json()
+        if not resp.ok:
+            return {}, None
         return json.loads(b64decode(result["content"].encode("utf8")).decode("utf8")), result["sha"]
 
     def update_metadata(self):
@@ -40,7 +42,9 @@ class GithubSync(BaseSync):
                 "name": self.owner,
                 "email": self.email
             },
-            "content": b64encode(self.remote_metadata.encode("utf8")).decode("utf8"),
+            "content": b64encode(json.dumps(self.remote_metadata,
+                                            ensure_ascii=False,
+                                            indent=4).encode()).decode("utf8"),
             "branch": self.branch
         }
         if self.remote_metadata_sha:
@@ -48,6 +52,7 @@ class GithubSync(BaseSync):
         resp = requests.put(url, data=json.dumps(data), params={
             "access_token": self.access_token
         })
+        self.remote_metadata_sha = resp.json()["content"]["sha"]
         return resp.ok
 
     def fetch_remote_note(self, note_id):
@@ -160,3 +165,4 @@ class GithubSync(BaseSync):
 if __name__ == '__main__':
     sync = GithubSync()
     sync.run()
+    print(datetime.now())

@@ -14,10 +14,9 @@ from datetime import datetime
 class BaseSync(object):
     def __init__(self):
         self.remote_metadata = {}
+        self.remote_metadata_sha = None
         self.metadata_file = utils.conf.metadata_file
         self.last_sync = SyncRecord.query.order_by(SyncRecord.creation_time.desc()).first()
-        if not self.last_sync:
-            self.init_sync()
 
     def is_note_content_equal(self, note_id, local_content):
         remote_sha = self.remote_metadata[note_id]["sha"]
@@ -47,8 +46,8 @@ class BaseSync(object):
         if not self.remote_metadata:
             return self.init_sync()
 
-        self.local_last_sync_sha = self.last_sync.sync_sha
-        self.local_last_sync_time = self.last_sync.creation_time
+        self.local_last_sync_sha = self.last_sync.sync_sha if self.last_sync else None
+        self.local_last_sync_time = self.last_sync.creation_time if self.last_sync else datetime(year=1990,month=1,day=1)
 
         if self.remote_metadata_sha == self.local_last_sync_sha:
             # put-create
@@ -237,6 +236,11 @@ class BaseSync(object):
                 self.create_remote_image(n.id, img.id, zlib.decompress(img.image))
 
         self.update_metadata()
+
+        # 创建同步记录
+        record = SyncRecord(sync_sha=self.remote_metadata_sha)
+        db.session.add(record)
+        db.session.commit()
 
     def fetch_metadata_and_sha(self):
         raise NotImplementedError
