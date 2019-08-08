@@ -59,9 +59,11 @@ def test_delete_file():
         print(resp.json())
 
 def test_read_content():
-    url = "https://api.github.com/repos/bmark-sync/notesync/contents/init.md"
+    url = "https://api.github.com/repos/bmark-sync/note-sync-2/contents/ideanote.json"
     resp = requests.get(url, data={
         "ref": "master"
+    }, params={
+        "access_token": "20a50aa67bfb987a0743a0068c4e3ddb76d21780"
     })
     print(json.dumps(resp.json(), indent=4))
     return resp.json()

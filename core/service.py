@@ -106,7 +106,7 @@ class NoteService(object):
     @classmethod
     def create_image(cls, note_id, image, image_id=None):
         image_content = zlib.compress(image.read())
-        image = Image(id=image_id, note_id=note_id, image=image_content)
+        image = Image(id=image_id, note_id=note_id, image=image_content, mime_type=image.mimetype)
         db.session.add(image)
         db.session.commit()
         return image.id

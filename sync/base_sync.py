@@ -129,6 +129,11 @@ class BaseSync(object):
             # 更新remote-metadata
             self.update_metadata()
 
+            # 创建同步记录
+            record = SyncRecord(sync_sha=self.remote_metadata_sha)
+            db.session.add(record)
+            db.session.commit()
+
         else:
             # 先同步remote到本地，再应用本地变更（只应用update和create，delete）
             local_create = Catalog.query.filter(Catalog.creation_time > self.local_last_sync_time,

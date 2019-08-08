@@ -28,6 +28,8 @@ class GithubSync(BaseSync):
         url = f"{self.base_url}/contents/{self.metadata_file}"
         resp = requests.get(url, data={
             "ref": self.branch
+        },params={
+            "access_token": self.access_token
         })
         result = resp.json()
         if not resp.ok:
@@ -59,6 +61,8 @@ class GithubSync(BaseSync):
         url = f"{self.base_url}/contents/{self.remote_metadata[note_id]['relative_path']}"
         resp = requests.get(url, data={
             "ref": self.branch
+        },params={
+            "access_token": self.access_token
         })
         return b64decode(resp.json()["content"].encode("utf8")).decode("utf8")
 
@@ -112,6 +116,8 @@ class GithubSync(BaseSync):
         url = f"{self.base_url}/contents/{self.remote_metadata[note_id][image_id]['img_rel_path']}"
         resp = requests.get(url, data={
             "ref": self.branch
+        },params={
+            "access_token": self.access_token
         })
         return b64decode(resp.json()["content"].encode("utf8"))
 
