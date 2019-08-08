@@ -28,7 +28,7 @@ class GithubSync(BaseSync):
         url = f"{self.base_url}/contents/{self.metadata_file}"
         resp = requests.get(url, data={
             "ref": self.branch
-        },params={
+        }, params={
             "access_token": self.access_token
         })
         result = resp.json()
@@ -61,10 +61,20 @@ class GithubSync(BaseSync):
         url = f"{self.base_url}/contents/{self.remote_metadata[note_id]['relative_path']}"
         resp = requests.get(url, data={
             "ref": self.branch
-        },params={
+        }, params={
             "access_token": self.access_token
         })
         return b64decode(resp.json()["content"].encode("utf8")).decode("utf8")
+
+    def _update_remote_note_sha(self, note_id):
+        url = f"{self.base_url}/contents/{self.remote_metadata[note_id]['relative_path']}"
+        resp = requests.get(url, data={
+            "ref": self.branch
+        }, params={
+            "access_token": self.access_token
+        })
+        self.remote_metadata[note_id]["sha"] = resp.json()["sha"]
+        return resp.ok
 
     def create_remote_note(self, note_id, content):
         relative_path = self._auto_gen_note_path(note_id=note_id)
@@ -86,7 +96,7 @@ class GithubSync(BaseSync):
 
     def update_remote_note(self, note_id, content):
         url = f"{self.base_url}/contents/{self.remote_metadata[note_id]['relative_path']}"
-        resp = requests.put(url, data=json.dumps({
+        data = {
             "message": self.commit_comment,
             "committer": {
                 "name": self.owner,
@@ -95,9 +105,13 @@ class GithubSync(BaseSync):
             "sha": self.remote_metadata[note_id]["sha"],
             "content": b64encode(content).decode("utf8"),
             "branch": self.branch
-        }), params={
+        }
+        resp = requests.put(url, data=json.dumps(data), params={
             "access_token": self.access_token
         })
+        if resp.status_code == 409:
+            self._update_remote_note_sha(note_id)
+            return self.update_remote_note(note_id, content)
         self.remote_metadata[note_id]["sha"] = resp.json()["content"]["sha"]
         return resp.ok
 
@@ -110,16 +124,29 @@ class GithubSync(BaseSync):
         }), params={
             "access_token": self.access_token
         })
+        if resp.status_code == 409:
+            self._update_remote_note_sha(note_id)
+            return self.delete_remote_note(note_id)
         return resp.ok
 
     def fetch_remote_image(self, note_id, image_id):
-        url = f"{self.base_url}/contents/{self.remote_metadata[note_id][image_id]['img_rel_path']}"
+        url = f"{self.base_url}/contents/{self.remote_metadata[note_id]['images'][image_id]['img_rel_path']}"
         resp = requests.get(url, data={
             "ref": self.branch
-        },params={
+        }, params={
             "access_token": self.access_token
         })
         return b64decode(resp.json()["content"].encode("utf8"))
+
+    def _update_remote_image_sha(self, note_id, image_id):
+        url = f"{self.base_url}/contents/{self.remote_metadata[note_id]['images'][image_id]['img_rel_path']}"
+        resp = requests.get(url, data={
+            "ref": self.branch
+        }, params={
+            "access_token": self.access_token
+        })
+        self.remote_metadata[note_id]['images'][image_id]["sha"] = resp.json()["sha"]
+        return resp.ok
 
     def create_remote_image(self, note_id, image_id, content):
         img_rel_path = self._auto_gen_image_path(note_id, image_id)
@@ -140,24 +167,27 @@ class GithubSync(BaseSync):
         return resp.ok
 
     def update_remote_image(self, note_id, image_id, content):
-        url = f"{self.base_url}/contents/{self.remote_metadata[note_id][image_id]['img_rel_path']}"
+        url = f"{self.base_url}/contents/{self.remote_metadata[note_id]['images'][image_id]['img_rel_path']}"
         resp = requests.put(url, data=json.dumps({
             "message": self.commit_comment,
             "committer": {
                 "name": self.owner,
                 "email": self.email
             },
-            "sha": self.remote_metadata[note_id]["sha"],
+            "sha": self.remote_metadata[note_id]['images'][image_id]["sha"],
             "content": b64encode(content).decode("utf8"),
             "branch": self.branch
         }), params={
             "access_token": self.access_token
         })
-        self.remote_metadata[note_id]["sha"] = resp.json()["content"]["sha"]
+        if resp.status_code == 409:
+            self._update_remote_image_sha(note_id, image_id)
+            return self.update_remote_image(note_id, image_id, content)
+        self.remote_metadata[note_id]['images'][image_id]["sha"] = resp.json()["content"]["sha"]
         return resp.ok
 
     def delete_remote_image(self, note_id, image_id):
-        url = f"{self.base_url}/contents/{self.remote_metadata[note_id][image_id]['img_rel_path']}"
+        url = f"{self.base_url}/contents/{self.remote_metadata[note_id]['images'][image_id]['img_rel_path']}"
         resp = requests.delete(url, data=json.dumps({
             "message": self.commit_comment,
             "sha": self.remote_metadata[note_id]["images"][image_id]["sha"],
@@ -165,6 +195,9 @@ class GithubSync(BaseSync):
         }), params={
             "access_token": self.access_token
         })
+        if resp.status_code == 409:
+            self._update_remote_image_sha(note_id, image_id)
+            return self.delete_remote_image(note_id, image_id)
         return resp.ok
 
 
