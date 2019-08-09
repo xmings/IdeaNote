@@ -5,7 +5,7 @@
 # @Date  : 2019/5/16
 # @Brief: 简述报表功能
 from . import core
-from flask import render_template, request, Response, jsonify
+from flask import render_template, request, Response, jsonify, current_app
 from core.service import NoteService
 
 @core.route("/")
@@ -18,6 +18,7 @@ def fetch_notes():
     try:
         tree = NoteService.fetch_catalog_tree()
     except Exception as e:
+        current_app.logger.info(e)
         return Response(str(e), status=500)
     return jsonify(tree)
 
@@ -28,7 +29,7 @@ def fetch_content():
     try:
         content = NoteService.fetch_note(note_id)
     except Exception as e:
-        core.logger.error(e)
+        current_app.logger.error(e)
         return Response(str(e), status=401)
     return content
 
@@ -40,7 +41,7 @@ def add_note():
     try:
         note_id = NoteService.create_note(title=title,parent_id=pid, content="")
     except Exception as e:
-        core.logger.error(e)
+        current_app.logger.error(e)
         return Response(e, status=401)
     return jsonify({"id": note_id})
 
@@ -63,7 +64,7 @@ def update_note():
             raise Exception(f"UNKNOWN PARAMETER: {type}")
 
     except Exception as e:
-        core.logger.error(e)
+        current_app.logger.error(e)
         return Response(str(e), status=403)
 
     return Response(status=200)
@@ -75,7 +76,7 @@ def drop_note():
     try:
         NoteService.delete_note(id=id)
     except Exception as e:
-        core.logger.error(e)
+        current_app.logger.error(e)
         return Response(str(e), status=500)
     return Response(status=200)
 
@@ -87,7 +88,7 @@ def upload_image():
     try:
         img_id = NoteService.create_image(note_id=id, image=image)
     except Exception as e:
-        core.logger.error(e)
+        current_app.logger.error(e)
         return "error", 500
 
     return jsonify({'filename': f".img/{img_id}"}), 200
@@ -98,7 +99,7 @@ def download_image(image_id):
     try:
         content, mimetype = NoteService.fetch_image(image_id=image_id)
     except Exception as e:
-        core.logger.error(e)
+        current_app.logger.error(e)
         return Response(status=403)
     return Response(content, mimetype=mimetype)
 
@@ -108,5 +109,6 @@ def sync_note():
     try:
         NoteService.sync_notes()
     except Exception as e:
+        current_app.logger.info(e)
         return Response(str(e), status=500)
     return Response(status=200)

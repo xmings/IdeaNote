@@ -29,6 +29,22 @@ class ConfigLoader(object):
     def note_data_path(self):
         return self.config.get("IdeaNote").get("note_data_path")
 
+    @property
+    def db_config(self):
+        return self.config.get("IdeaNote").get("db").get("config")
+
+    @property
+    def log_directory(self):
+        return self.config.get("IdeaNote").get("log").get("directory")
+
+    @property
+    def log_formatter(self):
+        return self.config.get("IdeaNote").get("log").get("formatter")
+
+    @property
+    def app_port(self):
+        return self.config.get("IdeaNote").get("port")
+
 
 conf = ConfigLoader()
 

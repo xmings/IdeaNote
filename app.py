@@ -3,13 +3,12 @@
 # @File  : control.py
 # @Author: wangms
 # @Date  : 2018/8/6
-
+import os
 from flask import Flask, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
-from flask.logging import default_handler
-from config import BaseConfig
-from logging.config import dictConfig as loggerConfig
-
+from common import conf
+from logging import INFO, Formatter
+from logging.handlers import TimedRotatingFileHandler
 
 import win32api, win32gui
 ct = win32api.GetConsoleTitle()
@@ -18,43 +17,25 @@ win32gui.ShowWindow(hd,0)
 
 
 app = Flask(__name__)
-app.config.from_object(BaseConfig)
+app.config.from_mapping(conf.db_config)
+log_handler = TimedRotatingFileHandler(
+    filename=os.path.join(conf.log_directory, "idea_note.log"),
+    when="midnight",
+    encoding="utf8"
+)
+log_handler.setLevel(INFO)
+log_handler.setFormatter(Formatter(conf.log_formatter))
+app.logger.addHandler(log_handler)
+
 db = SQLAlchemy(app)
-
-log_file = app.config.get("LOG_FILE")
-
 
 @app.route('/static/js/<path:path>', methods=["GET"])
 def send_js(path):
     return send_from_directory('static/js', path, mimetype="application/javascript")
 
-loggerConfig({
-    'version': 1,
-    'formatters': {'default': {
-        'format': '%(asctime)s %(levelname)s %(module)s %(lineno)d: %(message)s',
-    }},
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'default',
-            'level': 'INFO'
-        },
-        'file': {
-            'class': 'logging.FileHandler',
-            'formatter': 'default',
-            'filename': app.config.get("LOG_FILE"),
-            'level': 'INFO'
-    }},
-    'root': {
-        'level': 'DEBUG',
-        'handlers': ['console']
-    }
-})
 
 from core import core
 app.register_blueprint(core)
-
-app.logger.removeHandler(default_handler)
 
 # app.app_context().push()
 # db.drop_all()
@@ -62,8 +43,4 @@ app.logger.removeHandler(default_handler)
 
 
 if __name__ == '__main__':
-    import sys
-    assert len(sys.argv) == 3
-    port, notes = sys.argv[1:]
-    app.config['NOTES_DIRCTORY'] = notes
-    app.run(port=port, threaded=True)
+    app.run(port=conf.app_port, threaded=True)
