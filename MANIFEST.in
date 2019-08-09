@@ -1,5 +1,0 @@
-include *
-graft static
-graft templates
-graft log
-global-exclude *.pyc
