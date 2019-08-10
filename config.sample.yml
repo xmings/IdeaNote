@@ -1,14 +1,33 @@
 IdeaNote:
-  local:
+  port: 5555
+  metadata_file: ideanote.json
   sync:
     remote:
-      method: onedrive
+      method: github
       connection:
-        tenant: common
-        client_id: 0d6887cb-6a47-4e62-beee-73e7642b0e02
-        response_type: code
-        redirect_uri: http://localhost:5000
-        response_mode: query
-        scope: Device.ReadWrite.All Files.Read.All Files.ReadWrite.All User.Read
-        state: 1234
-        secret: r+?kZxNJ-IcX+Q33dfw5ZWb8LT96.fuh
+        owner: bmark-sync
+        email: thankall@yeah.net
+        repo: note-sync-2
+        access_token: 20a50aa67bfb987a0743a0068c4e3ddb76d21781
+        branch: master
+  db:
+    config:
+      SQLALCHEMY_ECHO: False
+      CREATE_DB_IF_NOT_FOUND: True
+      JSON_AS_ASCII: False
+      SECRET_KEY: '123456789'
+      SQLALCHEMY_DATABASE_URI: sqlite:///d:\weiyun\ideanote.db?check_same_thread=False
+      SQLALCHEMY_TRACK_MODIFICATIONS: False
+  log:
+    directory: E:\DataCarrer\Python\IdeaNote\log
+    formatter: "%(asctime)s %(levelname)s %(filename)s %(lineno)d: %(message)s"
+
+
+  note_data_path: E:\MyNote
+  log_dir: log
+  note_status:
+    valid: 1
+    invalid: -1
+    wait_consistent_flush: 3
+    unsure_update: 10
+    unsure_delete: 11
