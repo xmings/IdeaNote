@@ -84,30 +84,38 @@ body {
     padding: 4px 12px;
     background-color: #f3f3f329;
     font-size: 14px;
-    font-family: song, "Fira Code", Lucida Sans Typewriter, Lucida Console, monaco, Courrier, monospace;
+    font-family: "Fira Code", "Helvetica Neue", Helvetica, Helvetica, Arial, sans-serif; !important;
 }
 
 .preview p {
     margin-bottom: 0;
+    font-family: inherit;
 }
 
 .preview li {
     font-size: 14px;
+    font-family: inherit;
 }
 
 .preview pre {
-    font-size: 12px;
+    font-size: 14px;
+    font-family: inherit;
 }
 
 .preview blockquote {
     color: rgba(0, 0, 0, .5);
-    padding-left: 4px;
-    border-left: 5px solid rgba(0, 0, 0, .1);
+    line-height: 30px;
+    border-left: 6px solid rgba(0, 0, 0, .1);
     font-size: 14px;
+    margin: 0 0 24px;
+    padding: 6px;
+    background: #eef0f4;
+    font-family: inherit;
 }
 
 .preview blockquote ul {
     margin-left: 0;
+    font-family: inherit;
 }
 
 .preview table {
@@ -115,6 +123,7 @@ body {
     margin-top: 4px;
     margin-bottom: 8px;
     border: 1px solid #ccc;
+    font-family: inherit;
 }
 
 .preview table td {
@@ -122,6 +131,7 @@ body {
     border-top: 1px solid #dcdcdc;
     border-right: 1px solid #dcdcdc;
     padding: 8px 12px;
+    font-family: inherit;
 }
 
 .preview table th {
@@ -131,23 +141,28 @@ body {
     font-weight: bold;
     border-right: 1px solid #ccc;
     background-color: #eff3f5;
+    font-family: inherit;
 }
 
 .preview table tr:nth-child(2n) {
     background-color: #f7f7f7;
+    font-family: inherit;
 }
 
 #toc {
     font-size: 14px;
     margin-left: 10px;
+    font-family: inherit;
 }
 
 #toc .list-unstyled {
     margin-left: 10px;
+    font-family: inherit;
 }
 
 #toc a {
     text-decoration: none;
+    font-family: inherit;
 }
 
 #toc a:focus {
@@ -166,26 +181,30 @@ body {
     top: 30%;
     padding: 20px;
     visibility: hidden;
+    font-family: inherit;
 }
 
 #catalog-tree {
     font-size: 12px;
     margin-left: 0;
+    font-family: inherit;
 }
 
 #catalog-tree > #root {
     padding-left: 0;
+    font-family: inherit;
 }
 
 .splitter_panel .vsplitter {
     width: 2px;
     background-color: rgba(128, 128, 128, 0.18);
+    font-family: inherit;
 }
 
 .CodeMirror {
     height: 100%;
-    font-family: song, "Fira Code", Lucida Sans Typewriter, Lucida Console, monaco, Courrier, monospace;
     font-size: 14px;
+    font-family: inherit;
 }
 
 .CodeMirror-lines {
