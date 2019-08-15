@@ -148,10 +148,11 @@ class NoteService(object):
                         snap = Snap(note_id=n.id, content=n.content)
                         db.session.add(snap)
                         db.session.commit()
+                last_time = datetime.now()
 
 
 
-at_snap = Thread(target=NoteService.auto_snap, args=())
+at_snap = Thread(target=NoteService.auto_snap)
 at_snap.setDaemon(True)
 at_snap.start()
 
