@@ -84,7 +84,8 @@ body {
     padding: 4px 12px;
     background-color: #f3f3f329;
     font-size: 14px;
-    font-family: "Fira Code", "Helvetica Neue", Helvetica, Helvetica, Arial, sans-serif; !important;
+    font-family: "Fira Code", "Helvetica Neue", Helvetica, Helvetica, Arial, sans-serif;
+!important;
 }
 
 .preview p {
@@ -97,6 +98,10 @@ body {
     font-family: inherit;
 }
 
+.preview li:before{
+    color: red;
+}
+
 .preview pre {
     font-size: 14px;
     font-family: inherit;
@@ -105,11 +110,12 @@ body {
 .preview blockquote {
     color: rgba(0, 0, 0, .5);
     line-height: 30px;
-    border-left: 6px solid rgba(0, 0, 0, .1);
+    border-left: 6px solid #21ba4591;
     font-size: 14px;
-    margin: 0 0 24px;
-    padding: 6px;
-    background: #eef0f4;
+    margin: 12px 0 24px 0;
+    padding: 14px;
+    box-shadow: rgb(170, 170, 170) 0 0 14px 0;
+    background: #eef0f461;
     font-family: inherit;
 }
 
@@ -118,12 +124,29 @@ body {
     font-family: inherit;
 }
 
+.preview blockquote code {
+    color: #db2828;
+    font-family: inherit;
+    background-color: rgba(255, 255, 255, 0.33);
+}
+
+.preview hr {
+    margin: 0 auto;
+    border: 0;
+    height: 2px;
+    background-image: linear-gradient(to right, #21ba45, #00b5ad, rgba(0, 0, 0, 0));
+}
+
 .preview table {
     width: 90%;
     margin-top: 4px;
     margin-bottom: 8px;
     border: 1px solid #ccc;
     font-family: inherit;
+}
+
+.preview image {
+    box-shadow: rgb(170, 170, 170) 0 0 14px 0;
 }
 
 .preview table td {
@@ -230,6 +253,7 @@ body {
 .ui.vertical.menu.contextmenu {
     position: fixed;
     display: none;
+    z-index: 1000;
 }
 
 .ui.vertical.menu.contextmenu .item > i.icon {
@@ -265,6 +289,7 @@ body {
     -webkit-box-shadow: none;
     box-shadow: none;
 }
+
 .ztree li a.curSelectedNode_Edit {
     background: none;
     border: none;
