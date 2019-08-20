@@ -124,10 +124,11 @@ body {
     font-family: inherit;
 }
 
-.preview blockquote code {
+code, kbd, samp {
     color: #db2828;
     font-family: inherit;
     background-color: rgba(255, 255, 255, 0.33);
+    font-weight: bold;
 }
 
 .preview hr {
