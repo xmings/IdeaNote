@@ -124,6 +124,19 @@ body {
     font-family: inherit;
 }
 
+.preview img {
+    border: 1px solid white;
+    box-shadow: rgb(102, 102, 102) 3.53553px 3.53553px 8px;
+    margin: 10px 0;
+}
+
+.preview img:hover {
+    -webkit-transition: all .7s;
+    transition: all .7s;
+    transform: scale(1.05);
+    -webkit-transform: scale(1.05);
+}
+
 code, kbd, samp {
     color: #db2828;
     font-family: inherit;
