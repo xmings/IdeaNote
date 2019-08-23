@@ -133,6 +133,7 @@ code, kbd, samp {
 .hljs {
     width: fit-content;
     font-weight: normal;
+    min-width: 30%;
 }
 
 .preview hr {

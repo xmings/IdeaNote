@@ -127,6 +127,14 @@ class Catalog {
                 // ctrl+s pull&&push
                 this.sync();
                 event.preventDefault();
+            } else if (event.keyCode === 38) {
+                this.move_by_arrow("up-index")
+            } else if (event.keyCode === 40) {
+                this.move_by_arrow("down-index")
+            } else if (event.keyCode === 37) {
+                this.move_by_arrow("up-level")
+            } else if (event.keyCode === 39) {
+                this.move_by_arrow("down-level")
             }
         });
 
@@ -177,7 +185,8 @@ class Catalog {
             dataType: 'json',
             success: response => {
                 newNode.id = response.id;
-                this.treeObj.updateNode(newNode)
+                this.treeObj.updateNode(newNode);
+                this.treeObj.editName(newNode);
             },
             error: XMLHttpRequest => {
                 messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
@@ -216,6 +225,53 @@ class Catalog {
                     + XMLHttpRequest.responseText, "negative");
             }
         })
+    }
+
+    move_by_arrow(direction) {
+        let targetNode = null;
+
+        if (direction === "up-index") {
+            targetNode = this.selectedNode.getPreNode();
+        } else if (direction === "down-index") {
+            targetNode = this.selectedNode.getNextNode();
+        } else if (direction === "up-level") {
+            let parent = this.selectedNode.getParentNode();
+            if (parent.level === 0) {
+                messageBox.show("该笔记父目录已是根目录，不能上移");
+                return;
+            }
+            targetNode = parent;
+        } else {
+            targetNode = this.selectedNode.getPreNode();
+        }
+        if (!targetNode) return;
+
+        $.ajax({
+            url: this.updateNoteUri,
+            type: 'POST',
+            data: {
+                type: direction,
+                target_note_id: targetNode.id,
+                id: this.selectedNode.id
+            },
+            error: function (XMLHttpRequest) {
+                messageBox.show("修改结点名称失败: "
+                    + XMLHttpRequest.responseText, "negative");
+            },
+            success: () => {
+                if (direction === "up-index") {
+                    this.treeObj.moveNode(targetNode, this.selectedNode, "prev");
+                } else if (direction === "down-index") {
+                    this.treeObj.moveNode(targetNode, this.selectedNode, "next");
+                } else if (direction === "up-level") {
+                    this.treeObj.moveNode(targetNode, this.selectedNode, "next");
+                } else if (direction === "down-level") {
+                    this.treeObj.moveNode(targetNode, this.selectedNode, "inner");
+                }
+                this.treeObj.updateNode(this.selectedNode);
+            }
+        })
+
     }
 
     sync() {

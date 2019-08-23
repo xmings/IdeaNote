@@ -28,17 +28,23 @@ class NoteService(object):
         return True
 
     @classmethod
-    def update_note_position(cls, note_id, prev_note_id):
+    def update_note_position(cls, note_id, prev_note_id=None, parent_id=None):
+        assert prev_note_id or parent_id, "either prev_note_id or parent_id is supplied"
         note = Catalog.query.filter_by(id=note_id).first()
-        prev_note = Catalog.query.filter_by(id=prev_note_id).first()
-        note.parent_id = prev_note.parent_id
-        note.seq_no = prev_note.seq_no + 1
-        post_notes = Catalog.query.filter(Catalog.parent_id == prev_note.parent_id,
-                                          Catalog.status == 1,
-                                          Catalog.seq_no > prev_note.seq_no,
-                                          Catalog.id != note.id).all()
-        for n in post_notes:
-            n.seq_no = note.seq_no + 1
+        if prev_note_id:
+            prev_note = Catalog.query.filter_by(id=prev_note_id).first()
+            note.parent_id = prev_note.parent_id
+            note.seq_no = prev_note.seq_no + 1
+            post_notes = Catalog.query.filter(Catalog.parent_id == prev_note.parent_id,
+                                              Catalog.status == 1,
+                                              Catalog.seq_no > prev_note.seq_no,
+                                              Catalog.id != note.id).all()
+            for n in post_notes:
+                n.seq_no = note.seq_no + 1
+        else:
+            note.parent_id = parent_id
+            last_note = Catalog.query.filter_by(parent_id=parent_id).order_by(Catalog.seq_no.desc()).first()
+            note.seq_no = 1 if not last_note else last_note.seq_no + 1
         db.session.commit()
         return True
 
