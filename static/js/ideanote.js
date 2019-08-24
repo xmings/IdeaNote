@@ -77,6 +77,9 @@ class Catalog {
                 onClick: (event, treeId, treeNode) => {
                     this.selectedNode = treeNode;
                     this.fetchNote();
+                    console.log(this.contentArea.editorObj.doc);
+                    this.contentArea.editorObj.focus();
+                    this.contentArea.editorObj.execCommand("goDocEnd");
                 },
                 onRename: () => {
                     this.rename()
@@ -127,7 +130,11 @@ class Catalog {
                 // ctrl+s pull&&push
                 this.sync();
                 event.preventDefault();
-            } else if (event.keyCode === 38) {
+            }
+        });
+
+        this.treeContainer.keydown(event => {
+            if (event.keyCode === 38) {
                 this.move_by_arrow("up-index")
             } else if (event.keyCode === 40) {
                 this.move_by_arrow("down-index")
@@ -136,7 +143,7 @@ class Catalog {
             } else if (event.keyCode === 39) {
                 this.move_by_arrow("down-level")
             }
-        });
+        })
 
     }
 
