@@ -77,9 +77,8 @@ class Catalog {
                 onClick: (event, treeId, treeNode) => {
                     this.selectedNode = treeNode;
                     this.fetchNote();
-                    console.log(this.contentArea.editorObj.doc);
-                    this.contentArea.editorObj.focus();
                     this.contentArea.editorObj.execCommand("goDocEnd");
+                    this.contentArea.editorObj.focus();
                 },
                 onRename: () => {
                     this.rename()
