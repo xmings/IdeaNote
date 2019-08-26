@@ -14,7 +14,9 @@ class NoteService(object):
     @classmethod
     def create_note(self, title, parent_id, content, **kwargs):
         content = zlib.compress(content.encode("utf8"))
-        note = Catalog(title=title, parent_id=parent_id, content=content, **kwargs)
+        last_child = Catalog.query.filter(Catalog.parent_id==parent_id).order_by(Catalog.seq_no.desc).first()
+        seq_no = 1 if not last_child or not last_child.seq_no else last_child.seq_no + 1
+        note = Catalog(title=title, parent_id=parent_id, content=content, seq_no=seq_no, **kwargs)
         db.session.add(note)
         db.session.commit()
 
