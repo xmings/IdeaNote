@@ -89,8 +89,12 @@ body {
 }
 
 .preview p {
-    margin-bottom: 0;
+    padding-top: 1em;
     font-family: inherit;
+}
+
+.preview p br {
+    line-height: 2em;
 }
 
 .preview li {
@@ -107,13 +111,20 @@ body {
     font-family: inherit;
 }
 
+.preview h1,.preview h2,.preview h3,
+.preview h4,.preview h5,.preview h6 {
+    padding-bottom: 0;
+    margin-bottom: 0;
+    margin-top: 1em;
+}
+
 .preview blockquote {
     color: rgba(0, 0, 0, .5);
     line-height: 30px;
     border-left: 6px solid #21ba4591;
     font-size: 14px;
-    margin: 20px 0;
-    padding: 14px;
+    margin: 2em 0 0 0;
+    padding: 0 2em 1em 1em;
     box-shadow: rgb(170, 170, 170) 0 0 14px 0;
     background: #eef0f461;
     font-family: inherit;
@@ -153,7 +164,6 @@ code, kbd, samp {
 }
 
 .preview hr {
-    margin: 20px 0;
     border: 0;
     height: 2px;
     background-image: linear-gradient(to right, #21ba45, #00b5ad, rgba(0, 0, 0, 0));

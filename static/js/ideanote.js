@@ -97,6 +97,27 @@ class Catalog {
                     } else {
                         this.contextmenu.hide();
                     }
+                },
+                onDrop: (event, treeId, treeNodes, targetNode, moveType, isCopy) => {
+                    let direction = moveType === "inner"? "down-level" : "down-index";
+                    console.log(treeId);
+                    console.log(treeNodes);
+                    console.log(targetNode);
+                    if (!isCopy && targetNode && treeNodes[0].pId) {
+                        $.ajax({
+                            url: this.updateNoteUri,
+                            type: 'POST',
+                            data: {
+                                type: direction,
+                                target_note_id: targetNode.id,
+                                id: treeNodes[0].id
+                            },
+                            error: function (XMLHttpRequest) {
+                                messageBox.show("修改结点名称失败: "
+                                    + XMLHttpRequest.responseText, "negative");
+                            }
+                        })
+                    }
                 }
             }
         };

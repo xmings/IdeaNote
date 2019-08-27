@@ -14,7 +14,7 @@ class NoteService(object):
     @classmethod
     def create_note(self, title, parent_id, content, **kwargs):
         content = zlib.compress(content.encode("utf8"))
-        last_child = Catalog.query.filter(Catalog.parent_id==parent_id).order_by(Catalog.seq_no.desc).first()
+        last_child = Catalog.query.filter(Catalog.parent_id==parent_id).order_by(Catalog.seq_no.desc()).first()
         seq_no = 1 if not last_child or not last_child.seq_no else last_child.seq_no + 1
         note = Catalog(title=title, parent_id=parent_id, content=content, seq_no=seq_no, **kwargs)
         db.session.add(note)
@@ -39,10 +39,11 @@ class NoteService(object):
             note.seq_no = prev_note.seq_no + 1
             post_notes = Catalog.query.filter(Catalog.parent_id == prev_note.parent_id,
                                               Catalog.status == 1,
-                                              Catalog.seq_no > prev_note.seq_no,
-                                              Catalog.id != note.id).all()
+                                              Catalog.seq_no >= prev_note.seq_no,
+                                              Catalog.id != note.id,
+                                              Catalog.id != prev_note.id).all()
             for n in post_notes:
-                n.seq_no = note.seq_no + 1
+                n.seq_no = note.seq_no + 2
         else:
             note.parent_id = parent_id
             last_note = Catalog.query.filter_by(parent_id=parent_id).order_by(Catalog.seq_no.desc()).first()
