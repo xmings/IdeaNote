@@ -97,10 +97,13 @@ body {
     line-height: 2em;
 }
 
+.preview ul {
+    margin: 0;
+}
+
 .preview li {
     font-size: 14px;
     font-family: inherit;
-    margin-top: 1em;
 }
 
 .preview li:before {
