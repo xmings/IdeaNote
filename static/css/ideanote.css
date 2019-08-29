@@ -148,10 +148,10 @@ body {
 }
 
 .preview img:hover {
-    -webkit-transition: all .7s;
-    transition: all .7s;
-    transform: scale(1.05);
-    -webkit-transform: scale(1.05);
+    -webkit-transition: all .5s;
+    transition: all .5s;
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
 }
 
 code, kbd, samp {
