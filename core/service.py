@@ -8,6 +8,8 @@ from core.model import Catalog, Image, Snap, db
 from datetime import datetime
 from app import app
 from threading import Thread
+from sync.weiyun_sync import WeiYunSync
+from common import conf
 
 
 class NoteService(object):
@@ -160,8 +162,30 @@ class NoteService(object):
                 last_time = datetime.now()
 
 
+    @classmethod
+    def auto_create_change_log(cls):
+        import time
+        last_time = datetime.now()
+        wy_sync = WeiYunSync(conf.sync_work_dir)
+        while True:
+            time.sleep(60)
+            if not wy_sync.can_upload():
+                continue
+            with app.app_context():
+                change_notes = Catalog.query.filter(Catalog.modification_time > last_time).all()
+                for n in change_notes:
+                    wy_sync.dump_note(n)
+                    change_images = Image.query.filter(Image.modification_time > last_time).all()
+                    for img in change_images:
+                        wy_sync.dump_images(img)
+            last_time = datetime.now()
+
 
 at_snap = Thread(target=NoteService.auto_snap)
-at_snap.setDaemon(True)
+at_snap.daemon = True
 at_snap.start()
+
+at_change_log = Thread(target=NoteService.auto_create_change_log)
+at_change_log.daemon = True
+at_change_log.start()
 

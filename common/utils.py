@@ -45,6 +45,10 @@ class ConfigLoader(object):
     def app_port(self):
         return self.config.get("IdeaNote").get("port")
 
+    @property
+    def sync_work_dir(self):
+        return self.config.get("IdeaNote").get("sync").get("work_dir")
+
 
 conf = ConfigLoader()
 
