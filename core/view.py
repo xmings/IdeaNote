@@ -115,3 +115,14 @@ def sync_note():
         current_app.logger.info(e)
         return Response(str(e), status=500)
     return Response(status=200)
+
+
+@core.route('/translator')
+def text_translator():
+    text = request.args.get('text')
+    try:
+        result = NoteService.translate_text(text)
+    except Exception as e:
+        current_app.logger.error(e)
+        return Response(str(e), status=500)
+    return jsonify(result)

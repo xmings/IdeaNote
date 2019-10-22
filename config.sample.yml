@@ -10,7 +10,7 @@ IdeaNote:
         repo: note-sync-2
         access_token: 20a50aa67bfb987a0743a0068c4e3ddb76d21781
         branch: master
-    work_dir: D:\weiyun
+    work_dir: D:\weiyun\ideanote
   db:
     config:
       SQLALCHEMY_ECHO: False

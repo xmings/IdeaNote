@@ -20,6 +20,7 @@ class Catalog(db.Model):
     status = db.Column(db.Integer, default=1)
     creation_time = db.Column(db.DateTime, default=datetime.now())
     modification_time = db.Column(db.DateTime)
+    change_time = max(creation_time, modification_time)
 
 
 class Image(db.Model):
@@ -31,6 +32,7 @@ class Image(db.Model):
     status = db.Column(db.Integer, default=1)
     creation_time = db.Column(db.DateTime, default=datetime.now())
     modification_time = db.Column(db.DateTime)
+    change_time = max(creation_time, modification_time)
 
 
 class Snap(db.Model):

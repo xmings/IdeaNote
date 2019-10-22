@@ -3,20 +3,21 @@
 # @File  : service.py
 # @Author: wangms
 # @Date  : 2019/8/3
-import zlib
+import zlib, requests
 from core.model import Catalog, Image, Snap, db
 from datetime import datetime
 from app import app
 from threading import Thread
 from sync.weiyun_sync import WeiYunSync
 from common import conf
+from sqlalchemy import or_
 
 
 class NoteService(object):
     @classmethod
     def create_note(self, title, parent_id, content, **kwargs):
         content = zlib.compress(content.encode("utf8"))
-        last_child = Catalog.query.filter(Catalog.parent_id==parent_id).order_by(Catalog.seq_no.desc()).first()
+        last_child = Catalog.query.filter(Catalog.parent_id == parent_id).order_by(Catalog.seq_no.desc()).first()
         seq_no = 1 if not last_child or not last_child.seq_no else last_child.seq_no + 1
         note = Catalog(title=title, parent_id=parent_id, content=content, seq_no=seq_no, **kwargs)
         db.session.add(note)
@@ -133,6 +134,11 @@ class NoteService(object):
         return ((zlib.decompress(i.image), i.mime_type) for i in imgs)
 
     @classmethod
+    def translate_text(cls, text):
+        r = requests.post("http://fy.iciba.com/ajax.php?a=fy", data={"f": "auto", "t": "auto", "w": text})
+        return r.json()
+
+    @classmethod
     def sync_notes(cls):
         from sync.github_sync import GithubSync
 
@@ -152,34 +158,61 @@ class NoteService(object):
         while True:
             time.sleep(60)
             with app.app_context():
-                change_notes = Catalog.query.filter(Catalog.modification_time>last_time, Catalog.status==1).all()
+                change_notes = Catalog.query.filter(Catalog.modification_time > last_time, Catalog.status == 1).all()
                 for n in change_notes:
-                    last_snap = Snap.query.filter(Snap.note_id==n.id).order_by(Snap.modification_time.desc()).first()
+                    last_snap = Snap.query.filter(Snap.note_id == n.id).order_by(Snap.modification_time.desc()).first()
                     if not last_snap or abs(len(last_snap.content) - len(n.content)) > 100:
                         snap = Snap(note_id=n.id, content=n.content)
                         db.session.add(snap)
                         db.session.commit()
                 last_time = datetime.now()
 
-
     @classmethod
     def auto_create_change_log(cls):
         import time
-        last_time = datetime.now()
         wy_sync = WeiYunSync(conf.sync_work_dir)
         while True:
-            time.sleep(60)
-            if not wy_sync.can_upload():
-                continue
-            with app.app_context():
-                change_notes = Catalog.query.filter(Catalog.modification_time > last_time).all()
-                for n in change_notes:
-                    wy_sync.dump_note(n)
-                    change_images = Image.query.filter(Image.modification_time > last_time).all()
-                    for img in change_images:
-                        wy_sync.dump_images(img)
-            last_time = datetime.now()
+            time.sleep(wy_sync.sync_frequence)
+            if wy_sync.request_push_lock():
+                with app.app_context():
+                    for note in Catalog.query.filter(Catalog.change_time > wy_sync.sync_timestamp).all():
+                        wy_sync.dump_note(note)
+                        for img in Image.query.filter(Catalog.change_time > wy_sync.sync_timestamp).all():
+                            wy_sync.dump_images(img)
 
+                wy_sync.flush_sync_metadata(
+                    last_update_timestamp=datetime.now(),
+                    sync_version=wy_sync.sync_version,
+                    sync_timestamp=datetime.now()
+                )
+
+            else:
+                last_change_note = Catalog.query.order_by(Catalog.change_time.desc()).first()
+                with app.app_context():
+                    notes = []
+                    images = []
+                    for record in wy_sync.load_change_record(last_change_note.change_time):
+                        version = record.get("version")
+                        if record.get("type") == "note":
+                            content = wy_sync.load_note(record.get("id"),version)
+                            record.pop("type")
+                            record.pop("version")
+                            record["content"] = content
+                            notes.append(Catalog(**record))
+                        elif record.get("type") == "image":
+                            image = wy_sync.load_image(record.get("id"),version)
+                            record.pop("type")
+                            record.pop("version")
+                            record["image"] = image
+                            images.append(Image(**record))
+
+                    db.session.bulk_save_objects(notes)
+                    db.session.bulk_save_objects(images)
+                    db.session.commit()
+
+                wy_sync.flush_sync_metadata(
+                    sync_version=version,
+                )
 
 at_snap = Thread(target=NoteService.auto_snap)
 at_snap.daemon = True
@@ -188,4 +221,3 @@ at_snap.start()
 at_change_log = Thread(target=NoteService.auto_create_change_log)
 at_change_log.daemon = True
 at_change_log.start()
-

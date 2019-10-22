@@ -97,7 +97,7 @@ body {
     line-height: 2em;
 }
 
-.preview ul {
+.preview ul, ol{
     margin: 0;
 }
 
