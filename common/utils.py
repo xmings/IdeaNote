@@ -10,6 +10,16 @@ from datetime import datetime, date
 import yaml
 import json
 
+def timestamp_from_str(s):
+    if s:
+        return datetime.fromisoformat(s)
+    return None
+
+def timestamp_to_str(ts):
+    if ts:
+        return str(ts)
+    return None
+
 
 class ConfigLoader(object):
     def __init__(self):

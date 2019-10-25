@@ -168,56 +168,71 @@ class NoteService(object):
                 last_time = datetime.now()
 
     @classmethod
-    def auto_create_change_log(cls):
+    def weiyun_auto_sync(cls):
         import time
         wy_sync = WeiYunSync(conf.sync_work_dir)
         while True:
-            time.sleep(wy_sync.sync_frequence)
-            if wy_sync.request_push_lock():
+            if wy_sync.request_push():
                 with app.app_context():
-                    for note in Catalog.query.filter(Catalog.change_time > wy_sync.sync_timestamp).all():
+                    change_note_count = 0
+                    for note in Catalog.query.filter(or_(Catalog.creation_time > wy_sync.sync_timestamp,
+                                                         Catalog.modification_time > wy_sync.sync_timestamp)).all():
                         wy_sync.dump_note(note)
-                        for img in Image.query.filter(Catalog.change_time > wy_sync.sync_timestamp).all():
-                            wy_sync.dump_images(img)
+                        change_note_count += 1
+                        for image in Image.query.filter(or_(Catalog.creation_time > wy_sync.sync_timestamp,
+                                                          Catalog.modification_time > wy_sync.sync_timestamp),
+                                                        Image.note_id == note.id).all():
+                            wy_sync.dump_image(image)
+                            change_note_count += 1
 
-                wy_sync.flush_sync_metadata(
-                    last_update_timestamp=datetime.now(),
-                    sync_version=wy_sync.sync_version,
-                    sync_timestamp=datetime.now()
-                )
+                if change_note_count == 0:
+                    wy_sync.last_update_timestamp = None
+
+                wy_sync.flush_sync_metadata()
 
             else:
-                last_change_note = Catalog.query.order_by(Catalog.change_time.desc()).first()
                 with app.app_context():
-                    notes = []
-                    images = []
-                    for record in wy_sync.load_change_record(last_change_note.change_time):
+                    for record in wy_sync.load_change_record():
                         version = record.get("version")
                         if record.get("type") == "note":
-                            content = wy_sync.load_note(record.get("id"),version)
-                            record.pop("type")
-                            record.pop("version")
-                            record["content"] = content
-                            notes.append(Catalog(**record))
+                            content = wy_sync.load_note(record.get("id"), version)
+                            db.session.add(
+                                Catalog(
+                                    id=record.get("id"),
+                                    title=record.get("title"),
+                                    icon=record.get("icon"),
+                                    parent_id=record.get("parent_id"),
+                                    content=content,
+                                    seq_no=record.get("seq_no"),
+                                    status=record.get("status"),
+                                    creation_time=record.get("creation_time"),
+                                    modification_time=record.get("modification_time")
+                                )
+                            )
                         elif record.get("type") == "image":
-                            image = wy_sync.load_image(record.get("id"),version)
-                            record.pop("type")
-                            record.pop("version")
-                            record["image"] = image
-                            images.append(Image(**record))
-
-                    db.session.bulk_save_objects(notes)
-                    db.session.bulk_save_objects(images)
+                            image = wy_sync.load_image(record.get("id"), version)
+                            db.session.add(
+                                Image(
+                                    id=record.get("id"),
+                                    note_id=record.get("note_id"),
+                                    image=image,
+                                    mime_type=record.get("mime_type"),
+                                    status=record.get("status"),
+                                    creation_time=record.get("creation_time"),
+                                    modification_time=record.get("modification_time")
+                                )
+                            )
                     db.session.commit()
 
-                wy_sync.flush_sync_metadata(
-                    sync_version=version,
-                )
+                wy_sync.flush_sync_metadata()
+
+            time.sleep(wy_sync.sync_frequence)
+
 
 at_snap = Thread(target=NoteService.auto_snap)
 at_snap.daemon = True
 at_snap.start()
 
-at_change_log = Thread(target=NoteService.auto_create_change_log)
-at_change_log.daemon = True
-at_change_log.start()
+weiyun_auto_sync = Thread(target=NoteService.weiyun_auto_sync)
+weiyun_auto_sync.daemon = True
+weiyun_auto_sync.start()

@@ -10,6 +10,7 @@ import socket
 import time
 from datetime import datetime, timedelta
 from threading import Lock
+from common import timestamp_from_str, timestamp_to_str
 
 sync_verion_lock = Lock()
 sync_metadata_lock = Lock()
@@ -21,43 +22,56 @@ class WeiYunSync(object):
         self.sync_frequence = sync_frequence
         self.change_record_prefix = os.path.join(self.work_dir, "change_record")
         self.sync_metadata_file = os.path.join(self.work_dir, "sync.metadata")
+        self.note_file_suffix = ".note"
+        self.image_file_suffix = ".image"
 
-        # 用于记录当前节点同步的version
+
+        self._writing_node = None
+        # 用于记录当前节点同步的version，作为变更日志应用过程中的offset
         self.sync_version = None
-        # 用于记录目前change_record中最大可用的version
+        # 用于记录目前change_record中最大可用的version，作为变更日志中的最大offset
         self.max_sync_version = None
-        self.node_name = socket.gethostname()
-        self.max_file_record_count = 2000
-        # 用于记录当前节点上次同步变更的记录的最大时间点
+        # 主要用于记录各节点最近一次产生变更日志的对应记录的时间(max(creation_time,modification_time))
         self.sync_timestamp = None
 
-    def flush_sync_metadata(self, writing_node=None,
-                            last_update_timestamp=None, sync_version=None, sync_timestamp=None):
+        self.last_update_timestamp = None
+
+
+        self.node_name = socket.gethostname()
+        self.max_file_record_count = 2000
+
+    @property
+    def writing_node(self):
+        return self._writing_node
+
+    def flush_sync_metadata(self):
         assert os.path.exists(self.sync_metadata_file)
 
         with sync_metadata_lock:
             with open(self.sync_metadata_file, "r") as f:
                 metadata = json.loads(f.read())
 
-            if writing_node:
-                metadata["writing_node"] = writing_node
+            # 只有request_push_lock请求到锁时会给write_node赋值，
+            # 另外，只有当dump_note或者dump_image时才给last_update_timestamp赋值
+            if self.writing_node:
+                metadata["writing_node"] = self.writing_node
+                metadata["last_update_timestamp"] = timestamp_to_str(self.last_update_timestamp)
 
-            if last_update_timestamp:
-                metadata["last_update_timestamp"] = last_update_timestamp
+            if self.sync_timestamp:
+                metadata["sync_timestamp"][self.node_name] = timestamp_to_str(self.sync_timestamp)
+            else:
+                self.sync_timestamp = timestamp_from_str(metadata["sync_timestamp"].get(self.node_name))
 
-            if sync_timestamp:
-                metadata["sync_timestamp"][self.node_name] = sync_timestamp
+            if self.sync_version:
+                metadata["sync_version"][self.node_name] = self.sync_version
+            else:
+                self.sync_version = metadata["sync_version"].get(self.node_name, 1)
 
-            if sync_version:
-                metadata["sync_version"][self.node_name] = sync_version
 
-            if writing_node or last_update_timestamp or sync_version or sync_timestamp:
-                with open(self.sync_metadata_file, "w") as f:
-                    f.write(json.dumps(metadata))
+            with open(self.sync_metadata_file, "w") as f:
+                f.write(json.dumps(metadata, indent=4))
 
-            self.sync_version = metadata.get("sync_version").get(self.node_name)
-            self.sync_timestamp = metadata.get("sync_timestamp").get(self.node_name)
-            self.max_sync_version = max(metadata.get("sync_version").values())
+            self.max_sync_version = int(max(metadata.get("sync_version").values()))
 
         return metadata
 
@@ -76,15 +90,21 @@ class WeiYunSync(object):
                     "parent_id": note.parent_id,
                     "seq_no": note.seq_no,
                     "status": note.status,
-                    "creation_time": str(note.creation_time),
-                    "modification_time": str(note.modification_time)
+                    "creation_time": timestamp_to_str(note.creation_time),
+                    "modification_time": timestamp_to_str(note.modification_time)
                 }))
 
-            note_file = os.path.join(self.work_dir, f"{note.id}-{self.sync_version}.note")
+            note_file = os.path.join(self.work_dir, f"{note.id}-{self.sync_version}{self.note_file_suffix}")
             with open(note_file, "wb") as f:
                 f.write(note.content)
 
-    def dump_images(self, image):
+            if self.sync_timestamp is None \
+                    or self.sync_timestamp < max(note.creation_time, note.modification_time):
+                self.sync_timestamp = max(note.creation_time, note.modification_time)
+
+            self.last_update_timestamp = datetime.now()
+
+    def dump_image(self, image):
         with sync_verion_lock:
             self.sync_version += 1
             file_no = (self.sync_version // self.max_file_record_count) * self.max_file_record_count
@@ -96,19 +116,22 @@ class WeiYunSync(object):
                     "note_id": image.note_id,
                     "mime_type": image.mime_type,
                     "status": image.status,
-                    "creation_time": image.creation_time,
-                    "modification_time": image.modification_time
+                    "creation_time": timestamp_to_str(image.creation_time),
+                    "modification_time": timestamp_to_str(image.modification_time)
                 }))
 
-            img_file = os.path.join(self.work_dir, f"{image.id}-{self.sync_version}.img")
+            img_file = os.path.join(self.work_dir, f"{image.id}-{self.sync_version}{self.image_file_suffix}")
             with open(img_file, "wb") as f:
                 f.write(image.image)
 
-    def load_change_record(self, last_change_timestamp):
-        self.flush_sync_metadata()
+        if self.sync_timestamp is None \
+                or self.sync_timestamp < max(image.creation_time, image.modification_time):
+            self.sync_timestamp = max(image.creation_time, image.modification_time)
 
-        assert last_change_timestamp == self.sync_timestamp
+        self.last_update_timestamp = datetime.now()
 
+    def load_change_record(self):
+        assert self.request_push(), "必须应用完所有已知变更日志才可以Push变更日志"
         start_file_no = (self.sync_version // self.max_file_record_count) * self.max_file_record_count
         end_file_no = (self.max_sync_version // self.max_file_record_count + 1) * self.max_file_record_count
 
@@ -117,36 +140,54 @@ class WeiYunSync(object):
             with open(change_record_file, "r") as f:
                 for line in f.readlines():
                     record = json.loads(line)
-                    if int(record.get("sync_version")) > self.sync_version:
+                    if int(record.get("version")) > self.sync_version:
                         yield record
 
     def load_note(self, note_id, version):
-        note_file = os.path.join(self.work_dir, f"{note_id}-{version}.note")
+        note_file = os.path.join(self.work_dir, f"{note_id}-{version}{self.note_file_suffix}")
         with open(note_file, "rb") as f:
-            return f.read()
+            content =  f.read()
+        self.sync_version = version
+        self.sync_timestamp = datetime.now()
+        return content
+
 
     def load_image(self, image_id, version):
-        note_file = os.path.join(self.work_dir, f"{image_id}-{version}.note")
+        note_file = os.path.join(self.work_dir, f"{image_id}-{version}{self.image_file_suffix}")
         with open(note_file, "rb") as f:
-            return f.read()
+            content = f.read()
+        self.sync_version = version
+        self.sync_timestamp = datetime.now()
+        return content
 
-    def request_push_lock(self, block=False):
+    def request_push(self):
+        """
+        1. Push锁内部条件：self.sync_version == self.max_sync_version，即必须先引用完所有的变更日志
+        2. Push锁外部条件: writing_node相同或者last_update_timestamp很久没有变更
+        """
+
         metadata = self.flush_sync_metadata()
 
+        # Push锁内部条件验证
+        if self.sync_version < self.max_sync_version:
+            return False
+
+        # Push锁外部条件验证
         if metadata.get("writing_node") == self.node_name:
-            self.flush_sync_metadata(writing_node=self.node_name, last_update_timestamp=datetime.now())
+            self._writing_node = self.node_name
+            self.last_update_timestamp = datetime.now()
+            self.flush_sync_metadata()
             return True
 
         last_update_time = metadata.get("last_update_time")
         time.sleep(self.sync_frequence * 3)
+        metadata = self.flush_sync_metadata()
+        if metadata.get("last_update_time") == last_update_time:
+            self._writing_node = self.node_name
+            self.last_update_timestamp = datetime.now()
+            self.flush_sync_metadata()
+            return True
 
-        while block:
-            metadata = self.flush_sync_metadata()
-            if last_update_time == metadata.get("last_update_time"):
-                self.flush_sync_metadata(writing_node=self.node_name, last_update_timestamp=datetime.now())
-                return True
-
-            time.sleep(self.sync_frequence)
         return False
 
     def cleanup_expired_note(self):
@@ -154,8 +195,10 @@ class WeiYunSync(object):
         min_version = min(metadata.get("sync_version").values())
         min_version = (min_version // self.max_file_record_count) * self.max_file_record_count
 
-        if self.request_push_lock():
+        if self.request_push():
             for filename in os.listdir(self.work_dir):
+                if filename == os.path.basename(self.sync_metadata_file):
+                    continue
                 prefix, subffix = filename.split(".")
                 if prefix.startswith(os.path.basename(self.change_record_prefix)):
                     if int(subffix) < min_version:
