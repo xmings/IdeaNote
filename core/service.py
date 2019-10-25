@@ -180,7 +180,7 @@ class NoteService(object):
                         wy_sync.dump_note(note)
                         change_note_count += 1
                         for image in Image.query.filter(or_(Catalog.creation_time > wy_sync.sync_timestamp,
-                                                          Catalog.modification_time > wy_sync.sync_timestamp),
+                                                            Catalog.modification_time > wy_sync.sync_timestamp),
                                                         Image.note_id == note.id).all():
                             wy_sync.dump_image(image)
                             change_note_count += 1
@@ -196,7 +196,7 @@ class NoteService(object):
                         version = record.get("version")
                         if record.get("type") == "note":
                             content = wy_sync.load_note(record.get("id"), version)
-                            db.session.add(
+                            db.session.merge(
                                 Catalog(
                                     id=record.get("id"),
                                     title=record.get("title"),
@@ -211,7 +211,7 @@ class NoteService(object):
                             )
                         elif record.get("type") == "image":
                             image = wy_sync.load_image(record.get("id"), version)
-                            db.session.add(
+                            db.session.merge(
                                 Image(
                                     id=record.get("id"),
                                     note_id=record.get("note_id"),

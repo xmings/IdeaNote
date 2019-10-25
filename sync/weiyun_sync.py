@@ -93,7 +93,7 @@ class WeiYunSync(object):
                     "status": note.status,
                     "creation_time": timestamp_to_str(note.creation_time),
                     "modification_time": timestamp_to_str(note.modification_time)
-                }))
+                }) + "\r\n")
 
             note_file = os.path.join(self.work_dir, f"{note.id}-{self.sync_version}{self.note_file_suffix}")
             with open(note_file, "wb") as f:
@@ -119,7 +119,7 @@ class WeiYunSync(object):
                     "status": image.status,
                     "creation_time": timestamp_to_str(image.creation_time),
                     "modification_time": timestamp_to_str(image.modification_time)
-                }))
+                }) + "\r\n")
 
             img_file = os.path.join(self.work_dir, f"{image.id}-{self.sync_version}{self.image_file_suffix}")
             with open(img_file, "wb") as f:
@@ -132,7 +132,7 @@ class WeiYunSync(object):
         self.last_update_timestamp = datetime.now()
 
     def load_change_record(self):
-        assert self.request_push(), "必须应用完所有已知变更日志才可以Push变更日志"
+        assert self.request_push() == False, "必须应用完所有已知变更日志才可以Push变更日志"
         start_file_no = (self.sync_version // self.max_file_record_count) * self.max_file_record_count
         end_file_no = (self.max_sync_version // self.max_file_record_count + 1) * self.max_file_record_count
 
@@ -142,6 +142,8 @@ class WeiYunSync(object):
                 for line in f.readlines():
                     record = json.loads(line)
                     if int(record.get("version")) > self.sync_version:
+                        record["creation_time"] = timestamp_from_str(record["creation_time"])
+                        record["modification_time"] = timestamp_from_str(record["modification_time"])
                         yield record
 
     def load_note(self, note_id, version):
