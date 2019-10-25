@@ -60,7 +60,8 @@ class WeiYunSync(object):
             if self.sync_timestamp:
                 metadata["sync_timestamp"][self.node_name] = timestamp_to_str(self.sync_timestamp)
             else:
-                self.sync_timestamp = timestamp_from_str(metadata["sync_timestamp"].get(self.node_name))
+                self.sync_timestamp = timestamp_from_str(metadata["sync_timestamp"].get(self.node_name)) \
+                                      or datetime.now() - timedelta(hours=10)
 
             if self.sync_version:
                 metadata["sync_version"][self.node_name] = self.sync_version
@@ -172,17 +173,17 @@ class WeiYunSync(object):
         if self.sync_version < self.max_sync_version:
             return False
 
-        # Push锁外部条件验证
-        if metadata.get("writing_node") == self.node_name:
+        last_update_timestamp = metadata.get("last_update_timestamp")
+        # Push锁外部条件验证last_update_timestamp
+        if metadata.get("writing_node") == self.node_name or last_update_timestamp is None:
             self._writing_node = self.node_name
             self.last_update_timestamp = datetime.now()
             self.flush_sync_metadata()
             return True
 
-        last_update_time = metadata.get("last_update_time")
         time.sleep(self.sync_frequence * 3)
         metadata = self.flush_sync_metadata()
-        if metadata.get("last_update_time") == last_update_time:
+        if metadata.get("last_update_timestamp") == last_update_timestamp:
             self._writing_node = self.node_name
             self.last_update_timestamp = datetime.now()
             self.flush_sync_metadata()
