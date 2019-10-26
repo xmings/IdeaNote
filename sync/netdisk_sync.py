@@ -1,6 +1,6 @@
 #!/bin/python
 # -*- coding: utf-8 -*-
-# @File  : weiyun_sync.py
+# @File  : netdisk_sync.py
 # @Author: wangms
 # @Date  : 2019/8/8
 # @Brief: 简述报表功能
@@ -16,7 +16,7 @@ sync_verion_lock = Lock()
 sync_metadata_lock = Lock()
 
 
-class WeiYunSync(object):
+class NetDiskSync(object):
     def __init__(self, work_dir, sync_frequence=60):
         self.work_dir = work_dir
         self.sync_frequence = sync_frequence
@@ -148,16 +148,28 @@ class WeiYunSync(object):
 
     def load_note(self, note_id, version):
         note_file = os.path.join(self.work_dir, f"{note_id}-{version}{self.note_file_suffix}")
+        count = 1
+        while not os.path.exists(note_file):
+            time.sleep(0.5)
+            count += 1
+            if count > 30: raise FileNotFoundError(note_file)
+
         with open(note_file, "rb") as f:
-            content =  f.read()
+            content = f.read()
         self.sync_version = version
         self.sync_timestamp = datetime.now()
         return content
 
 
     def load_image(self, image_id, version):
-        note_file = os.path.join(self.work_dir, f"{image_id}-{version}{self.image_file_suffix}")
-        with open(note_file, "rb") as f:
+        image_file = os.path.join(self.work_dir, f"{image_id}-{version}{self.image_file_suffix}")
+        count = 1
+        while not os.path.exists(image_file):
+            time.sleep(0.5)
+            count += 1
+            if count > 300: raise FileNotFoundError(image_file)
+
+        with open(image_file, "rb") as f:
             content = f.read()
         self.sync_version = version
         self.sync_timestamp = datetime.now()

@@ -8,9 +8,10 @@ from core.model import Catalog, Image, Snap, db
 from datetime import datetime
 from app import app
 from threading import Thread
-from sync.weiyun_sync import WeiYunSync
+from sync.netdisk_sync import NetDiskSync
 from common import conf
 from sqlalchemy import or_
+import time
 
 
 class NoteService(object):
@@ -153,86 +154,94 @@ class NoteService(object):
 
     @classmethod
     def auto_snap(cls):
-        import time
-        last_time = datetime.now()
-        while True:
-            time.sleep(60)
-            with app.app_context():
-                change_notes = Catalog.query.filter(Catalog.modification_time > last_time, Catalog.status == 1).all()
-                for n in change_notes:
-                    last_snap = Snap.query.filter(Snap.note_id == n.id).order_by(Snap.modification_time.desc()).first()
-                    if not last_snap or abs(len(last_snap.content) - len(n.content)) > 100:
-                        snap = Snap(note_id=n.id, content=n.content)
-                        db.session.add(snap)
-                        db.session.commit()
-                last_time = datetime.now()
+        try:
+            last_time = datetime.now()
+            while True:
+                time.sleep(60)
+                with app.app_context():
+                    change_notes = Catalog.query.filter(Catalog.modification_time > last_time,
+                                                        Catalog.status == 1).all()
+                    for n in change_notes:
+                        last_snap = Snap.query.filter(Snap.note_id == n.id).order_by(
+                            Snap.modification_time.desc()).first()
+                        if not last_snap or abs(len(last_snap.content) - len(n.content)) > 100:
+                            snap = Snap(note_id=n.id, content=n.content)
+                            db.session.add(snap)
+                            db.session.commit()
+                    last_time = datetime.now()
+        except Exception as e:
+            app.logger.error(e)
+            app.logger.error("自动快照线程退出")
 
     @classmethod
-    def weiyun_auto_sync(cls):
-        import time
-        wy_sync = WeiYunSync(conf.sync_work_dir)
-        while True:
-            if wy_sync.request_push():
-                with app.app_context():
-                    change_note_count = 0
-                    for note in Catalog.query.filter(or_(Catalog.creation_time > wy_sync.sync_timestamp,
-                                                         Catalog.modification_time > wy_sync.sync_timestamp)).all():
-                        wy_sync.dump_note(note)
-                        change_note_count += 1
-                        for image in Image.query.filter(or_(Catalog.creation_time > wy_sync.sync_timestamp,
-                                                            Catalog.modification_time > wy_sync.sync_timestamp),
-                                                        Image.note_id == note.id).all():
-                            wy_sync.dump_image(image)
+    def netdisk_auto_sync(cls):
+        try:
+            wy_sync = NetDiskSync(conf.sync_work_dir)
+            while True:
+                if wy_sync.request_push():
+                    with app.app_context():
+                        change_note_count = 0
+                        for note in Catalog.query.filter(or_(Catalog.creation_time > wy_sync.sync_timestamp,
+                                                             Catalog.modification_time > wy_sync.sync_timestamp)).all():
+                            wy_sync.dump_note(note)
                             change_note_count += 1
+                            for image in Image.query.filter(or_(Catalog.creation_time > wy_sync.sync_timestamp,
+                                                                Catalog.modification_time > wy_sync.sync_timestamp),
+                                                            Image.note_id == note.id).all():
+                                wy_sync.dump_image(image)
+                                change_note_count += 1
 
-                if change_note_count == 0:
-                    wy_sync.last_update_timestamp = None
+                    if change_note_count == 0:
+                        wy_sync.last_update_timestamp = None
 
-                wy_sync.flush_sync_metadata()
+                    wy_sync.flush_sync_metadata()
 
-            else:
-                with app.app_context():
-                    for record in wy_sync.load_change_record():
-                        version = record.get("version")
-                        if record.get("type") == "note":
-                            content = wy_sync.load_note(record.get("id"), version)
-                            db.session.merge(
-                                Catalog(
-                                    id=record.get("id"),
-                                    title=record.get("title"),
-                                    icon=record.get("icon"),
-                                    parent_id=record.get("parent_id"),
-                                    content=content,
-                                    seq_no=record.get("seq_no"),
-                                    status=record.get("status"),
-                                    creation_time=record.get("creation_time"),
-                                    modification_time=record.get("modification_time")
+                else:
+                    with app.app_context():
+                        for record in wy_sync.load_change_record():
+                            version = record.get("version")
+                            if record.get("type") == "note":
+                                content = wy_sync.load_note(record.get("id"), version)
+                                db.session.merge(
+                                    Catalog(
+                                        id=record.get("id"),
+                                        title=record.get("title"),
+                                        icon=record.get("icon"),
+                                        parent_id=record.get("parent_id"),
+                                        content=content,
+                                        seq_no=record.get("seq_no"),
+                                        status=record.get("status"),
+                                        creation_time=record.get("creation_time"),
+                                        modification_time=record.get("modification_time")
+                                    )
                                 )
-                            )
-                        elif record.get("type") == "image":
-                            image = wy_sync.load_image(record.get("id"), version)
-                            db.session.merge(
-                                Image(
-                                    id=record.get("id"),
-                                    note_id=record.get("note_id"),
-                                    image=image,
-                                    mime_type=record.get("mime_type"),
-                                    status=record.get("status"),
-                                    creation_time=record.get("creation_time"),
-                                    modification_time=record.get("modification_time")
+                            elif record.get("type") == "image":
+                                image = wy_sync.load_image(record.get("id"), version)
+                                db.session.merge(
+                                    Image(
+                                        id=record.get("id"),
+                                        note_id=record.get("note_id"),
+                                        image=image,
+                                        mime_type=record.get("mime_type"),
+                                        status=record.get("status"),
+                                        creation_time=record.get("creation_time"),
+                                        modification_time=record.get("modification_time")
+                                    )
                                 )
-                            )
-                    db.session.commit()
+                        db.session.commit()
 
-                wy_sync.flush_sync_metadata()
+                    wy_sync.flush_sync_metadata()
 
-            time.sleep(wy_sync.sync_frequence)
+                time.sleep(wy_sync.sync_frequence)
+        except Exception as e:
+            app.logger.error(e.args)
+            app.logger.error("网盘同步线程退出")
 
 
 at_snap = Thread(target=NoteService.auto_snap)
 at_snap.daemon = True
 at_snap.start()
 
-weiyun_auto_sync = Thread(target=NoteService.weiyun_auto_sync)
-weiyun_auto_sync.daemon = True
-weiyun_auto_sync.start()
+netdisk_auto_sync = Thread(target=NoteService.netdisk_auto_sync)
+netdisk_auto_sync.daemon = True
+netdisk_auto_sync.start()

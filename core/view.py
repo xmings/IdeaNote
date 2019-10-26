@@ -127,10 +127,10 @@ def text_translator():
         return Response(str(e), status=500)
     return jsonify(result)
 
-# @core.route('/weiyun_sync')
+# @core.route('/netdisk_sync')
 # def sync():
 #     try:
-#         NoteService.weiyun_auto_sync()
+#         NoteService.netdisk_auto_sync()
 #     except Exception as e:
 #         current_app.logger.error(e)
 #         return Response(str(e), status=500)
