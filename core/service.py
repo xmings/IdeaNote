@@ -30,6 +30,7 @@ class NoteService(object):
     def update_note_title(cls, note_id, title):
         note = Catalog.query.filter_by(id=note_id).first()
         note.title = title
+        note.modification_time = datetime.now()
         db.session.commit()
         return True
 
@@ -48,10 +49,12 @@ class NoteService(object):
                                               Catalog.id != prev_note.id).all()
             for n in post_notes:
                 n.seq_no = note.seq_no + 2
+                n.modification_time = datetime.now()
         else:
             note.parent_id = parent_id
             last_note = Catalog.query.filter_by(parent_id=parent_id).order_by(Catalog.seq_no.desc()).first()
             note.seq_no = 1 if not last_note else last_note.seq_no + 1
+            note.modification_time = datetime.now()
         db.session.commit()
         return True
 
@@ -69,6 +72,7 @@ class NoteService(object):
     def update_note_status(cls, note_id, status):
         note = Catalog.query.filter_by(id=note_id).first()
         note.status = status
+        note.modification_time = datetime.now()
         db.session.commit()
         return True
 
