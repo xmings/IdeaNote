@@ -10,7 +10,7 @@ from app import app
 from threading import Thread
 from sync.netdisk_sync import NetDiskSync
 from common import conf
-from sqlalchemy import or_
+from sqlalchemy.sql import functions as sql_func
 import time
 
 
@@ -144,19 +144,6 @@ class NoteService(object):
         return r.json()
 
     @classmethod
-    def sync_notes(cls):
-        from sync.github_sync import GithubSync
-
-        # sync = GithubSync()
-        # # last_sha is a sha from the latest sync file which is named as `metadata.json`.
-        # last_sha = sync.run()
-        # rec = SyncRecord(sync_sha=last_sha)
-        # db.session.add(rec)
-        # # save the last sync sha and each file sha
-        # db.session.commit()
-        return True
-
-    @classmethod
     def auto_snap(cls):
         try:
             last_time = datetime.now()
@@ -185,13 +172,10 @@ class NoteService(object):
                 if wy_sync.request_push():
                     with app.app_context():
                         change_note_count = 0
-                        for note in Catalog.query.filter(or_(Catalog.creation_time > wy_sync.sync_timestamp,
-                                                             Catalog.modification_time > wy_sync.sync_timestamp)).all():
+                        for note in Catalog.query.filter(sql_func.max(Catalog.creation_time, Catalog.modification_time) > wy_sync.sync_timestamp):
                             wy_sync.dump_note(note)
                             change_note_count += 1
-                            for image in Image.query.filter(or_(Catalog.creation_time > wy_sync.sync_timestamp,
-                                                                Catalog.modification_time > wy_sync.sync_timestamp),
-                                                            Image.note_id == note.id).all():
+                            for image in Image.query.filter(sql_func.max(Catalog.creation_time, Catalog.modification_time) > wy_sync.sync_timestamp, Image.note_id == note.id):
                                 wy_sync.dump_image(image)
                                 change_note_count += 1
 
