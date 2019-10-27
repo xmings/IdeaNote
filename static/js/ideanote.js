@@ -80,8 +80,11 @@ class Catalog {
                     this.contentArea.editorObj.execCommand("goDocEnd");
                     this.contentArea.editorObj.focus();
                 },
-                onRename: () => {
-                    this.rename()
+                onRename: (event, treeId, treeNode) => {
+                    this.selectedNode =  treeNode;
+                    this.rename();
+                    this.treeContainer.find("#" + treeNode.tId + ">a").click();
+
                 },
                 onRightClick: (event, treeId, treeNode) => {
                     if (treeNode) {

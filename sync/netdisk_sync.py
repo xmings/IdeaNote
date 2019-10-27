@@ -93,7 +93,7 @@ class NetDiskSync(object):
                     "status": note.status,
                     "creation_time": timestamp_to_str(note.creation_time),
                     "modification_time": timestamp_to_str(note.modification_time)
-                }) + "\n")
+                }, ensure_ascii=False) + "\n")
 
             note_file = os.path.join(self.work_dir, f"{note.id}-{self.sync_version}{self.note_file_suffix}")
             with open(note_file, "wb") as f:
@@ -119,7 +119,7 @@ class NetDiskSync(object):
                     "status": image.status,
                     "creation_time": timestamp_to_str(image.creation_time),
                     "modification_time": timestamp_to_str(image.modification_time)
-                }) + "\n")
+                }, ensure_ascii=False) + "\n")
 
             img_file = os.path.join(self.work_dir, f"{image.id}-{self.sync_version}{self.image_file_suffix}")
             with open(img_file, "wb") as f:
