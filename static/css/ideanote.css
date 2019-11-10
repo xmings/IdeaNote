@@ -147,12 +147,12 @@ body {
     margin: 10px 0;
 }
 
-.preview img:hover {
-    -webkit-transition: all .5s;
-    transition: all .5s;
-    transform: scale(1.02);
-    -webkit-transform: scale(1.02);
-}
+/*.preview img:hover {*/
+/*    -webkit-transition: all .5s;*/
+/*    transition: all .5s;*/
+/*    transform: scale(1.02);*/
+/*    -webkit-transform: scale(1.02);*/
+/*}*/
 
 code, kbd, samp {
     color: #db2828;
