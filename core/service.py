@@ -175,7 +175,7 @@ class NoteService(object):
                         for note in Catalog.query.filter(sql_func.max(Catalog.creation_time, Catalog.modification_time) > wy_sync.sync_timestamp):
                             wy_sync.dump_note(note)
                             change_note_count += 1
-                            for image in Image.query.filter(sql_func.max(Catalog.creation_time, Catalog.modification_time) > wy_sync.sync_timestamp, Image.note_id == note.id):
+                            for image in Image.query.filter(sql_func.max(Image.creation_time, Image.modification_time) > wy_sync.sync_timestamp, Image.note_id == note.id):
                                 wy_sync.dump_image(image)
                                 change_note_count += 1
 
