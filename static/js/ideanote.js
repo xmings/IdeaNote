@@ -52,6 +52,7 @@ class Catalog {
         this.syncUri = options.syncUri;
         this.contentArea = options.contentArea;
         this.selectedNode = null;
+        this.changeSequenceMode = false;
         this.attribution = {
             check: {
                 enable: false
@@ -81,7 +82,7 @@ class Catalog {
                     this.contentArea.editorObj.focus();
                 },
                 onRename: (event, treeId, treeNode) => {
-                    this.selectedNode =  treeNode;
+                    this.selectedNode = treeNode;
                     this.rename();
                     this.treeContainer.find("#" + treeNode.tId + ">a").click();
 
@@ -102,7 +103,7 @@ class Catalog {
                     }
                 },
                 onDrop: (event, treeId, treeNodes, targetNode, moveType, isCopy) => {
-                    let direction = moveType === "inner"? "down-level" : "down-index";
+                    let direction = moveType === "inner" ? "down-level" : "down-index";
                     console.log(treeId);
                     console.log(treeNodes);
                     console.log(targetNode);
@@ -142,6 +143,7 @@ class Catalog {
         });
 
         $(document).click(e => {
+            this.changeSequenceMode = $(e.target).hasClass("node_name");
             this.contextmenu.hide();
         });
 
@@ -153,19 +155,20 @@ class Catalog {
                 // ctrl+s pull&&push
                 this.sync();
                 event.preventDefault();
+            } else if (this.changeSequenceMode === true) {
+                    if (event.keyCode === 38) {
+                        this.move_by_arrow("up-index");
+                    } else if (event.keyCode === 40) {
+                        this.move_by_arrow("down-index");
+                    } else if (event.keyCode === 37) {
+                        this.move_by_arrow("up-level");
+                    } else if (event.keyCode === 39) {
+                        this.move_by_arrow("down-level");
+                    }
+            }else{
+                this.changeSequenceMode = false;
             }
-        });
 
-        this.treeContainer.keydown(event => {
-            if (event.keyCode === 38) {
-                this.move_by_arrow("up-index")
-            } else if (event.keyCode === 40) {
-                this.move_by_arrow("down-index")
-            } else if (event.keyCode === 37) {
-                this.move_by_arrow("up-level")
-            } else if (event.keyCode === 39) {
-                this.move_by_arrow("down-level")
-            }
         })
 
     }
