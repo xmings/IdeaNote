@@ -217,7 +217,8 @@ class NoteService(object):
 
                 time.sleep(wy_sync.sync_frequence)
         except Exception as e:
-            app.logger.error(e.args)
+            app.logger.error(e)
+            app.logger.error(e.__traceback__.tb_lineno)
             app.logger.error("网盘同步线程退出")
 
 

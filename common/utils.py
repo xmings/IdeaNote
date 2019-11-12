@@ -20,6 +20,12 @@ def timestamp_to_str(ts):
         return str(ts)
     return None
 
+def timestamp_max(ts1, ts2):
+    if ts1 is None:
+        return ts2
+    elif ts2 is None:
+        return ts1
+    return max(ts1, ts2)
 
 class ConfigLoader(object):
     def __init__(self):

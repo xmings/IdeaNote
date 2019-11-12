@@ -10,7 +10,7 @@ import socket
 import time
 from datetime import datetime, timedelta
 from threading import Lock
-from common import timestamp_from_str, timestamp_to_str
+from common import timestamp_from_str, timestamp_to_str, timestamp_max
 
 sync_verion_lock = Lock()
 sync_metadata_lock = Lock()
@@ -31,7 +31,7 @@ class NetDiskSync(object):
         self.sync_version = None
         # 用于记录目前change_record中最大可用的version，作为变更日志中的最大offset
         self.max_sync_version = None
-        # 主要用于记录各节点最近一次产生变更日志的对应记录的时间(max(creation_time,modification_time))
+        # 主要用于记录各节点最近一次产生变更日志的对应记录的时间(timestamp_max(creation_time,modification_time))
         self.sync_timestamp = None
 
         self.last_update_timestamp = None
@@ -100,8 +100,8 @@ class NetDiskSync(object):
                 f.write(note.content)
 
             if self.sync_timestamp is None \
-                    or self.sync_timestamp < max(note.creation_time, note.modification_time):
-                self.sync_timestamp = max(note.creation_time, note.modification_time)
+                    or self.sync_timestamp < timestamp_max(note.creation_time, note.modification_time):
+                self.sync_timestamp = timestamp_max(note.creation_time, note.modification_time)
 
             self.last_update_timestamp = datetime.now()
 
@@ -126,8 +126,8 @@ class NetDiskSync(object):
                 f.write(image.image)
 
         if self.sync_timestamp is None \
-                or self.sync_timestamp < max(image.creation_time, image.modification_time):
-            self.sync_timestamp = max(image.creation_time, image.modification_time)
+                or self.sync_timestamp < timestamp_max(image.creation_time, image.modification_time):
+            self.sync_timestamp = timestamp_max(image.creation_time, image.modification_time)
 
         self.last_update_timestamp = datetime.now()
 
