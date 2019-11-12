@@ -61,8 +61,13 @@ class NoteService(object):
     @classmethod
     def update_note_content(cls, note_id, content):
         note = Catalog.query.filter_by(id=note_id).first()
-        # snap = Snap(note_id=note.id, content=note.content)
-        # db.session.add(snap)
+        images = Image.query.filter_by(note_id=note_id).all()
+        for img in images:
+            if img.id not in content:
+                img.status = -1
+                img.modification_time = datetime.now()
+                db.session.commit()
+
         note.content = zlib.compress(content.encode("utf8"))
         note.modification_time = datetime.now()
         db.session.commit()
@@ -144,27 +149,6 @@ class NoteService(object):
         return r.json()
 
     @classmethod
-    def auto_snap(cls):
-        try:
-            last_time = datetime.now()
-            while True:
-                time.sleep(60)
-                with app.app_context():
-                    change_notes = Catalog.query.filter(Catalog.modification_time > last_time,
-                                                        Catalog.status == 1).all()
-                    for n in change_notes:
-                        last_snap = Snap.query.filter(Snap.note_id == n.id).order_by(
-                            Snap.modification_time.desc()).first()
-                        if not last_snap or abs(len(last_snap.content) - len(n.content)) > 100:
-                            snap = Snap(note_id=n.id, content=n.content)
-                            db.session.add(snap)
-                            db.session.commit()
-                    last_time = datetime.now()
-        except Exception as e:
-            app.logger.error(e)
-            app.logger.error("自动快照线程退出")
-
-    @classmethod
     def netdisk_auto_sync(cls):
         try:
             wy_sync = NetDiskSync(conf.sync_work_dir)
@@ -172,11 +156,14 @@ class NoteService(object):
                 if wy_sync.request_push():
                     with app.app_context():
                         change_note_count = 0
-                        for note in Catalog.query.filter(sql_func.max(Catalog.creation_time, Catalog.modification_time) > wy_sync.sync_timestamp):
+                        sync_time = wy_sync.sync_timestamp
+                        for note in Catalog.query.filter(sql_func.max(Catalog.creation_time, Catalog.modification_time) > sync_time):
                             wy_sync.dump_note(note)
+                            app.logger.info(note)
                             change_note_count += 1
-                            for image in Image.query.filter(sql_func.max(Image.creation_time, Image.modification_time) > wy_sync.sync_timestamp, Image.note_id == note.id):
+                            for image in Image.query.filter(sql_func.max(Image.creation_time, Image.modification_time) > sync_time, Image.note_id == note.id):
                                 wy_sync.dump_image(image)
+                                app.logger.info(image)
                                 change_note_count += 1
 
                     if change_note_count == 0:
@@ -216,6 +203,7 @@ class NoteService(object):
                                         modification_time=record.get("modification_time")
                                     )
                                 )
+                            app.logger.info(record)
                         db.session.commit()
 
                     wy_sync.flush_sync_metadata()
@@ -225,10 +213,6 @@ class NoteService(object):
             app.logger.error(e.args)
             app.logger.error("网盘同步线程退出")
 
-
-at_snap = Thread(target=NoteService.auto_snap)
-at_snap.daemon = True
-at_snap.start()
 
 netdisk_auto_sync = Thread(target=NoteService.netdisk_auto_sync)
 netdisk_auto_sync.daemon = True

@@ -102,17 +102,17 @@ def download_image(image_id):
     try:
         content, mimetype = NoteService.fetch_image(image_id=image_id)
     except Exception as e:
-        current_app.logger.error(e)
+        current_app.logger.error(f"{e}: {image_id}")
         return Response(status=403)
     return Response(content, mimetype=mimetype)
 
 
-@core.route("/sync", methods=["GET"])
+@core.route("/sync", methods=["POST"])
 def sync_note():
     try:
-        NoteService.sync_notes()
+        NoteService.netdisk_auto_sync()
     except Exception as e:
-        current_app.logger.info(e)
+        current_app.logger.error(e)
         return Response(str(e), status=500)
     return Response(status=200)
 
@@ -126,12 +126,3 @@ def text_translator():
         current_app.logger.error(e)
         return Response(str(e), status=500)
     return jsonify(result)
-
-# @core.route('/netdisk_sync')
-# def sync():
-#     try:
-#         NoteService.netdisk_auto_sync()
-#     except Exception as e:
-#         current_app.logger.error(e)
-#         return Response(str(e), status=500)
-#     return Response(status=200)

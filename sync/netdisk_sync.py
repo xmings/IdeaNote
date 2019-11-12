@@ -160,7 +160,6 @@ class NetDiskSync(object):
         self.sync_timestamp = datetime.now()
         return content
 
-
     def load_image(self, image_id, version):
         image_file = os.path.join(self.work_dir, f"{image_id}-{version}{self.image_file_suffix}")
         count = 1
