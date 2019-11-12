@@ -10,7 +10,6 @@ from app import app
 from threading import Thread
 from sync.netdisk_sync import NetDiskSync
 from common import conf
-from sqlalchemy.sql import functions as sql_func
 import time
 
 
@@ -61,7 +60,7 @@ class NoteService(object):
     @classmethod
     def update_note_content(cls, note_id, content):
         note = Catalog.query.filter_by(id=note_id).first()
-        images = Image.query.filter_by(note_id=note_id).all()
+        images = Image.query.filter_by(note_id=note_id, status=1).all()
         for img in images:
             if img.id not in content:
                 img.status = -1
@@ -157,11 +156,19 @@ class NoteService(object):
                     with app.app_context():
                         change_note_count = 0
                         sync_time = wy_sync.sync_timestamp
-                        for note in Catalog.query.filter(sql_func.max(Catalog.creation_time, Catalog.modification_time) > sync_time):
+                        for id, in db.session.execute(f"""
+                            select id from t_catalog 
+                            where coalesce(modification_time, creation_time) > '{sync_time}'
+                        """).fetchall():
+                            note = Catalog.query.filter_by(id=id).first()
                             wy_sync.dump_note(note)
                             app.logger.info(note)
                             change_note_count += 1
-                            for image in Image.query.filter(sql_func.max(Image.creation_time, Image.modification_time) > sync_time, Image.note_id == note.id):
+                            for id, in db.session.execute(f"""
+                                select id from t_note_reference_image 
+                                where coalesce(modification_time, creation_time) > '{sync_time}' and note_id='{note.id}'
+                            """).fetchall():
+                                image = Image.query.filter_by(id=id).first()
                                 wy_sync.dump_image(image)
                                 app.logger.info(image)
                                 change_note_count += 1
