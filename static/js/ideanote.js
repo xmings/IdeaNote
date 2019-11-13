@@ -533,7 +533,7 @@ class Toc {
         this.tocContainer = $(options.tocContainer);
         this.contentContainer = $(options.contentContainer);
         this.heading = options.heading.toUpperCase();
-        this.headingList = options.heading.split(",");
+        this.headingList = this.heading.split(",");
     }
 
     build() {
@@ -542,23 +542,19 @@ class Toc {
             id = 1000;
         this.contentContainer.find(this.heading).each((index, ele) => {
             let level = this.headingList.indexOf(ele.tagName);
-
             if (lastLevel >= 0) {
                 for (let i = 0; i < Math.abs(lastLevel - level); i++) {
                     if (lastLevel < level) {
                         tocHtmlString = tocHtmlString.replace(/<\/li>$/, "");
-                        tocHtmlString += "<ul class='list-unstyled'>"
+                        tocHtmlString += "<ol class='list-unstyled'>"
                     } else if (lastLevel > level) {
-                        tocHtmlString += "</li></ul>"
-                    } else {
-                        tocHtmlString += "</li>"
+                        tocHtmlString += "</li></ol>"
                     }
                 }
             }
 
             $(ele).attr("id", id);
             tocHtmlString += "<li><a href='#" + id + "'>" + $(ele).text() + "</a></li>";
-
             lastLevel = level;
             id += 1;
         });

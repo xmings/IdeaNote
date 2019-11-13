@@ -204,7 +204,7 @@ code, kbd, samp {
 }
 
 #toc {
-    font-size: 14px;
+    font-size: 12px;
     margin-left: 10px;
     font-family: inherit;
 }
@@ -217,6 +217,7 @@ code, kbd, samp {
 #toc a {
     text-decoration: none;
     font-family: inherit;
+    color: black;
 }
 
 #toc a:focus {
