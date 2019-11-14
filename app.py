@@ -3,17 +3,18 @@
 # @File  : control.py
 # @Author: wangms
 # @Date  : 2018/8/6
-import os
+import os, platform
 from flask import Flask, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from common import conf
 from logging import INFO, Formatter
 from logging.handlers import TimedRotatingFileHandler
 
-import win32api, win32gui
-ct = win32api.GetConsoleTitle()
-hd = win32gui.FindWindow(0,ct)
-win32gui.ShowWindow(hd,0)
+if platform.system() == "Windows" and conf.hide_window:
+    import win32api, win32gui
+    ct = win32api.GetConsoleTitle()
+    hd = win32gui.FindWindow(0,ct)
+    win32gui.ShowWindow(hd,0)
 
 
 app = Flask(__name__)

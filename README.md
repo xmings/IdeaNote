@@ -22,10 +22,9 @@ IdeaNote是一款基于WEB的集树形目录管理、`Markdown`编辑、`免费�
 7. 文章编辑历史查阅功能
 
 ### 四. 安装说明
-1. 安装Python3.7环境
-2. 创建本地sqlite数据库，并create_table.sql建表脚本
-3. 修改config.yml配置信息
-4. 在CMD或者SHELL中进入IdeaNote程序目录，执行`python3 app.py`启动IdeaNote
+1. 安装Python3.7及以上版本
+2. 运行`python onekey_install.py`根据提示创建和修改config.yml文件
+5. 在浏览器访问http://localhost:5555
 
 > IdeaNote的启动方式是flask应用的开发环境的启动方式，用户可以根据自己需要修改启动方式
 

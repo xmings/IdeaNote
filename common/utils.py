@@ -30,7 +30,7 @@ def timestamp_max(ts1, ts2):
 class ConfigLoader(object):
     def __init__(self):
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        with open(os.path.join(project_root, "config.yml"), "r", encoding="utf8") as f:
+        with open(os.path.join(project_root, "config.sample.yml"), "r", encoding="utf8") as f:
             self.config = yaml.load(f.read(), Loader=yaml.FullLoader)
 
     @property
@@ -64,6 +64,10 @@ class ConfigLoader(object):
     @property
     def sync_work_dir(self):
         return self.config.get("IdeaNote").get("sync").get("work_dir")
+
+    @property
+    def hide_window(self):
+        return self.config.get("IdeaNote").get("hide_window")
 
 
 conf = ConfigLoader()

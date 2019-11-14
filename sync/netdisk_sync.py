@@ -72,7 +72,8 @@ class NetDiskSync(object):
             with open(self.sync_metadata_file, "w") as f:
                 f.write(json.dumps(metadata, indent=4))
 
-            self.max_sync_version = int(max(metadata.get("sync_version").values()))
+            vers = metadata.get("sync_version").values()
+            self.max_sync_version = int(max(vers)) if vers else 1
 
         return metadata
 
