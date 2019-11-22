@@ -69,6 +69,14 @@ class ConfigLoader(object):
     def hide_window(self):
         return self.config.get("IdeaNote").get("hide_window")
 
+    @property
+    def urlmark_sync(self):
+        return self.config.get("IdeaNote").get("urlmark").get("sync")
+
+    @property
+    def urlmark_file(self):
+        return self.config.get("IdeaNote").get("urlmark").get("sync_file")
+
 
 conf = ConfigLoader()
 

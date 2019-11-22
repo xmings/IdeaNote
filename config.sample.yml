@@ -23,3 +23,6 @@ IdeaNote:
   log:
     directory: D:\log
     formatter: "%(asctime)s %(levelname)s %(filename)s %(lineno)d: %(message)s"
+  urlmark:
+    sync: True
+    sync_file: D:\ideanote_sync\chrome_bookmark.json

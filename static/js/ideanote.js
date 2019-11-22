@@ -54,123 +54,206 @@ class Catalog {
         this.selectedNode = null;
         this.changeSequenceMode = false;
         this.attribution = {
-            check: {
-                enable: false
-            },
-            data: {
-                simpleData: {
-                    enable: true
+            'core': {
+                'data': [],
+                'force_text': true,
+                'check_callback': true,
+                'multiple': false,
+                'themes': {
+                    'dots': false,
                 }
             },
-            edit: {
-                drag: {
-                    isCopy: false,
-                    isMove: true,
+            'plugins': ['state', 'dnd', 'contextmenu', 'types'],
+            'types': {
+                "default": {
+                    "icon": "folder icon",
+                    "valid_children": ["default", "file"]
                 },
-                enable: true,
-                showRemoveBtn: false,
-                showRenameBtn: false
-            },
-            view: {
-                selectedMulti: false
-            },
-            callback: {
-                onClick: (event, treeId, treeNode) => {
-                    this.selectedNode = treeNode;
-                    this.fetchNote();
-                    this.contentArea.editorObj.execCommand("goDocEnd");
-                    this.contentArea.editorObj.focus();
+                "file": {
+                    "icon": "file alternate icon",
+                    "valid_children": ["default", "file"]
                 },
-                onRename: (event, treeId, treeNode) => {
-                    this.selectedNode = treeNode;
-                    this.rename();
-                    this.treeContainer.find("#" + treeNode.tId + ">a").click();
+            },
+            'keyboard': {
+                'up-shift': function (e) {
+                    e.preventDefault();
+                    console.log("good");
+                }
+            },
+            'contextmenu': {
+                'items': {
+                    'create': {
+                        'label': "添加",
+                        'icon': 'plus icon',
+                        'separator_after': true,
+                        'action': data => {
+                            let parent = this.treeObj.get_node(data.reference),
+                                text = "新建笔记";
+                            $.ajax({
+                                url: this.addNoteUri,
+                                data: {
+                                    title: text,
+                                    pid: parent.id
+                                },
+                                type: 'POST',
+                                dataType: 'json',
+                                success: response => {
+                                    this.treeObj.create_node(parent, {
+                                        "id": response.id,
+                                        "text": text,
+                                        "type": "file"
+                                    }, "last");
+                                    console.log(this.treeObj);
+                                },
+                                error: XMLHttpRequest => {
+                                    messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
+                                }
 
-                },
-                onRightClick: (event, treeId, treeNode) => {
-                    if (treeNode) {
-                        this.treeContainer.find("#" + treeNode.tId + ">a").click();
-                        let y = event.originalEvent.y;
-                        if (y + this.contextmenu.height() >= window.innerHeight) {
-                            y = $(document).innerHeight() - this.contextmenu.height() - 10;
+                            });
+
                         }
-                        this.contextmenu.css({
-                            "left": event.originalEvent.x,
-                            "top": y
-                        }).show();
-                    } else {
-                        this.contextmenu.hide();
-                    }
-                },
-                onDrop: (event, treeId, treeNodes, targetNode, moveType, isCopy) => {
-                    let direction = moveType === "inner" ? "down-level" : "down-index";
-                    console.log(treeId);
-                    console.log(treeNodes);
-                    console.log(targetNode);
-                    if (!isCopy && targetNode && treeNodes[0].pId) {
-                        $.ajax({
-                            url: this.updateNoteUri,
-                            type: 'POST',
-                            data: {
-                                type: direction,
-                                target_note_id: targetNode.id,
-                                id: treeNodes[0].id
-                            },
-                            error: function (XMLHttpRequest) {
-                                messageBox.show("修改结点名称失败: "
-                                    + XMLHttpRequest.responseText, "negative");
-                            }
-                        })
+                    },
+                    'rename': {
+                        'label': "重命名",
+                        'icon': 'edit icon',
+                        'separator_after': true,
+                        'action': data => {
+                            this.treeObj.edit(this.treeObj.get_node(data.reference));
+                        }
+                    },
+                    'delete': {
+                        'label': "删除",
+                        'icon': 'trash icon',
+                        'separator_after': true,
+                        'action': data => {
+                            var node = this.treeObj.get_node(data.reference),
+                                parent = this.treeObj.get_node(node.parent);
+
+                            $.ajax({
+                                url: this.dropNoteUri,
+                                type: "POST",
+                                data: {
+                                    id: node.id
+                                },
+                                beforeSend: XMLHttpRequest => {
+                                    if (node.children.length > 0) {
+                                        messageBox.show("This note has more than one child");
+                                        return false
+                                    }
+                                    return true;
+                                },
+                                success: response => {
+                                    if (this.treeObj.is_selected(node) && node.children.length === 0) {
+                                        this.treeObj.delete_node(this.treeObj.get_selected());
+                                        if (this.treeObj.get_node(parent).children.length === 0) {
+                                            this.treeObj.set_icon(parent, "file icon");
+                                        }
+                                    }
+                                },
+                                error: XMLHttpRequest => {
+                                    messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
+                                }
+                            });
+
+
+                        }
+                    },
+                    'sync': {
+                        'label': "同步",
+                        'icon': 'refresh icon',
+                        'action': () => {
+                            $.ajax({
+                                url: this.syncUri,
+                                type: 'POST',
+                                beforeSend: () => {
+                                    messageBox.show("<i class='notched circle loading icon'></i>同步中 ...");
+                                },
+                                success: () => {
+                                    messageBox.show("同步成功");
+                                },
+                                error: XMLHttpRequest => {
+                                    messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
+                                }
+                            })
+                        }
                     }
                 }
             }
         };
 
-        this.contextmenu.find(".add-note").click(() => {
-            this.addNote();
-        });
-
-        this.contextmenu.find(".drop-note").click(() => {
-            this.dropNote();
-        });
-
-        this.contextmenu.find(".rename").click(() => {
-            this.treeObj.editName(this.selectedNode);
-        });
-
-        this.contextmenu.find(".sync").click(() => {
-            this.sync()
-        });
-
-        $(document).click(e => {
-            this.changeSequenceMode = $(e.target).hasClass("node_name");
-            this.contextmenu.hide();
-        });
-
-        $(document).contextmenu(e => {
-            this.contextmenu.hide();
-        });
         $(document).keydown(event => {
             if (event.ctrlKey && event.keyCode === 83) {
                 // ctrl+s pull&&push
                 this.sync();
                 event.preventDefault();
             } else if (this.changeSequenceMode === true) {
-                    if (event.keyCode === 38) {
-                        this.move_by_arrow("up-index");
-                    } else if (event.keyCode === 40) {
-                        this.move_by_arrow("down-index");
-                    } else if (event.keyCode === 37) {
-                        this.move_by_arrow("up-level");
-                    } else if (event.keyCode === 39) {
-                        this.move_by_arrow("down-level");
-                    }
-            }else{
+                if (event.keyCode === 38) {
+                    this.move_by_arrow("up-index");
+                } else if (event.keyCode === 40) {
+                    this.move_by_arrow("down-index");
+                } else if (event.keyCode === 37) {
+                    this.move_by_arrow("up-level");
+                } else if (event.keyCode === 39) {
+                    this.move_by_arrow("down-level");
+                }
+            } else {
                 this.changeSequenceMode = false;
             }
 
-        })
+        });
 
+        this.treeContainer.on("select_node.jstree", (e, data) => {
+            this.selectedNode = data.node;
+            $.ajax({
+                url: this.fetchContentUri,
+                data: {
+                    id: this.selectedNode.id
+                },
+                success: content => {
+                    this.contentArea.switchDoc(this.selectedNode.id, content);
+                },
+                error: XMLHttpRequest => {
+                    messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
+                }
+            });
+            this.contentArea.editorObj.execCommand("goDocEnd");
+            this.contentArea.editorObj.focus();
+        });
+
+        this.treeContainer.on("rename_node.jstree", (e, data) => {
+            $.ajax({
+                url: this.updateNoteUri,
+                type: 'POST',
+                data: {
+                    title: data.node.text,
+                    type: "rename",
+                    id: data.node.id
+                },
+                error: function (XMLHttpRequest) {
+                    messageBox.show("修改结点名称失败: "
+                        + XMLHttpRequest.responseText, "negative");
+                }
+            });
+        });
+
+        this.treeContainer.on('move_node.jstree', (e, data) => {
+            console.log(e, data);
+            let direction = data.old_parent === data.parent ? "down-index" : "down-index",
+                target_node = data.parent.children[data.position];
+            $.ajax({
+                url: this.updateNoteUri,
+                type: 'POST',
+                data: {
+                    type: direction,
+                    target_note_id: target_node.id,
+                    id: data.node.id
+                },
+                error: function (XMLHttpRequest) {
+                    messageBox.show("修改结点名称失败: "
+                        + XMLHttpRequest.responseText, "negative");
+                }
+            })
+        });
     }
 
     buildTree() {
@@ -179,85 +262,15 @@ class Catalog {
             type: "GET",
             dataType: "json",
             success: data => {
-                this.treeObj = $.fn.zTree.init(this.treeContainer, this.attribution, data);
-                this.root = this.treeObj.getNodes()[0];
-                this.treeContainer.find("#" + this.root.tId + ">a").click();
+                this.attribution.core.data = data;
+                this.treeContainer.jstree(this.attribution);
+                this.treeObj = this.treeContainer.jstree(true);
             },
             error: XMLHttpRequest => {
                 messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative")
             }
         });
 
-    }
-
-    fetchNote() {
-        $.ajax({
-            url: this.fetchContentUri,
-            data: {
-                id: this.selectedNode.id
-            },
-            success: content => {
-                this.contentArea.switchDoc(this.selectedNode.id, content);
-            },
-            error: XMLHttpRequest => {
-                messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
-            }
-        })
-    }
-
-    addNote() {
-        let newNodes = this.treeObj.addNodes(this.selectedNode, -1, {name: "新建节点"}),
-            newNode = this.treeObj.getNodeByTId(newNodes[0].tId);
-        $.ajax({
-            url: this.addNoteUri,
-            data: {
-                title: "新建节点",
-                pid: this.selectedNode.id
-            },
-            type: 'POST',
-            dataType: 'json',
-            success: response => {
-                newNode.id = response.id;
-                this.treeObj.updateNode(newNode);
-                this.treeObj.editName(newNode);
-            },
-            error: XMLHttpRequest => {
-                messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
-            }
-
-        })
-    }
-
-    dropNote() {
-        $.ajax({
-            url: this.dropNoteUri,
-            type: "POST",
-            data: {
-                id: this.selectedNode.id
-            },
-            success: response => {
-                this.treeObj.removeNode(this.selectedNode);
-            },
-            error: XMLHttpRequest => {
-                messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
-            }
-        })
-    }
-
-    rename() {
-        $.ajax({
-            url: this.updateNoteUri,
-            type: 'POST',
-            data: {
-                title: this.selectedNode.name,
-                type: "rename",
-                id: this.selectedNode.id
-            },
-            error: function (XMLHttpRequest) {
-                messageBox.show("修改结点名称失败: "
-                    + XMLHttpRequest.responseText, "negative");
-            }
-        })
     }
 
     move_by_arrow(direction) {
@@ -306,21 +319,6 @@ class Catalog {
         })
 
     }
-
-    sync() {
-        messageBox.show("<i class='notched circle loading icon'></i>同步中 ...");
-        $.ajax({
-            url: this.syncUri,
-            type: 'POST',
-            success: () => {
-                messageBox.show("同步成功");
-            },
-            error: XMLHttpRequest => {
-                messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
-            }
-        })
-    }
-
 }
 
 class ContentArea {

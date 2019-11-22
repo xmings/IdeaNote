@@ -241,8 +241,9 @@ code, kbd, samp {
 
 #catalog-tree {
     font-size: 12px;
-    margin-left: 0;
-    font-family: inherit;
+    margin: 0;
+    padding: 0;
+    font-family: "Microsoft Yahei", "Ubuntu Mono", sans-serif;
 }
 
 #catalog-tree > #root {
@@ -282,19 +283,7 @@ code, kbd, samp {
     position: absolute
 }
 
-.ui.vertical.menu.contextmenu {
-    position: fixed;
-    display: none;
-    z-index: 1000;
-}
-
-.ui.vertical.menu.contextmenu .item > i.icon {
-    float: left;
-    padding-right: 30px;
-
-}
-
-.ztree li a input.rename:focus {
+#catalog-tree li a input.rename:focus {
     border-color: #85b7d9;
     background: #fff;
     color: rgba(0, 0, 0, .8);
@@ -302,7 +291,7 @@ code, kbd, samp {
     box-shadow: none;
 }
 
-.ztree li a input.rename:focus {
+#catalog-tree li a input.rename:focus {
     margin: 0;
     padding: 0;
     max-width: 100%;
@@ -322,7 +311,7 @@ code, kbd, samp {
     box-shadow: none;
 }
 
-.ztree li a.curSelectedNode_Edit {
+#catalog-tree li a.curSelectedNode_Edit {
     background: none;
     border: none;
     padding: 0;

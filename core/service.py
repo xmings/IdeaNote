@@ -103,8 +103,8 @@ class NoteService(object):
         for n in notes:
             notes_dict[n.id] = {
                 "id": n.id,
-                "name": n.title,
-                "open": False,
+                "text": n.title,
+                "type": "file",
                 "parent_id": n.parent_id
             }
 
@@ -114,9 +114,10 @@ class NoteService(object):
                 if not notes_dict[pid].get("children"):
                     notes_dict[pid]["children"] = []
                 notes_dict[pid]["children"].append(v)
+                notes_dict[pid]["type"] = "folder"
 
         root = notes_dict[root.id]
-        root["open"] = True
+        root["opened"] = True
         return root
 
     @classmethod

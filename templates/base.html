@@ -27,8 +27,8 @@
             <a class="item" data-tab="outline">大纲</a>
         </div>
 
-        <div class="ui bottom attached active tab segment" data-tab="catalog">
-            <ul id="catalog-tree" class="ztree"></ul>
+        <div class="ui bottom attached active tab segment" data-tab="catalog" style="padding-left: 0">
+            <ul id="catalog-tree" class="catalog-tree"></ul>
         </div>
         <div class="ui bottom attached tab segment" data-tab="outline">
             <ol class="ui list" id="toc" data-toc="content" data-toc-headings="headings"></ol>
@@ -40,14 +40,6 @@
         </div>
         <div class="preview" id="preview"></div>
     </div>
-
-    <div class="ui vertical teal inverted mini menu contextmenu" style="display: none">
-        <a class="item add-note"><i class="plus alternate icon"></i> 添加</a>
-        <a class="item rename"><i class="edit alternate icon"></i> 重命名</a>
-        <a class="item drop-note"><i class="trash alternate icon"></i> 删除</a>
-        <a class="item sync"><i class="sync alternate icon"></i> 同步</a>
-    </div>
-
 </div>
 
 <div class="footer"></div>

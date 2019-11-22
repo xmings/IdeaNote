@@ -2,3 +2,4 @@ PyYAML==5.1.1
 requests==2.22.0
 Flask==1.0.3
 Flask-SQLAlchemy==2.4.0
+watchdog-0.9.0
