@@ -316,3 +316,7 @@ code, kbd, samp {
     border: none;
     padding: 0;
 }
+
+#toc li:before{
+    position: relative !important;
+}
