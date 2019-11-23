@@ -34,26 +34,30 @@ class NoteService(object):
         return True
 
     @classmethod
-    def update_note_position(cls, note_id, prev_note_id=None, parent_id=None):
-        assert prev_note_id or parent_id, "either prev_note_id or parent_id is supplied"
+    def update_note_position(cls, note_id, parent_id, index):
         note = Catalog.query.filter_by(id=note_id).first()
-        if prev_note_id:
-            prev_note = Catalog.query.filter_by(id=prev_note_id).first()
-            note.parent_id = prev_note.parent_id
-            note.seq_no = prev_note.seq_no + 1
-            post_notes = Catalog.query.filter(Catalog.parent_id == prev_note.parent_id,
-                                              Catalog.status == 1,
-                                              Catalog.seq_no >= prev_note.seq_no,
-                                              Catalog.id != note.id,
-                                              Catalog.id != prev_note.id).all()
-            for n in post_notes:
-                n.seq_no = note.seq_no + 2
-                n.modification_time = datetime.now()
-        else:
+        no = 0
+        font_node_seq = 0
+        for child in Catalog.query.filter_by(parent_id=parent_id, status=1).order_by(Catalog.seq_no.desc()).all():
+            if no < index:
+                font_node_seq = child.seq_no
+                continue
+            elif no == index:
+                note.parent_id = parent_id
+                note.seq_no = font_node_seq + 1
+                note.modification_time = datetime.now()
+
+            # node其后的node的seq都需要加两次，防止重叠
+            child.seq_no += 2
+            child.modification_time = datetime.now()
+
+            no += 1
+
+        if no == 0:
             note.parent_id = parent_id
-            last_note = Catalog.query.filter_by(parent_id=parent_id).order_by(Catalog.seq_no.desc()).first()
-            note.seq_no = 1 if not last_note else last_note.seq_no + 1
+            note.seq_no = 1
             note.modification_time = datetime.now()
+
         db.session.commit()
         return True
 
@@ -97,8 +101,8 @@ class NoteService(object):
 
     @classmethod
     def fetch_catalog_tree(cls):
-        root = Catalog.query.filter(Catalog.status != -1, Catalog.parent_id == "self").first()
-        notes = Catalog.query.filter(Catalog.status != -1).order_by(Catalog.parent_id, Catalog.seq_no).all()
+        root = Catalog.query.filter(Catalog.status == 1, Catalog.parent_id == "self").first()
+        notes = Catalog.query.filter(Catalog.status == 1).order_by(Catalog.parent_id, Catalog.seq_no).all()
         notes_dict = {}
         for n in notes:
             notes_dict[n.id] = {

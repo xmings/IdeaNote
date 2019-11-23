@@ -52,7 +52,6 @@ class Catalog {
         this.syncUri = options.syncUri;
         this.contentArea = options.contentArea;
         this.selectedNode = null;
-        this.changeSequenceMode = false;
         this.attribution = {
             'core': {
                 'data': [],
@@ -61,6 +60,48 @@ class Catalog {
                 'multiple': false,
                 'themes': {
                     'dots': false,
+                },
+                'keyboard': {
+                    'up': function (e) {
+                        e.preventDefault();
+                        let node = this.get_node(e.target),
+                            parent = this.get_node(node.parent),
+                            index = parent.children.indexOf(node.id);
+                        if (index === 0) {
+                            return false
+                        }
+                        this.move_node(node, parent, index - 1);
+                    },
+                    'down': function (e) {
+                        e.preventDefault();
+                        let node = this.get_node(e.target),
+                            parent = this.get_node(node.parent),
+                            index = parent.children.indexOf(node.id) + 1;
+                        if (index === parent.children.length) {
+                            return false
+                        }
+                        this.move_node(node, parent, index + 1);
+                    },
+                    'left': function (e) {
+                        e.preventDefault();
+                        let node = this.get_node(e.target),
+                            parent = this.get_node(node.parent),
+                            grand_parent = this.get_node(parent.parent);
+                        if (!grand_parent) {
+                            return false
+                        }
+                        this.move_node(node, grand_parent, grand_parent.children.length + 1);
+                    },
+                    'right': function (e) {
+                        e.preventDefault();
+                        let node = this.get_node(e.target),
+                            prev_node = this.get_node(this.get_prev_dom(node));
+                        if (!prev_node) {
+                            return false
+                        }
+                        this.move_node(node, prev_node, prev_node.children.length + 1);
+                    }
+
                 }
             },
             'plugins': ['state', 'dnd', 'contextmenu', 'types'],
@@ -70,15 +111,9 @@ class Catalog {
                     "valid_children": ["default", "file"]
                 },
                 "file": {
-                    "icon": "file alternate icon",
+                    "icon": "file icon",
                     "valid_children": ["default", "file"]
                 },
-            },
-            'keyboard': {
-                'up-shift': function (e) {
-                    e.preventDefault();
-                    console.log("good");
-                }
             },
             'contextmenu': {
                 'items': {
@@ -181,27 +216,6 @@ class Catalog {
             }
         };
 
-        $(document).keydown(event => {
-            if (event.ctrlKey && event.keyCode === 83) {
-                // ctrl+s pull&&push
-                this.sync();
-                event.preventDefault();
-            } else if (this.changeSequenceMode === true) {
-                if (event.keyCode === 38) {
-                    this.move_by_arrow("up-index");
-                } else if (event.keyCode === 40) {
-                    this.move_by_arrow("down-index");
-                } else if (event.keyCode === 37) {
-                    this.move_by_arrow("up-level");
-                } else if (event.keyCode === 39) {
-                    this.move_by_arrow("down-level");
-                }
-            } else {
-                this.changeSequenceMode = false;
-            }
-
-        });
-
         this.treeContainer.on("select_node.jstree", (e, data) => {
             this.selectedNode = data.node;
             $.ajax({
@@ -237,18 +251,19 @@ class Catalog {
         });
 
         this.treeContainer.on('move_node.jstree', (e, data) => {
-            console.log(e, data);
-            let direction = data.old_parent === data.parent ? "down-index" : "down-index",
-                target_node = data.parent.children[data.position];
             $.ajax({
                 url: this.updateNoteUri,
                 type: 'POST',
                 data: {
-                    type: direction,
-                    target_note_id: target_node.id,
-                    id: data.node.id
+                    parent_id: data.parent,
+                    index: data.position,
+                    id: data.node.id,
+                    type: "position"
                 },
-                error: function (XMLHttpRequest) {
+                success: () =>{
+                    this.treeObj.open_node(this.treeObj.get_node(data.parent));
+                },
+                error: (XMLHttpRequest) => {
                     messageBox.show("修改结点名称失败: "
                         + XMLHttpRequest.responseText, "negative");
                 }
@@ -273,52 +288,6 @@ class Catalog {
 
     }
 
-    move_by_arrow(direction) {
-        let targetNode = null;
-
-        if (direction === "up-index") {
-            targetNode = this.selectedNode.getPreNode();
-        } else if (direction === "down-index") {
-            targetNode = this.selectedNode.getNextNode();
-        } else if (direction === "up-level") {
-            let parent = this.selectedNode.getParentNode();
-            if (parent.level === 0) {
-                messageBox.show("该笔记父目录已是根目录，不能上移");
-                return;
-            }
-            targetNode = parent;
-        } else {
-            targetNode = this.selectedNode.getPreNode();
-        }
-        if (!targetNode) return;
-
-        $.ajax({
-            url: this.updateNoteUri,
-            type: 'POST',
-            data: {
-                type: direction,
-                target_note_id: targetNode.id,
-                id: this.selectedNode.id
-            },
-            error: function (XMLHttpRequest) {
-                messageBox.show("修改结点名称失败: "
-                    + XMLHttpRequest.responseText, "negative");
-            },
-            success: () => {
-                if (direction === "up-index") {
-                    this.treeObj.moveNode(targetNode, this.selectedNode, "prev");
-                } else if (direction === "down-index") {
-                    this.treeObj.moveNode(targetNode, this.selectedNode, "next");
-                } else if (direction === "up-level") {
-                    this.treeObj.moveNode(targetNode, this.selectedNode, "next");
-                } else if (direction === "down-level") {
-                    this.treeObj.moveNode(targetNode, this.selectedNode, "inner");
-                }
-                this.treeObj.updateNode(this.selectedNode);
-            }
-        })
-
-    }
 }
 
 class ContentArea {

@@ -54,12 +54,11 @@ def update_note():
         if type == "rename":
             title = request.form.get('title')
             NoteService.update_note_title(note_id=id, title=title)
-        elif type in ("up-index", "down-index", "up-level"):
-            prev_note_id = request.form.get('target_note_id')
-            NoteService.update_note_position(note_id=id, prev_note_id=prev_note_id)
-        elif type == "down-level":
-            parent_id = request.form.get('target_note_id')
-            NoteService.update_note_position(note_id=id, parent_id=parent_id)
+        elif type == "position":
+            parent_id = request.form.get('parent_id')
+            index = request.form.get('index')
+            NoteService.update_note_position(note_id=id, parent_id=parent_id,index=int(index))
+
         elif type == "content":
             content = request.form.get('content')
             NoteService.update_note_content(note_id=id, content=content)
