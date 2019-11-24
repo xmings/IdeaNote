@@ -129,7 +129,7 @@ class Catalog {
                     "valid_children": ["default", "file"]
                 },
                 "file": {
-                    "icon": "file icon",
+                    "icon": "file alternate outline icon",
                     "valid_children": ["default", "file"]
                 },
                 "folder": {
@@ -203,7 +203,7 @@ class Catalog {
                                     if (this.treeObj.is_selected(node) && node.children.length === 0) {
                                         this.treeObj.delete_node(this.treeObj.get_selected());
                                         if (this.treeObj.get_node(parent).children.length === 0) {
-                                            this.treeObj.set_icon(parent, "file icon");
+                                            this.treeObj.set_icon(parent, "file alternate outline icon");
                                         }
                                     }
                                 },
@@ -245,7 +245,7 @@ class Catalog {
                                 type: "POST",
                                 error: (XMLHttpRequest) => {
                                     if (XMLHttpRequest.status === 401){
-                                        messageBox.show("该目录已加密，请先解锁！", "success", 1000000)
+                                        messageBox.show("该目录已加密，请先解锁再去锁！", "success", 3000)
                                     }else{
                                         messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText);
                                     }

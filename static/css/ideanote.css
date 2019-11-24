@@ -249,6 +249,9 @@ code, kbd, samp {
     font-size: 12px;
     margin: 0;
     padding: 0;
+    border: none;
+    outline: none;
+    box-shadow: none;
     font-family: "Microsoft Yahei", "Ubuntu Mono", sans-serif;
 }
 
