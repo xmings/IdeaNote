@@ -25,6 +25,17 @@ class MessageBox {
             }, 2000);
         }
     }
+
+    hide(timeout) {
+        if (typeof timeout === "undefined") {
+            timeout = 0
+        }
+
+        setTimeout(() => {
+            this.container.removeClass("visible");
+        }, timeout);
+
+    }
 }
 
 let messageBox = new MessageBox();
@@ -44,6 +55,7 @@ class Catalog {
         }, options);
         this.treeContainer = $(options.treeContainer);
         this.contextmenu = $(options.contextmenu);
+        this.authContainer = $(options.authContainer);
         this.fetchDataUri = options.fetchDataUri;
         this.fetchContentUri = options.fetchContentUri;
         this.updateNoteUri = options.updateNoteUri;
@@ -51,7 +63,8 @@ class Catalog {
         this.addNoteUri = options.addNoteUri;
         this.syncUri = options.syncUri;
         this.contentArea = options.contentArea;
-        this.selectedNode = null;
+        this.authUri = options.authUri;
+        this.needAuthUri = options.needAuthUri;
         this.attribution = {
             'core': {
                 'data': [],
@@ -61,6 +74,8 @@ class Catalog {
                 'themes': {
                     'dots': false,
                 },
+                'loaded_state': true,
+                'restore_focus': false,
                 'keyboard': {
                     'up': function (e) {
                         e.preventDefault();
@@ -114,6 +129,10 @@ class Catalog {
                     "icon": "file icon",
                     "valid_children": ["default", "file"]
                 },
+                "folder": {
+                    "icon": "folder icon",
+                    "valid_children": ["default", "file"]
+                },
             },
             'contextmenu': {
                 'items': {
@@ -161,7 +180,7 @@ class Catalog {
                         'icon': 'trash icon',
                         'separator_after': true,
                         'action': data => {
-                            var node = this.treeObj.get_node(data.reference),
+                            let node = this.treeObj.get_node(data.reference),
                                 parent = this.treeObj.get_node(node.parent);
 
                             $.ajax({
@@ -193,6 +212,14 @@ class Catalog {
 
                         }
                     },
+                    'lock': {
+                        'label': "加密",
+                        'icon': 'lock icon',
+                        'separator_after': true,
+                        'action': data => {
+
+                        }
+                    },
                     'sync': {
                         'label': "同步",
                         'icon': 'refresh icon',
@@ -217,17 +244,16 @@ class Catalog {
         };
 
         this.treeContainer.on("select_node.jstree", (e, data) => {
-            this.selectedNode = data.node;
             $.ajax({
                 url: this.fetchContentUri,
                 data: {
-                    id: this.selectedNode.id
+                    id: data.node.id
                 },
                 success: content => {
-                    this.contentArea.switchDoc(this.selectedNode.id, content);
+                    this.contentArea.switchDoc(data.node.id, content);
                 },
                 error: XMLHttpRequest => {
-                    messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
+                    messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText);
                 }
             });
             this.contentArea.editorObj.execCommand("goDocEnd");
@@ -260,7 +286,7 @@ class Catalog {
                     id: data.node.id,
                     type: "position"
                 },
-                success: () =>{
+                success: () => {
                     this.treeObj.open_node(this.treeObj.get_node(data.parent));
                 },
                 error: (XMLHttpRequest) => {
@@ -269,6 +295,50 @@ class Catalog {
                 }
             })
         });
+
+        this.treeContainer.on("open_node.jstree", (e, data) => {
+            if (data.node.type === "folder") {
+                $.get(this.needAuthUri, {id: data.node.id}, (res) => {
+                    if (res.status) {
+                        this.treeObj.close_node(data.node.id);
+                        this.authContainer.find("input").attr("data-note-id", data.node.id);
+                        this.authContainer.css("visibility", "visible");
+                    } else {
+                        this.authContainer.css("visibility", "hidden");
+                    }
+                })
+            }
+        });
+
+        this.authContainer.find(".button").click(() => {
+            let input = this.authContainer.find("input");
+            $.ajax({
+                url: this.authUri,
+                type: "POST",
+                data: {
+                    id: input.attr("data-note-id"),
+                    auth_code: input.val()
+                },
+                beforeSend: () => {
+                    this.authContainer.css("visibility", "hidden");
+                },
+                success: () => {
+                    this.treeObj.open_node(this.treeObj.get_selected()[0]);
+                    this.treeObj.select_node(this.treeObj.get_selected()[0]);
+                },
+                error: () => {
+                    messageBox.show("Hi dude, please enter the correct password", "negative");
+                    messageBox.hide(2000)
+                }
+            });
+        });
+
+        $(document).on('click', (ele) => {
+            if ($(ele.target) !== this.authContainer
+                && this.authContainer.has($(ele.target)).length === 0) {
+                this.authContainer.css("visibility", "hidden");
+            }
+        })
     }
 
     buildTree() {

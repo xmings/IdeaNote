@@ -9,6 +9,7 @@ from datetime import datetime
 from app import app
 from threading import Thread
 from sync.netdisk_sync import NetDiskSync
+from flask import session
 from common import conf
 import time
 
@@ -81,6 +82,14 @@ class NoteService(object):
         return True
 
     @classmethod
+    def update_note_lock_status(cls, note_id, lock=True):
+        note = Catalog.query.filter_by(id=note_id).first()
+        if lock:
+            note.with_passwd = 1
+        db.session.commit()
+        return True
+
+    @classmethod
     def delete_note(cls, id):
         note = Catalog.query.filter_by(id=id).first()
         delete_notes = [note]
@@ -119,6 +128,17 @@ class NoteService(object):
         root = notes_dict[root.id]
         root["opened"] = True
         return root
+
+    @classmethod
+    def need_auth_code(cls, id):
+        note = Catalog.query.filter_by(id=id).first()
+        with app.app_context():
+            if note.with_passwd == 0:
+                return False
+            else:
+                if f"auth-{id}" in session:
+                    return False
+        return True
 
     @classmethod
     def fetch_note(cls, id):

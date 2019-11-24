@@ -5,13 +5,45 @@
 # @Date  : 2019/5/16
 # @Brief: 简述报表功能
 from . import core
-from flask import render_template, request, Response, jsonify, current_app
+from flask import render_template, request, Response, jsonify, current_app, session
 from core.service import NoteService
 
 @core.route("/")
 def index():
+    for i in [ii for ii in session if ii.startswith('auth')]:
+        session.pop(i)
     return render_template('editor.html')
 
+@core.route("/auth", methods=["POST"])
+def auth():
+    note_id = request.form.get('id')
+    auth_code = request.form.get('auth_code')
+    if auth_code != "123456":
+        return Response(status=400)
+
+    session[f"auth-{note_id}"] = 1
+    return Response(status=200)
+
+@core.route("/note/lock", methods=["POST"])
+def toggle_note_lock():
+    note_id = request.form.get('id')
+    try:
+        if NoteService.need_auth_code(note_id):
+            NoteService.update_note_lock_status(note_id, False)
+        else:
+            NoteService.update_note_lock_status(note_id)
+    except Exception as e:
+        return Response(str(e), status=500)
+    return Response(status=200)
+
+@core.route("/note/lock")
+def need_auth_note():
+    note_id = request.args.get("id")
+    try:
+        status = NoteService.need_auth_code(note_id)
+    except Exception as e:
+        return Response(str(e), status=500)
+    return jsonify({"status": status})
 
 @core.route('/notes', methods=['GET'])
 def fetch_notes():
@@ -30,7 +62,7 @@ def fetch_content():
         content = NoteService.fetch_note(note_id)
     except Exception as e:
         current_app.logger.error(e)
-        return Response(str(e), status=401)
+        return Response(str(e), status=500)
     return content
 
 
@@ -42,7 +74,7 @@ def add_note():
         note_id = NoteService.create_note(title=title,parent_id=pid, content="")
     except Exception as e:
         current_app.logger.error(e)
-        return Response(e, status=401)
+        return Response(e, status=500)
     return jsonify({"id": note_id})
 
 
@@ -67,7 +99,7 @@ def update_note():
 
     except Exception as e:
         current_app.logger.error(e)
-        return Response(str(e), status=403)
+        return Response(str(e), status=500)
 
     return Response(status=200)
 
@@ -102,7 +134,7 @@ def download_image(image_id):
         content, mimetype = NoteService.fetch_image(image_id=image_id)
     except Exception as e:
         current_app.logger.error(f"{e}: {image_id}")
-        return Response(status=403)
+        return Response(status=500)
     return Response(content, mimetype=mimetype)
 
 

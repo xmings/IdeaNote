@@ -16,9 +16,16 @@
     {% block jsdefinebefore %}{% endblock %}
 </head>
 <body>
-<div class="ui success message floating flash-message" id="flash-message">
+<div class="ui message floating flash-message" id="flash-message">
     <i class="close icon"></i>
     <div class="content"></div>
+</div>
+
+<div class="ui floating auth-frame" id="auth-frame">
+    <div class="ui fluid action input">
+        <input type="password" data-auth-code="" placeholder="请输入密码...">
+        <div class="ui button">验证</div>
+    </div>
 </div>
 <div class="workspace-ui" id="workspace-ui">
     <div class="left-frame">

@@ -6,7 +6,6 @@
 from app import db
 from uuid import uuid1
 from datetime import datetime
-from sqlalchemy.orm import relationship
 
 
 class Catalog(db.Model):
@@ -18,6 +17,7 @@ class Catalog(db.Model):
     content = db.Column(db.Binary)
     remote_content = db.Column(db.Binary)
     seq_no = db.Column(db.Integer, autoincrement=True)
+    with_passwd = db.Column(db.Integer, default=0)
     status = db.Column(db.Integer, default=1)
     creation_time = db.Column(db.DateTime, default=datetime.now())
     modification_time = db.Column(db.DateTime)

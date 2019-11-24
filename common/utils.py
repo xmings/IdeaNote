@@ -46,6 +46,10 @@ class ConfigLoader(object):
         return self.config.get("IdeaNote").get("note_data_path")
 
     @property
+    def flask_config(self):
+        return self.config.get("IdeaNote").get("flask").get("config")
+
+    @property
     def db_config(self):
         return self.config.get("IdeaNote").get("db").get("config")
 

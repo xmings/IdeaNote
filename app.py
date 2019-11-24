@@ -19,6 +19,7 @@ if platform.system() == "Windows" and conf.hide_window:
 
 app = Flask(__name__)
 app.config.from_mapping(conf.db_config)
+app.config['SECRET_KEY'] = "12345"
 log_handler = TimedRotatingFileHandler(
     filename=os.path.join(conf.log_directory, "idea_note.log"),
     when="midnight",
