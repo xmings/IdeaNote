@@ -17,7 +17,7 @@ class NoteService(object):
     @classmethod
     def create_note(self, title, parent_id, content, **kwargs):
         content = zlib.compress(content.encode("utf8"))
-        last_child = Catalog.query.filter(Catalog.parent_id == parent_id).order_by(Catalog.seq_no.desc()).first()
+        last_child = Catalog.query.filter(Catalog.parent_id == parent_id).order_by(Catalog.seq_no.asc()).first()
         seq_no = 1 if not last_child or not last_child.seq_no else last_child.seq_no + 1
         note = Catalog(title=title, parent_id=parent_id, content=content, seq_no=seq_no, **kwargs)
         db.session.add(note)
@@ -36,27 +36,23 @@ class NoteService(object):
     @classmethod
     def update_note_position(cls, note_id, parent_id, index):
         note = Catalog.query.filter_by(id=note_id).first()
-        no = 0
-        font_node_seq = 0
-        for child in Catalog.query.filter_by(parent_id=parent_id, status=1).order_by(Catalog.seq_no.desc()).all():
-            if no < index:
-                font_node_seq = child.seq_no
-                continue
-            elif no == index:
-                note.parent_id = parent_id
-                note.seq_no = font_node_seq + 1
-                note.modification_time = datetime.now()
+        node_seq = 0
+        for child in Catalog.query.filter(
+                Catalog.parent_id==parent_id,
+                Catalog.status==1,
+                Catalog.id!=note.id
+        ).order_by(Catalog.seq_no.asc()).all():
+            if node_seq == index:
+                # 为note留出该位置
+                node_seq += 1
 
-            # node其后的node的seq都需要加两次，防止重叠
-            child.seq_no += 2
+            child.seq_no = node_seq
             child.modification_time = datetime.now()
-
-            no += 1
-
-        if no == 0:
-            note.parent_id = parent_id
-            note.seq_no = 1
-            note.modification_time = datetime.now()
+            node_seq += 1
+        # 最后插入该位置
+        note.parent_id = parent_id
+        note.seq_no = index
+        note.modification_time = datetime.now()
 
         db.session.commit()
         return True
@@ -157,26 +153,26 @@ class NoteService(object):
         try:
             wy_sync = NetDiskSync(conf.sync_work_dir)
             while True:
-                if wy_sync.request_push():
-                    with app.app_context():
-                        change_note_count = 0
-                        sync_time = wy_sync.sync_timestamp
+                sync_time = wy_sync.sync_timestamp
+                change_notes = db.session.execute(f"""
+                    select id from t_catalog 
+                    where coalesce(modification_time, creation_time) > '{sync_time}'
+                """).fetchall()
+                if change_notes and wy_sync.request_push():
+                    change_note_count = 0
+                    for id, in change_notes:
+                        note = Catalog.query.filter_by(id=id).first()
+                        wy_sync.dump_note(note)
+                        app.logger.info(note)
+                        change_note_count += 1
                         for id, in db.session.execute(f"""
-                            select id from t_catalog 
-                            where coalesce(modification_time, creation_time) > '{sync_time}'
+                            select id from t_note_reference_image 
+                            where coalesce(modification_time, creation_time) > '{sync_time}' and note_id='{note.id}'
                         """).fetchall():
-                            note = Catalog.query.filter_by(id=id).first()
-                            wy_sync.dump_note(note)
-                            app.logger.info(note)
+                            image = Image.query.filter_by(id=id).first()
+                            wy_sync.dump_image(image)
+                            app.logger.info(image)
                             change_note_count += 1
-                            for id, in db.session.execute(f"""
-                                select id from t_note_reference_image 
-                                where coalesce(modification_time, creation_time) > '{sync_time}' and note_id='{note.id}'
-                            """).fetchall():
-                                image = Image.query.filter_by(id=id).first()
-                                wy_sync.dump_image(image)
-                                app.logger.info(image)
-                                change_note_count += 1
 
                     if change_note_count == 0:
                         wy_sync.last_update_timestamp = None
@@ -184,39 +180,38 @@ class NoteService(object):
                     wy_sync.flush_sync_metadata()
 
                 else:
-                    with app.app_context():
-                        for record in wy_sync.load_change_record():
-                            version = record.get("version")
-                            if record.get("type") == "note":
-                                content = wy_sync.load_note(record.get("id"), version)
-                                db.session.merge(
-                                    Catalog(
-                                        id=record.get("id"),
-                                        title=record.get("title"),
-                                        icon=record.get("icon"),
-                                        parent_id=record.get("parent_id"),
-                                        content=content,
-                                        seq_no=record.get("seq_no"),
-                                        status=record.get("status"),
-                                        creation_time=record.get("creation_time"),
-                                        modification_time=record.get("modification_time")
-                                    )
+                    for record in wy_sync.load_change_record():
+                        version = record.get("version")
+                        if record.get("type") == "note":
+                            content = wy_sync.load_note(record.get("id"), version)
+                            db.session.merge(
+                                Catalog(
+                                    id=record.get("id"),
+                                    title=record.get("title"),
+                                    icon=record.get("icon"),
+                                    parent_id=record.get("parent_id"),
+                                    content=content,
+                                    seq_no=record.get("seq_no"),
+                                    status=record.get("status"),
+                                    creation_time=record.get("creation_time"),
+                                    modification_time=record.get("modification_time")
                                 )
-                            elif record.get("type") == "image":
-                                image = wy_sync.load_image(record.get("id"), version)
-                                db.session.merge(
-                                    Image(
-                                        id=record.get("id"),
-                                        note_id=record.get("note_id"),
-                                        image=image,
-                                        mime_type=record.get("mime_type"),
-                                        status=record.get("status"),
-                                        creation_time=record.get("creation_time"),
-                                        modification_time=record.get("modification_time")
-                                    )
+                            )
+                        elif record.get("type") == "image":
+                            image = wy_sync.load_image(record.get("id"), version)
+                            db.session.merge(
+                                Image(
+                                    id=record.get("id"),
+                                    note_id=record.get("note_id"),
+                                    image=image,
+                                    mime_type=record.get("mime_type"),
+                                    status=record.get("status"),
+                                    creation_time=record.get("creation_time"),
+                                    modification_time=record.get("modification_time")
                                 )
-                            app.logger.info(record)
-                        db.session.commit()
+                            )
+                        app.logger.info(record)
+                    db.session.commit()
 
                     wy_sync.flush_sync_metadata()
 

@@ -133,19 +133,19 @@ class NetDiskSync(object):
         self.last_update_timestamp = datetime.now()
 
     def load_change_record(self):
-        assert self.request_push() == False, "必须应用完所有已知变更日志才可以Push变更日志"
-        start_file_no = (self.sync_version // self.max_file_record_count) * self.max_file_record_count
-        end_file_no = (self.max_sync_version // self.max_file_record_count + 1) * self.max_file_record_count
+        if self.need_apply_log():
+            start_file_no = (self.sync_version // self.max_file_record_count) * self.max_file_record_count
+            end_file_no = (self.max_sync_version // self.max_file_record_count + 1) * self.max_file_record_count
 
-        for file_no in range(start_file_no, end_file_no, self.max_file_record_count):
-            change_record_file = f"{self.change_record_prefix}.{file_no}"
-            with open(change_record_file, "r") as f:
-                for line in f.readlines():
-                    record = json.loads(line)
-                    if int(record.get("version")) > self.sync_version:
-                        record["creation_time"] = timestamp_from_str(record["creation_time"])
-                        record["modification_time"] = timestamp_from_str(record["modification_time"])
-                        yield record
+            for file_no in range(start_file_no, end_file_no, self.max_file_record_count):
+                change_record_file = f"{self.change_record_prefix}.{file_no}"
+                with open(change_record_file, "r") as f:
+                    for line in f.readlines():
+                        record = json.loads(line)
+                        if int(record.get("version")) > self.sync_version:
+                            record["creation_time"] = timestamp_from_str(record["creation_time"])
+                            record["modification_time"] = timestamp_from_str(record["modification_time"])
+                            yield record
 
     def load_note(self, note_id, version):
         note_file = os.path.join(self.work_dir, f"{note_id}-{version}{self.note_file_suffix}")
@@ -177,16 +177,14 @@ class NetDiskSync(object):
 
     def request_push(self):
         """
-        1. Push锁内部条件：self.sync_version == self.max_sync_version，即必须先引用完所有的变更日志
+        1. Push锁内部条件：self.sync_version >= self.max_sync_version，即必须先引用完所有的变更日志
         2. Push锁外部条件: writing_node相同或者last_update_timestamp很久没有变更
         """
-
-        metadata = self.flush_sync_metadata()
-
         # Push锁内部条件验证
-        if self.sync_version < self.max_sync_version:
+        if self.need_apply_log():
             return False
 
+        metadata = self.flush_sync_metadata()
         last_update_timestamp = metadata.get("last_update_timestamp")
         # Push锁外部条件验证last_update_timestamp
         if metadata.get("writing_node") == self.node_name or last_update_timestamp is None:
@@ -204,6 +202,18 @@ class NetDiskSync(object):
             return True
 
         return False
+
+    def need_apply_log(self):
+        """
+        检查是否有日志未被应用
+        :return: boolean
+        """
+        self.flush_sync_metadata()
+        # Push锁内部条件验证
+        if self.sync_version < self.max_sync_version:
+            return True
+        return False
+
 
     def cleanup_expired_note(self):
         metadata = self.flush_sync_metadata()
