@@ -7,6 +7,7 @@
 from . import core
 from flask import render_template, request, Response, jsonify, current_app, session
 from core.service import NoteService
+from common import conf
 
 @core.route("/")
 def index():
@@ -14,29 +15,28 @@ def index():
         session.pop(i)
     return render_template('editor.html')
 
-@core.route("/auth", methods=["POST"])
+@core.route("/note/auth", methods=["POST"])
 def auth():
     note_id = request.form.get('id')
     auth_code = request.form.get('auth_code')
-    if auth_code != "123456":
+    if auth_code != str(conf.auth_code):
         return Response(status=400)
 
     session[f"auth-{note_id}"] = 1
     return Response(status=200)
 
-@core.route("/note/lock", methods=["POST"])
+@core.route("/note/toggle/lock", methods=["POST"])
 def toggle_note_lock():
     note_id = request.form.get('id')
     try:
         if NoteService.need_auth_code(note_id):
-            NoteService.update_note_lock_status(note_id, False)
-        else:
-            NoteService.update_note_lock_status(note_id)
+            return Response(status=401)
+        NoteService.update_note_lock_status(note_id, toggle=True)
     except Exception as e:
         return Response(str(e), status=500)
     return Response(status=200)
 
-@core.route("/note/lock")
+@core.route("/note/need/lock")
 def need_auth_note():
     note_id = request.args.get("id")
     try:

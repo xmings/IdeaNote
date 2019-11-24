@@ -81,6 +81,10 @@ class ConfigLoader(object):
     def urlmark_file(self):
         return self.config.get("IdeaNote").get("urlmark").get("sync_file")
 
+    @property
+    def auth_code(self):
+        return self.config.get("IdeaNote").get("auth_code")
+
 
 conf = ConfigLoader()
 

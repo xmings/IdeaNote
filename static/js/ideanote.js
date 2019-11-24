@@ -10,7 +10,7 @@ class MessageBox {
         });
     }
 
-    show(content, level) {
+    show(content, level, timeout) {
         if (typeof level === "undefined"
             || ["success", "negative"].indexOf(level) === -1) {
             level = "success";
@@ -19,10 +19,12 @@ class MessageBox {
         this.container.removeClass("success").removeClass("negative").addClass(level);
         this.container.transition("fade");
 
+        if (typeof timeout === "undefined") timeout = 3000;
+
         if (level === "success") {
             setTimeout(() => {
                 this.container.transition('fade');
-            }, 2000);
+            }, timeout);
         }
     }
 
@@ -65,6 +67,7 @@ class Catalog {
         this.contentArea = options.contentArea;
         this.authUri = options.authUri;
         this.needAuthUri = options.needAuthUri;
+        this.toggleNoteLockUri = options.toggleNoteLock;
         this.attribution = {
             'core': {
                 'data': [],
@@ -209,15 +212,6 @@ class Catalog {
                                 }
                             });
 
-
-                        }
-                    },
-                    'lock': {
-                        'label': "加密",
-                        'icon': 'lock icon',
-                        'separator_after': true,
-                        'action': data => {
-
                         }
                     },
                     'sync': {
@@ -238,7 +232,27 @@ class Catalog {
                                 }
                             })
                         }
-                    }
+                    },
+                    'lock': {
+                        'label': "锁定/解锁",
+                        'icon': 'lock icon',
+                        'separator_after': true,
+                        'action': data => {
+                            let node = this.treeObj.get_node(data.reference);
+                            $.ajax({
+                                url: this.toggleNoteLockUri,
+                                data: {id: node.id},
+                                type: "POST",
+                                error: (XMLHttpRequest) => {
+                                    if (XMLHttpRequest.status === 401){
+                                        messageBox.show("该目录已加密，请先解锁！", "success", 1000000)
+                                    }else{
+                                        messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText);
+                                    }
+                                }
+                            })
+                        }
+                    },
                 }
             }
         };
@@ -303,8 +317,6 @@ class Catalog {
                         this.treeObj.close_node(data.node.id);
                         this.authContainer.find("input").attr("data-note-id", data.node.id);
                         this.authContainer.css("visibility", "visible");
-                    } else {
-                        this.authContainer.css("visibility", "hidden");
                     }
                 })
             }
@@ -337,6 +349,11 @@ class Catalog {
             if ($(ele.target) !== this.authContainer
                 && this.authContainer.has($(ele.target)).length === 0) {
                 this.authContainer.css("visibility", "hidden");
+            }
+
+            if ($(ele.target) !== messageBox.container
+                && messageBox.container.has($(ele.target)).length === 0){
+                messageBox.hide();
             }
         })
     }

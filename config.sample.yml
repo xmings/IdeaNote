@@ -2,6 +2,7 @@ IdeaNote:
   port: 5555
   metadata_file: ideanote.json
   hide_window: False
+  auth_code: 123456
   sync:
     remote:
       method: github

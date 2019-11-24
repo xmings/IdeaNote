@@ -82,10 +82,13 @@ class NoteService(object):
         return True
 
     @classmethod
-    def update_note_lock_status(cls, note_id, lock=True):
+    def update_note_lock_status(cls, note_id, toggle=True, lock=True):
         note = Catalog.query.filter_by(id=note_id).first()
-        if lock:
-            note.with_passwd = 1
+        if toggle:
+            note.with_passwd = 1 if note.with_passwd == 0 else 0
+        else:
+            note.with_passwd = 1 if lock else 0
+
         db.session.commit()
         return True
 
