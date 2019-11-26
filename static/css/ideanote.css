@@ -55,9 +55,9 @@ body {
 }
 
 ::-webkit-scrollbar {
-    width: 14px;
+    width: 4px !important;
     height: 14px;
-    background-color: transparent;
+    background-color: transparent !important;
 }
 
 ::-webkit-scrollbar-track,
@@ -67,8 +67,8 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-    background: transparent;
-    box-shadow: white;
+    background: transparent !important;
+    box-shadow: white !important;
 }
 
 ::-webkit-scrollbar-thumb {
