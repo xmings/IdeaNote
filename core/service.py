@@ -88,7 +88,7 @@ class NoteService(object):
             note.with_passwd = 1 if note.with_passwd == 0 else 0
         else:
             note.with_passwd = 1 if lock else 0
-
+        note.modification_time = datetime.now()
         db.session.commit()
         return True
 

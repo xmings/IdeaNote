@@ -160,7 +160,8 @@ class Catalog {
                                         "text": text,
                                         "type": "file"
                                     }, "last");
-                                    console.log(this.treeObj);
+                                    this.treeObj.set_type(parent, "folder");
+                                    this.treeObj.open_node(parent);
                                 },
                                 error: XMLHttpRequest => {
                                     messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
