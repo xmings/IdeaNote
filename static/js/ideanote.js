@@ -437,7 +437,7 @@ class ContentArea {
         });
 
         let lastPostTimeStr = null;
-        setTimeout(() => {
+        setInterval(() => {
             let minChangeTimeNode = null;
             for (let i = 0; i < localStorage.length; i++) {
                 let key = localStorage.key(i);
@@ -452,7 +452,8 @@ class ContentArea {
                     }
                 }
             }
-            if (minChangeTimeNode !== null) {
+            if (lastPostTimeStr === null
+                || (minChangeTimeNode !== null && minChangeTimeNode.changeTime > lastPostTimeStr)) {
                 $.ajax({
                     url: this.submitContentUri,
                     type: "POST",
@@ -463,13 +464,17 @@ class ContentArea {
                     },
                     success: () => {
                         lastPostTimeStr = minChangeTimeNode.changeTime;
+                        // 清楚掉在localStorage中存在但并没有打开的note
+                        if (!(minChangeTimeNode.id in this.docBuffer)) {
+                            localStorage.removeItem('ideanote-' + minChangeTimeNode.id);
+                        }
                     },
                     error: XMLHttpRequest => {
                         messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
                     }
                 });
             }
-        }, 1000);
+        }, 5000);
 
 
         this.editorObj.on('scroll', e => {
