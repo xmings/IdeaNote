@@ -80,44 +80,48 @@ class Catalog {
                 'loaded_state': true,
                 'restore_focus': false,
                 'keyboard': {
-                    'up': function (e) {
+                    'up': (e) => {
                         e.preventDefault();
-                        let node = this.get_node(e.target),
-                            parent = this.get_node(node.parent),
+                        let node = this.treeObj.get_node(e.target),
+                            parent = this.treeObj.get_node(node.parent),
                             index = parent.children.indexOf(node.id);
                         if (index === 0) {
                             return false
                         }
-                        this.move_node(node, parent, index - 1);
+                        this.treeObj.move_node(node, parent, index - 1);
+                        this.treeObj.get_node(node, true).find("a").focus();
                     },
-                    'down': function (e) {
+                    'down': (e) => {
                         e.preventDefault();
-                        let node = this.get_node(e.target),
-                            parent = this.get_node(node.parent),
+                        let node = this.treeObj.get_node(e.target),
+                            parent = this.treeObj.get_node(node.parent),
                             index = parent.children.indexOf(node.id) + 1;
                         if (index === parent.children.length) {
                             return false
                         }
-                        this.move_node(node, parent, index + 1);
+                        this.treeObj.move_node(node, parent, index + 1);
+                        this.treeObj.get_node(node, true).find("a").focus();
                     },
-                    'left': function (e) {
+                    'left': (e) => {
                         e.preventDefault();
-                        let node = this.get_node(e.target),
-                            parent = this.get_node(node.parent),
-                            grand_parent = this.get_node(parent.parent);
+                        let node = this.treeObj.get_node(e.target),
+                            parent = this.treeObj.get_node(node.parent),
+                            grand_parent = this.treeObj.get_node(parent.parent);
                         if (!grand_parent) {
                             return false
                         }
-                        this.move_node(node, grand_parent, grand_parent.children.length + 1);
+                        this.treeObj.move_node(node, grand_parent, grand_parent.children.length + 1);
+                        this.treeObj.get_node(node, true).find("a").focus();
                     },
-                    'right': function (e) {
+                    'right': (e) => {
                         e.preventDefault();
-                        let node = this.get_node(e.target),
-                            prev_node = this.get_node(this.get_prev_dom(node));
+                        let node = this.treeObj.get_node(e.target),
+                            prev_node = this.treeObj.get_node(this.treeObj.get_prev_dom(node, true));
                         if (!prev_node) {
                             return false
                         }
-                        this.move_node(node, prev_node, prev_node.children.length + 1);
+                        this.treeObj.move_node(node, prev_node, prev_node.children.length + 1);
+                        this.treeObj.get_node(node, true).find("a").focus();
                     }
 
                 }
@@ -245,9 +249,9 @@ class Catalog {
                                 data: {id: node.id},
                                 type: "POST",
                                 error: (XMLHttpRequest) => {
-                                    if (XMLHttpRequest.status === 401){
+                                    if (XMLHttpRequest.status === 401) {
                                         messageBox.show("该目录已加密，请先解锁再去锁！", "success", 3000)
-                                    }else{
+                                    } else {
                                         messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText);
                                     }
                                 }
@@ -353,10 +357,10 @@ class Catalog {
             }
 
             if ($(ele.target) !== messageBox.container
-                && messageBox.container.has($(ele.target)).length === 0){
+                && messageBox.container.has($(ele.target)).length === 0) {
                 messageBox.hide();
             }
-        })
+        });
     }
 
     buildTree() {
