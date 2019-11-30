@@ -424,24 +424,53 @@ class ContentArea {
         this.toc = new Toc();
 
         this.editorObj.on("changes", (instance, changes) => {
+            console.log(instance, changes);
             let content = this.editorObj.doc.getValue();
             this.previewContent(content);
             this.toc.build();
 
-            $.ajax({
-                url: this.submitContentUri,
-                type: "POST",
-                data: {
-                    id: this.currentNoteId,
-                    type: "content",
-                    content: content,
-                },
-                error: XMLHttpRequest => {
-                    messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
-                }
-            });
-
+            localStorage.setItem("ideanote-" + this.currentNoteId, JSON.stringify({
+                "id": this.currentNoteId,
+                "content": content,
+                "changeTime": (new Date()).toISOString()
+            }));
         });
+
+        let lastPostTimeStr = null;
+        setTimeout(() => {
+            let minChangeTimeNode = null;
+            for (let i = 0; i < localStorage.length; i++) {
+                let key = localStorage.key(i);
+                if (key.startsWith("ideanote")) {
+                    let node = JSON.parse(localStorage.getItem(key));
+                    if (minChangeTimeNode === null) {
+                        minChangeTimeNode = node;
+                    } else {
+                        if (lastPostTimeStr === null || node.changeTime > lastPostTimeStr) {
+                            minChangeTimeNode = node.changeTime < minChangeTimeNode.changeTime ? node : minChangeTimeNode;
+                        }
+                    }
+                }
+            }
+            if (minChangeTimeNode !== null) {
+                $.ajax({
+                    url: this.submitContentUri,
+                    type: "POST",
+                    data: {
+                        id: minChangeTimeNode.id,
+                        type: "content",
+                        content: minChangeTimeNode.content,
+                    },
+                    success: () => {
+                        lastPostTimeStr = minChangeTimeNode.changeTime;
+                    },
+                    error: XMLHttpRequest => {
+                        messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
+                    }
+                });
+            }
+        }, 1000);
+
 
         this.editorObj.on('scroll', e => {
             let scrollRate = this.editorObj.getScrollInfo().top / this.editorObj.getScrollInfo().height;

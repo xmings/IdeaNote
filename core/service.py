@@ -61,13 +61,8 @@ class NoteService(object):
     @classmethod
     def update_note_content(cls, note_id, content):
         note = Catalog.query.filter_by(id=note_id).first()
-        images = Image.query.filter_by(note_id=note_id, status=1).all()
-        for img in images:
-            if img.id not in content:
-                img.status = -1
-                img.modification_time = datetime.now()
-                db.session.commit()
-
+        if zlib.decompress(note.content).decode("utf8") == content:
+            return True
         note.content = zlib.compress(content.encode("utf8"))
         note.modification_time = datetime.now()
         db.session.commit()
@@ -146,6 +141,12 @@ class NoteService(object):
     @classmethod
     def fetch_note(cls, id):
         note = Catalog.query.filter_by(id=id).first()
+        images = Image.query.filter_by(note_id=id, status=1).all()
+        for img in images:
+            if img.id not in note.content:
+                img.status = -1
+                img.modification_time = datetime.now()
+                db.session.commit()
         return zlib.decompress(note.content).decode("utf8")
 
     @classmethod

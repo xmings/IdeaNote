@@ -90,7 +90,6 @@ def update_note():
             parent_id = request.form.get('parent_id')
             index = request.form.get('index')
             NoteService.update_note_position(note_id=id, parent_id=parent_id,index=int(index))
-
         elif type == "content":
             content = request.form.get('content')
             NoteService.update_note_content(note_id=id, content=content)
