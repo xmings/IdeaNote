@@ -7,7 +7,7 @@ import os, platform
 from flask import Flask, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from common import conf
-from logging import INFO, Formatter
+from logging import INFO, Formatter, basicConfig
 from logging.handlers import TimedRotatingFileHandler
 
 if platform.system() == "Windows" and conf.hide_window:
@@ -27,6 +27,7 @@ log_handler = TimedRotatingFileHandler(
 )
 log_handler.setLevel(INFO)
 log_handler.setFormatter(Formatter(conf.log_formatter))
+basicConfig(format=conf.log_formatter, datefmt=None)
 app.logger.addHandler(log_handler)
 
 db = SQLAlchemy(app)

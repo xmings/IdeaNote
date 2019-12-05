@@ -3,7 +3,7 @@
 # @File  : service.py
 # @Author: wangms
 # @Date  : 2019/8/3
-import zlib, requests
+import zlib, requests, os
 from core.model import Catalog, Image, Snap, db
 from datetime import datetime
 from app import app
@@ -141,13 +141,14 @@ class NoteService(object):
     @classmethod
     def fetch_note(cls, id):
         note = Catalog.query.filter_by(id=id).first()
+        content = zlib.decompress(note.content).decode("utf8")
         images = Image.query.filter_by(note_id=id, status=1).all()
         for img in images:
-            if img.id not in note.content:
+            if img.id not in content:
                 img.status = -1
                 img.modification_time = datetime.now()
                 db.session.commit()
-        return zlib.decompress(note.content).decode("utf8")
+        return content
 
     @classmethod
     def create_image(cls, note_id, image, image_id=None):
@@ -171,6 +172,12 @@ class NoteService(object):
     def translate_text(cls, text):
         r = requests.post("http://fy.iciba.com/ajax.php?a=fy", data={"f": "auto", "t": "auto", "w": text})
         return r.json()
+
+    @classmethod
+    def parse_change_log(cls, change_id):
+        change_log = os.path.join("")
+        with open(change_log) as f:
+            pass
 
     @classmethod
     def netdisk_auto_sync(cls):
