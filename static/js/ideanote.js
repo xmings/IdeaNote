@@ -315,13 +315,15 @@ class Catalog {
             })
         });
 
-        this.treeContainer.on("open_node.jstree", (e, data) => {
+        this.treeContainer.on("before_open.jstree", (e, data) => {
             if (data.node.type === "folder") {
                 $.get(this.needAuthUri, {id: data.node.id}, (res) => {
                     if (res.status) {
                         this.treeObj.close_node(data.node.id);
+                        this.treeObj.select_node(data.node.id);
                         this.authContainer.find("input").attr("data-note-id", data.node.id);
                         this.authContainer.css("visibility", "visible");
+                        this.authContainer.find("input").focus();
                     }
                 })
             }
@@ -340,7 +342,8 @@ class Catalog {
                     this.authContainer.css("visibility", "hidden");
                 },
                 success: () => {
-                    this.treeObj.open_node(this.treeObj.get_selected()[0]);
+                    let id = this.authContainer.find("input").attr("data-note-id");
+                    this.treeObj.open_node(this.treeObj.get_node(id));
                     this.treeObj.select_node(this.treeObj.get_selected()[0]);
                 },
                 error: () => {
@@ -350,17 +353,26 @@ class Catalog {
             });
         });
 
-        $(document).on('click', (ele) => {
-            if ($(ele.target) !== this.authContainer
-                && this.authContainer.has($(ele.target)).length === 0) {
+        $(document).on('click', (e) => {
+            if ($(e.target) !== this.authContainer
+                && this.authContainer.has($(e.target)).length === 0) {
                 this.authContainer.css("visibility", "hidden");
             }
 
-            if ($(ele.target) !== messageBox.container
-                && messageBox.container.has($(ele.target)).length === 0) {
+            if ($(e.target) !== messageBox.container
+                && messageBox.container.has($(e.target)).length === 0) {
                 messageBox.hide();
             }
         });
+
+        $(document).on("keydown", (e) => {
+            if (this.authContainer.css("visibility") === "visible") {
+                if (e.keyCode === 13) {
+                    e.preventDefault();
+                    this.authContainer.find(".button").click();
+                }
+            }
+        })
     }
 
     buildTree() {
@@ -452,8 +464,7 @@ class ContentArea {
                     }
                 }
             }
-            if (lastPostTimeStr === null
-                || (minChangeTimeNode !== null && minChangeTimeNode.changeTime > lastPostTimeStr)) {
+            if (minChangeTimeNode !== null && minChangeTimeNode.changeTime > lastPostTimeStr) {
                 $.ajax({
                     url: this.submitContentUri,
                     type: "POST",
@@ -464,7 +475,7 @@ class ContentArea {
                     },
                     success: () => {
                         lastPostTimeStr = minChangeTimeNode.changeTime;
-                        // 清楚掉在localStorage中存在但并没有打开的note
+                        // 清除在localStorage中存在但并没有打开的note
                         if (!(minChangeTimeNode.id in this.docBuffer)) {
                             localStorage.removeItem('ideanote-' + minChangeTimeNode.id);
                         }
