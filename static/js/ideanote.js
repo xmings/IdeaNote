@@ -464,7 +464,7 @@ class ContentArea {
                     }
                 }
             }
-            if (minChangeTimeNode !== null && minChangeTimeNode.changeTime > lastPostTimeStr) {
+            if (minChangeTimeNode !== null && (lastPostTimeStr === null || minChangeTimeNode.changeTime > lastPostTimeStr)) {
                 $.ajax({
                     url: this.submitContentUri,
                     type: "POST",
