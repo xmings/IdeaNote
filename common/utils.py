@@ -123,6 +123,7 @@ basicConfig(format=conf.log_formatter, datefmt=None)
 def fetch_logger(logger_name, log_filename):
     logger = getLogger(logger_name)
     logger.setLevel(DEBUG)
+    logger.propagate = False
 
     if len(logger.handlers) == 0:
         file_handler = TimedRotatingFileHandler(
