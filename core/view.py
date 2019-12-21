@@ -137,16 +137,6 @@ def download_image(image_id):
     return Response(content, mimetype=mimetype)
 
 
-@core.route("/sync", methods=["POST"])
-def sync_note():
-    try:
-        NoteService.netdisk_auto_sync()
-    except Exception as e:
-        current_app.logger.error(e)
-        return Response(str(e), status=500)
-    return Response(status=200)
-
-
 @core.route('/translator')
 def text_translator():
     text = request.args.get('text')

@@ -66,12 +66,13 @@ if not os.path.exists(conf.sync_work_dir):
     logger.error("\033[1;31m 请在config.yml文件中正确指定work_dir的路径 \033[0m")
     sys.exit(1)
 import json
+import socket
+from datetime import datetime
 with open(os.path.join(conf.sync_work_dir, "sync.metadata"), "w", encoding="utf8") as f:
     f.write(json.dumps({
-            "writing_node": "",
-            "sync_timestamp": {},
-            "sync_version": {},
-            "last_update_timestamp": None
+            "latest_version": 0,
+            "clinet_id": socket.gethostname(),
+            "change_time": datetime.now().isoformat()
     }, ensure_ascii=False, indent=4))
 logger.info(">>>>>>通过！\n")
 
@@ -82,14 +83,15 @@ if not os.path.exists(conf.log_directory):
 logger.info(">>>>>>通过！\n")
 
 logger.info("5. 初始化DB")
-from core.model import Catalog, Image, SyncRecord, Snap
+from core.model import Catalog, Image, SyncRecord
+from sync.model import SyncInfo
 import sqlalchemy, zlib
 from sqlalchemy.orm import sessionmaker
 
 db_file = conf.db_config.get("SQLALCHEMY_DATABASE_URI")
 db = sqlalchemy.create_engine(db_file)
 session = sessionmaker(bind=db)()
-for t in [Catalog, Image, SyncRecord, Snap]:
+for t in [Catalog, Image, SyncRecord, SyncInfo]:
     t.metadata.drop_all(db.engine)
     t.metadata.create_all(db.engine)
 root = Catalog(title="MyNote", parent_id="self", content=zlib.compress(welcome.encode("utf8")), status=1)

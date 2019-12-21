@@ -18,7 +18,7 @@ class Catalog(db.Model):
     remote_content = db.Column(db.Binary)
     seq_no = db.Column(db.Integer, autoincrement=True)
     with_passwd = db.Column(db.Integer, default=0)
-    status = db.Column(db.Integer, default=1)
+    status = db.Column(db.Integer, default=1) # 1=sync status;2=not merge status;3=not push status;-1=delete status
     creation_time = db.Column(db.DateTime, default=datetime.now())
     modification_time = db.Column(db.DateTime)
 
@@ -33,14 +33,6 @@ class Image(db.Model):
     creation_time = db.Column(db.DateTime, default=datetime.now())
     modification_time = db.Column(db.DateTime)
 
-
-class Snap(db.Model):
-    __tablename__ = "t_content_snap"
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    note_id = db.Column(db.String, db.ForeignKey('t_catalog.id'))
-    content = db.Column(db.Text)
-    creation_time = db.Column(db.DateTime, default=datetime.now())
-    modification_time = db.Column(db.DateTime)
 
 class SyncRecord(db.Model):
     __tablename__ = "t_sync_log"

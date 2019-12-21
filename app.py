@@ -40,6 +40,10 @@ def send_js(path):
 from core import core
 app.register_blueprint(core)
 
+from sync import sync
+app.register_blueprint(sync)
+
+
 # app.app_context().push()
 # db.drop_all()
 # db.create_all()
