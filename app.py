@@ -6,9 +6,7 @@
 import os, platform
 from flask import Flask, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
-from common import conf
-from logging import INFO, Formatter, basicConfig
-from logging.handlers import TimedRotatingFileHandler
+from common import conf, fetch_logger
 
 if platform.system() == "Windows" and conf.hide_window:
     import win32api, win32gui
@@ -20,15 +18,9 @@ if platform.system() == "Windows" and conf.hide_window:
 app = Flask(__name__)
 app.config.from_mapping(conf.db_config)
 app.config['SECRET_KEY'] = "12345"
-log_handler = TimedRotatingFileHandler(
-    filename=os.path.join(conf.log_directory, "idea_note.log"),
-    when="midnight",
-    encoding="utf8"
-)
-log_handler.setLevel(INFO)
-log_handler.setFormatter(Formatter(conf.log_formatter))
-basicConfig(format=conf.log_formatter, datefmt=None)
-app.logger.addHandler(log_handler)
+
+logger = fetch_logger(os.path.abspath(__file__), "idea_note.log")
+app.logger.handlers = logger.handlers
 
 db = SQLAlchemy(app)
 
@@ -36,12 +28,11 @@ db = SQLAlchemy(app)
 def send_js(path):
     return send_from_directory('static/js', path, mimetype="application/javascript")
 
+from sync import sync
+app.register_blueprint(sync)
 
 from core import core
 app.register_blueprint(core)
-
-from sync import sync
-app.register_blueprint(sync)
 
 
 # app.app_context().push()

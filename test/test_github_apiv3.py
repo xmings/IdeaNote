@@ -15,7 +15,7 @@ def test_list_folder():
     print(json.dumps(resp.json(), indent=4))
 
 def test_create_folder():
-    url = "https://api.github.com/repos/bmark-sync/test_github_api/contents/abc/test_create.md"
+    url = "https://api.github.com/repos/sync-repo/note-sync/contents/version"
     content = b64encode("abcdef".encode("utf8")).decode("utf8")
     resp = requests.put(url, data=json.dumps({
         "message": "创建idea目录及内容文件",
@@ -26,7 +26,7 @@ def test_create_folder():
         "content": f"{content}",
         "branch": "master"
     }), params={
-        "access_token": "c64b06c644660e1819f9077163f5f670c680dad7"
+        "access_token": "38d6f2b08b84d86a2fa64fd77dc2357638ffde02"
     })
 
     print(json.dumps(resp.json(), indent=4))
@@ -101,3 +101,5 @@ def test_create_image():
     return resp.json()
 
 
+if __name__ == '__main__':
+    test_create_file()

@@ -61,19 +61,17 @@ if not os.path.exists(config_file):
 logger.info(">>>>>>通过！\n")
 
 from common import conf
-logger.info("3. 检查同步目录")
-if not os.path.exists(conf.sync_work_dir):
-    logger.error("\033[1;31m 请在config.yml文件中正确指定work_dir的路径 \033[0m")
+logger.info("3. 初始化同步目录")
+if conf.sync_method == "github":
+    from sync.sync_utils.github_sync_utils import GithubSyncUtils
+    GithubSyncUtils(conf.sync_connection_info).init_version_info()
+elif conf.sync_method == "netdisk":
+    from sync.sync_utils.netdisk_sync_utils import NetDiskSyncUtils
+    NetDiskSyncUtils(conf.sync_work_dir).init_version_info()
+else:
+    logger.error("\033[1;31m 错误的同步方式配置，请正确填写config.yml中的sync_method的值\033[0m")
     sys.exit(1)
-import json
-import socket
-from datetime import datetime
-with open(os.path.join(conf.sync_work_dir, "sync.metadata"), "w", encoding="utf8") as f:
-    f.write(json.dumps({
-            "latest_version": 0,
-            "clinet_id": socket.gethostname(),
-            "change_time": datetime.now().isoformat()
-    }, ensure_ascii=False, indent=4))
+
 logger.info(">>>>>>通过！\n")
 
 logger.info("4. 检查日志目录")

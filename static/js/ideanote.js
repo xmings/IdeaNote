@@ -50,7 +50,6 @@ class Catalog {
             fetchDataUri: null,
             fetchContentUri: null,
             updateNoteUri: null,
-            syncUri: null,
             dropNoteUri: null,
             addNoteUri: null,
             contentArea: null
@@ -63,7 +62,6 @@ class Catalog {
         this.updateNoteUri = options.updateNoteUri;
         this.dropNoteUri = options.dropNoteUri;
         this.addNoteUri = options.addNoteUri;
-        this.syncUri = options.syncUri;
         this.contentArea = options.contentArea;
         this.authUri = options.authUri;
         this.needAuthUri = options.needAuthUri;
@@ -217,25 +215,6 @@ class Catalog {
                                 }
                             });
 
-                        }
-                    },
-                    'sync': {
-                        'label': "同步",
-                        'icon': 'refresh icon',
-                        'action': () => {
-                            $.ajax({
-                                url: this.syncUri,
-                                type: 'POST',
-                                beforeSend: () => {
-                                    messageBox.show("<i class='notched circle loading icon'></i>同步中 ...");
-                                },
-                                success: () => {
-                                    messageBox.show("同步成功");
-                                },
-                                error: XMLHttpRequest => {
-                                    messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
-                                }
-                            })
                         }
                     },
                     'lock': {

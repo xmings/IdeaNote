@@ -10,7 +10,7 @@ import requests
 import json
 
 def test_onedrive_connection():
-    info =  conf.remote_connection_info
+    info =  conf.git_connection_info
     base_url = """
         https://login.microsoftonline.com/{tenant}/oauth2/v2.0/authorize?
         client_id={client_id}

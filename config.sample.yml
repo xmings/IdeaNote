@@ -1,17 +1,15 @@
 IdeaNote:
   port: 5555
-  metadata_file: ideanote.json
   hide_window: False
   auth_code: 123456
   sync:
-    remote:
-      method: github
-      connection:
-        owner: xxxxxx
-        email: 123456@xxx.yyy
-        repo: xxxxxx
-        access_token: 20a50aaxxxxxxxxxxxxxxxxxxd21781
-        branch: master
+    method: github
+    connection:
+      owner: xxxxxx
+      email: 123456@xxx.yyy
+      repo: xxxxxx
+      access_token: 20a50aaxxxxxxxxxxxxxxxxxxd21781
+      branch: master
     work_dir: D:\ideanote_sync
   db:
     config:

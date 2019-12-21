@@ -6,7 +6,8 @@
 import os
 from dataclasses import dataclass, field
 from datetime import datetime, date
-
+from logging import getLogger, INFO, DEBUG, Formatter, StreamHandler, basicConfig
+from logging.handlers import TimedRotatingFileHandler
 import yaml
 import json
 
@@ -34,8 +35,16 @@ class ConfigLoader(object):
             self.config = yaml.load(f.read(), Loader=yaml.FullLoader)
 
     @property
-    def remote_connection_info(self):
-        return self.config.get("IdeaNote").get("sync").get("remote").get("connection")
+    def sync_method(self):
+        return self.config.get("IdeaNote").get("sync").get("method")
+
+    @property
+    def sync_connection_info(self):
+        return self.config.get("IdeaNote").get("sync").get("connection")
+
+    @property
+    def sync_work_dir(self):
+        return self.config.get("IdeaNote").get("sync").get("work_dir")
 
     @property
     def metadata_file(self):
@@ -64,10 +73,6 @@ class ConfigLoader(object):
     @property
     def app_port(self):
         return self.config.get("IdeaNote").get("port")
-
-    @property
-    def sync_work_dir(self):
-        return self.config.get("IdeaNote").get("sync").get("work_dir")
 
     @property
     def hide_window(self):
@@ -113,3 +118,31 @@ class JsonEncoderForFrontEnd(json.JSONEncoder):
                 "open": False
             }
         return super().default(o)
+
+basicConfig(format=conf.log_formatter, datefmt=None)
+def fetch_logger(logger_name, log_filename):
+    logger = getLogger(logger_name)
+    logger.setLevel(DEBUG)
+
+    if not logger.hasHandlers():
+        file_handler = TimedRotatingFileHandler(
+            filename=os.path.join(conf.log_directory, log_filename),
+            when="midnight",
+            encoding="utf8"
+        )
+        file_handler.setLevel(INFO)
+        file_handler.setFormatter(Formatter(conf.log_formatter))
+
+        console_handler = StreamHandler()
+        console_handler.setLevel(DEBUG)
+        console_handler.setFormatter(Formatter(conf.log_formatter))
+
+        logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
+    return logger
+
+
+class Resp(object):
+    def __init__(self, status, content):
+        self.status = status
+        self.content = content

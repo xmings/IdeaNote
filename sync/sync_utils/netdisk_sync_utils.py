@@ -6,7 +6,9 @@
 # @Brief: 简述报表功能
 import json
 import os
+import socket
 import pickle
+from datetime import datetime
 from sync.sync_utils.base_sync_utils import BaseSyncUtils
 
 
@@ -15,6 +17,14 @@ class NetDiskSyncUtils(BaseSyncUtils):
         self.work_dir = work_dir
         self.version_info_file = os.path.join(self.work_dir, "version_info.json")
         self.note_info_file_suffix = ".note"
+
+    def init_version_info(self):
+        with open(self.version_info_file, "w", encoding="utf8") as f:
+            f.write(json.dumps({
+                "latest_version": 0,
+                "client_id": socket.gethostname(),
+                "change_time": datetime.now().isoformat()
+            }, ensure_ascii=False, indent=4))
 
     def load_version_info(self) -> dict:
         with open(self.version_info_file, "r", encoding="utf8") as f:
@@ -56,3 +66,8 @@ class NetDiskSyncUtils(BaseSyncUtils):
         with open(note_info_file, "wb") as f:
             f.write(pickle.dumps(note_info))
         return True
+
+    def fetch_sync_note_list(self):
+        note_version_list = os.listdir(self.work_dir)
+        note_version_list.remove(os.path.basename(self.version_info_file))
+        return note_version_list

@@ -17,7 +17,7 @@ class NoteService(object):
         last_child = Catalog.query.filter(Catalog.parent_id == parent_id).order_by(Catalog.seq_no.asc()).first()
         seq_no = 1 if not last_child or not last_child.seq_no else last_child.seq_no + 1
         note = Catalog(title=title, parent_id=parent_id, content=content, seq_no=seq_no, **kwargs)
-        note.status = 3
+        note.sync_status = 2
         db.session.add(note)
         db.session.commit()
 
@@ -27,7 +27,7 @@ class NoteService(object):
     def update_note_title(cls, note_id, title):
         note = Catalog.query.filter_by(id=note_id).first()
         note.title = title
-        note.status = 3
+        note.sync_status = 2
         note.modification_time = datetime.now()
         db.session.commit()
         return True
@@ -52,7 +52,7 @@ class NoteService(object):
         # 最后插入该位置
         note.parent_id = parent_id
         note.seq_no = index
-        note.status = 3
+        note.sync_status = 2
         note.modification_time = datetime.now()
 
         db.session.commit()
@@ -64,7 +64,7 @@ class NoteService(object):
         if zlib.decompress(note.content).decode("utf8") == content:
             return True
         note.content = zlib.compress(content.encode("utf8"))
-        note.status = 3
+        note.sync_status = 2
         note.modification_time = datetime.now()
         db.session.commit()
         return True
@@ -73,6 +73,7 @@ class NoteService(object):
     def update_note_status(cls, note_id, status):
         note = Catalog.query.filter_by(id=note_id).first()
         note.status = status
+        note.sync_status = 2
         note.modification_time = datetime.now()
         db.session.commit()
         return True
@@ -84,7 +85,7 @@ class NoteService(object):
             note.with_passwd = 1 if note.with_passwd == 0 else 0
         else:
             note.with_passwd = 1 if lock else 0
-        note.status = 3
+        note.sync_status = 2
         note.modification_time = datetime.now()
         db.session.commit()
         return True
