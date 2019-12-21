@@ -124,7 +124,7 @@ def fetch_logger(logger_name, log_filename):
     logger = getLogger(logger_name)
     logger.setLevel(DEBUG)
 
-    if not logger.hasHandlers():
+    if len(logger.handlers) == 0:
         file_handler = TimedRotatingFileHandler(
             filename=os.path.join(conf.log_directory, log_filename),
             when="midnight",
