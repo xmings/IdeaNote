@@ -49,11 +49,11 @@ class SyncService(object):
                         local_version_info.latest_version = latest_version
                         local_version_info.modification_time = datetime.now()
                         db.session.commit()
-                        for ver in range(local_version_info.current_verion, latest_version + 1):
+                        for ver in range(local_version_info.current_version, latest_version + 1):
                             note_info = self.sync_utils.load_note_info(ver)
                             if note_info:
                                 self.apply_change(note_info)
-                        local_version_info.current_verion = latest_version
+                        local_version_info.current_version = latest_version
                         local_version_info.modification_time = datetime.now()
                         db.session.commit()
                     else:
@@ -66,8 +66,8 @@ class SyncService(object):
                             self.sync_utils.dump_version_info(latest_version_info)
                 else:
                     latest_version = int(latest_version_info["latest_version"])
-                    logger.info(f"{local_version_info.current_verion}, {latest_version}, {local_version_info.current_verion == latest_version}")
-                    assert local_version_info.current_verion == latest_version, "client_id相同则version必须相同"
+                    logger.info(f"{local_version_info.current_version}, {latest_version}, {local_version_info.current_version == latest_version}")
+                    assert local_version_info.current_version == latest_version, "client_id相同则version必须相同"
 
                     change_time = datetime.fromisoformat(latest_version_info["change_time"])
                     if len(not_push_change)>0 and change_time + self.sync_interval < datetime.now():
@@ -84,7 +84,7 @@ class SyncService(object):
                             latest_version_info["change_time"] = datetime.now().isoformat()
                             self.sync_utils.dump_version_info(latest_version_info)
 
-                            local_version_info.current_verion = latest_version
+                            local_version_info.current_version = latest_version
                             local_version_info.latest_version = latest_version
                             local_version_info.modification_time = datetime.now()
                             db.session.commit()
@@ -97,7 +97,7 @@ class SyncService(object):
 
     def apply_change(self, note_info):
         note = pickle.loads(note_info.get("note"))
-        local_note = Catalog.query.filter_by(Catalog.id==note.id).first()
+        local_note = Catalog.query.filter(Catalog.id==note.id).first()
 
         if local_note.sync_status == 2:
             local_content = NoteService.fetch_note(note.id)

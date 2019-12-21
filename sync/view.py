@@ -12,8 +12,8 @@ from .sync_utils.github_sync_utils import GithubSyncUtils
 from sync import sync
 from flask import request, current_app, Response, jsonify
 
-#sync_utils = NetDiskSyncUtils(conf.sync_work_dir)
-sync_utils = GithubSyncUtils(conf.sync_connection_info)
+sync_utils = NetDiskSyncUtils(conf.sync_work_dir)
+#sync_utils = GithubSyncUtils(conf.sync_connection_info)
 sync_service = SyncService(sync_utils)
 
 sync_thread = Thread(target=sync_service.run)

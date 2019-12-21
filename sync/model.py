@@ -9,6 +9,6 @@ from app import db
 class SyncInfo(db.Model):
     __tablename__ = "t_sync_info"
     id = db.Column(db.Integer, primary_key=True)
-    current_verion = db.Column(db.Integer)
+    current_version = db.Column(db.Integer)
     latest_version = db.Column(db.Integer)
     modification_time = db.Column(db.DateTime)
