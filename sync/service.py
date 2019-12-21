@@ -42,7 +42,6 @@ class SyncService(object):
                 not_push_change = Catalog.query.filter(Catalog.sync_status == 2).all()
                 logger.info(f"not_push_change: {not_push_change}")
                 latest_version_info = self.sync_utils.load_version_info()
-                print(latest_version_info)
                 if self.client_id != latest_version_info["client_id"]:
                     latest_version = int(latest_version_info["latest_version"])
                     if local_version_info.current_version < latest_version:
@@ -66,7 +65,6 @@ class SyncService(object):
                             self.sync_utils.dump_version_info(latest_version_info)
                 else:
                     latest_version = int(latest_version_info["latest_version"])
-                    logger.info(f"{local_version_info.current_version}, {latest_version}, {local_version_info.current_version == latest_version}")
                     assert local_version_info.current_version == latest_version, "client_id相同则version必须相同"
 
                     change_time = datetime.fromisoformat(latest_version_info["change_time"])
@@ -113,6 +111,7 @@ class SyncService(object):
             image = pickle.loads(i)
             db.session.merge(image)
         db.session.commit()
+        logger.info(f"Succeed in applying change log: <title={note.title}, version={note_info.get('version')}")
         return True
 
     def push_change(self, note_id, version):
@@ -132,4 +131,5 @@ class SyncService(object):
         self.sync_utils.dump_note_info(note_info)
         note.sync_status = 1
         db.session.commit()
+        logger.info(f"Succeed in pushing change log: <title={note.title}, version={version}")
         return True
