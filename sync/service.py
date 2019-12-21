@@ -40,7 +40,7 @@ class SyncService(object):
             local_version_info = SyncInfo.query.first()
             try:
                 not_push_change = Catalog.query.filter(Catalog.sync_status == 2).all()
-                logger.info(f"not_push_change: {not_push_change}")
+                logger.info(f"waiting for pushing change log: {not_push_change}")
                 latest_version_info = self.sync_utils.load_version_info()
                 if self.client_id != latest_version_info["client_id"]:
                     latest_version = int(latest_version_info["latest_version"])
@@ -104,6 +104,8 @@ class SyncService(object):
             note.content = zlib.compress(content.encode("utf8"))
             note.status = 2
             note.modification_time = datetime.now()
+        else:
+            note.sync_status = 1 # 标记未同步状态
 
         db.session.merge(note)
 
@@ -111,7 +113,7 @@ class SyncService(object):
             image = pickle.loads(i)
             db.session.merge(image)
         db.session.commit()
-        logger.info(f"Succeed in applying change log: <title={note.title}, version={note_info.get('version')}")
+        logger.info(f"Succeed in applying change log: <title={note.title}, version={note_info.get('version')}>")
         return True
 
     def push_change(self, note_id, version):
@@ -129,7 +131,7 @@ class SyncService(object):
         note_info["version"] = version
         note_info["timestamp"] = datetime.now()
         self.sync_utils.dump_note_info(note_info)
-        note.sync_status = 1
+        note.sync_status = 1 # 标记未同步状态
         db.session.commit()
-        logger.info(f"Succeed in pushing change log: <title={note.title}, version={version}")
+        logger.info(f"Succeed in pushing change log: <title={note.title}, version={version}>")
         return True
