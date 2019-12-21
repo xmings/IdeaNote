@@ -23,7 +23,7 @@ class SyncService(object):
     def __init__(self, sync_utils: BaseSyncUtils):
         self.sync_utils = sync_utils
         self.client_id = socket.gethostname()
-        self.sync_interval = timedelta(seconds=60)
+        self.sync_interval = timedelta(seconds=30)
 
     def run(self):
         """
@@ -58,7 +58,7 @@ class SyncService(object):
                     else:
                         # 已经处于同步状态
                         change_time = datetime.fromisoformat(latest_version_info["change_time"])
-                        if len(not_push_change)>0 and change_time + self.sync_interval * 4 < datetime.now():
+                        if len(not_push_change)>0 and change_time + self.sync_interval * 3 < datetime.now():
                             # 如果有未push得变更并且其他client在180秒之内没有push变更，就先修改latest_version_info，等待下一轮遍历
                             latest_version_info["client_id"] = self.client_id
                             latest_version_info["change_time"] = datetime.now().isoformat()
@@ -68,7 +68,7 @@ class SyncService(object):
                     assert local_version_info.current_version == latest_version, "client_id相同则version必须相同"
 
                     change_time = datetime.fromisoformat(latest_version_info["change_time"])
-                    if len(not_push_change)>0 and change_time + self.sync_interval < datetime.now():
+                    if len(not_push_change)>0 and change_time + self.sync_interval * 1.5 < datetime.now():
                         # 如果latest_version_info中的client是自己，但chnage_time太久远，先更新change_time，等待下一轮遍历
                         latest_version_info["change_time"] = datetime.now().isoformat()
                         self.sync_utils.dump_version_info(latest_version_info)
@@ -91,7 +91,7 @@ class SyncService(object):
                 logger.error(traceback.format_exc())
                 logger.error("网盘同步线程退出")
 
-            time.sleep(self.sync_interval.total_seconds()/2)
+            time.sleep(self.sync_interval.total_seconds())
 
     def apply_change(self, note_info):
         note = pickle.loads(note_info.get("note"))
