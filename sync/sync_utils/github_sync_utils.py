@@ -4,6 +4,7 @@
 # @Author: wangms
 # @Date  : 2019/12/20
 # @Brief: 简述报表功能
+import os
 import requests
 import json
 import pickle
@@ -104,6 +105,11 @@ class GithubSyncUtils(BaseSyncUtils):
         resp = self._fetch_content_response(filename=filename)
         return pickle.loads(b64decode(resp.content.get("content").encode("utf8")))
 
+    def load_note_info_by_version_note_id(self, version, note_id) -> dict:
+        filename = f"{version}-{note_id}{self.note_info_file_suffix}"
+        resp = self._fetch_content_response(filename=filename)
+        return pickle.loads(b64decode(resp.content.get("content").encode("utf8")))
+
     def dump_note_info(self, note_info: dict) -> bool:
         resp = self._push_file_with_reponse(
             filename=f"{note_info.get('version')}-{note_info.get('id')}{self.note_info_file_suffix}",
@@ -113,4 +119,18 @@ class GithubSyncUtils(BaseSyncUtils):
         return resp.status
 
     def fetch_sync_note_list(self):
-        return self._fetch_content_response()
+        note_list = self._fetch_content_response()
+        result = []
+        for i in note_list.content:
+            filename = i.get("name")
+            version_id, note_id = filename[:-len(self.note_info_file_suffix)].split("-")
+            note = self.load_note_info_by_version_note_id(version_id, note_id)
+            result.append({
+                "version_id": note.get("version"),
+                "note_id": note.get("id"),
+                "filename": filename,
+                "title": note.get("title"),
+                "from_client": note.get("client_id"),
+                "timestamp": note.get("timestamp")
+            })
+        return note_list

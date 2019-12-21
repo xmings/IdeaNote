@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block content %}
+    <table class="ui table inverted  compact " style="width: 80%; margin: 10px 10%;">
+        <thead>
+        <tr class="center aligned">
+            <th>version</th>
+            <th>filename</th>
+            <th>title</th>
+            <th>from_client</th>
+            <th>timestamp</th>
+            <th>action</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for i in note_list|sort(attribute='version_id', reverse=true) %}
+            <tr class="center aligned">
+                <td>{{ i.version_id }}</td>
+                <td>{{ i.filename }}</td>
+                <td>{{ i.title }}</td>
+                <td>{{ i.from_client }}</td>
+                <td>{{ i.timestamp }}</td>
+                <td>
+                    <a href="#" class="view-sync-note"
+                       data-note-id="{{ i.note_id }}" data-version-id="{{ i.version_id }}">查看</a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="ui modal view-sync-note-modal">
+        <i class="close icon"></i>
+        <div class="content">
+        </div>
+        <div class="actions">
+            <div class="ui button cancel">关闭窗口</div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            view_modal = $(".view-sync-note-modal");
+            view_modal.modal();
+
+            $(".view-sync-note").click(function () {
+                $.ajax({
+                    url: "{{ url_for('sync.sync_note_view') }}",
+                    data: {
+                        "note_id": $(this).attr("data-note-id"),
+                        "version_id": $(this).attr("data-version-id")
+                    },
+                    dataType: "html",
+                    success: (data) => {
+                        view_modal.find(".content").html(data);
+                        view_modal.modal("show");
+                    }
+                })
+            });
+        })
+    </script>
+{% endblock %}

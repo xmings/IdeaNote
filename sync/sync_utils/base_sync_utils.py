@@ -29,6 +29,10 @@ class BaseSyncUtils(ABC):
         pass
 
     @abstractmethod
+    def load_note_info_by_version_note_id(self,version, note_id) -> dict:
+        pass
+
+    @abstractmethod
     def dump_note_info(self, note_info: dict) -> bool:
         pass
 

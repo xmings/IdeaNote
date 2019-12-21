@@ -59,6 +59,12 @@ class NetDiskSyncUtils(BaseSyncUtils):
                 return pickle.loads(f.read())
         return {}
 
+    def load_note_info_by_version_note_id(self, version, note_id) -> dict:
+        note_info_file = os.path.join(self.work_dir, f"{version}-{note_id}{self.note_info_file_suffix}")
+        if os.path.isfile(note_info_file):
+            with open(note_info_file, "rb") as f:
+                return pickle.loads(f.read())
+        return {}
 
     def dump_note_info(self, note_info: dict) -> bool:
         filename = f"{note_info.get('version')}-{note_info.get('id')}{self.note_info_file_suffix}"
@@ -68,6 +74,20 @@ class NetDiskSyncUtils(BaseSyncUtils):
         return True
 
     def fetch_sync_note_list(self):
-        note_version_list = os.listdir(self.work_dir)
-        note_version_list.remove(os.path.basename(self.version_info_file))
-        return note_version_list
+        note_filename_list = os.listdir(self.work_dir)
+        note_filename_list.remove(os.path.basename(self.version_info_file))
+
+        result = []
+
+        for filename in note_filename_list:
+            version_id, note_id = filename[:-len(self.note_info_file_suffix)].split("-")
+            note = self.load_note_info_by_version_note_id(version_id, note_id)
+            result.append({
+                "version_id": note.get("version"),
+                "note_id": note.get("id"),
+                "filename": filename,
+                "title": note.get("title"),
+                "from_client": note.get("client_id"),
+                "timestamp": note.get("timestamp")
+            })
+        return result
