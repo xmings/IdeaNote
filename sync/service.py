@@ -48,7 +48,7 @@ class SyncService(object):
                         local_version_info.latest_version = latest_version
                         local_version_info.modification_time = datetime.now()
                         db.session.commit()
-                        for ver in range(local_version_info.current_version, latest_version + 1):
+                        for ver in range(local_version_info.current_version + 1, latest_version + 1):
                             note_info = self.sync_utils.load_note_info(ver)
                             if note_info:
                                 self.apply_change(note_info)
