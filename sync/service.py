@@ -40,7 +40,7 @@ class SyncService(object):
             local_version_info = SyncInfo.query.first()
             try:
                 not_push_change = Catalog.query.filter(Catalog.sync_status == 2).all()
-                logger.info(f"waiting for pushing change log: {not_push_change}")
+                logger.debug(f"waiting for pushing change log: {not_push_change}")
                 latest_version_info = self.sync_utils.load_version_info()
                 if self.client_id != latest_version_info["client_id"]:
                     latest_version = int(latest_version_info["latest_version"])
