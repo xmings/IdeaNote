@@ -97,7 +97,7 @@ class SyncService(object):
         note = pickle.loads(note_info.get("note"))
         local_note = Catalog.query.filter(Catalog.id==note.id).first()
 
-        if local_note.sync_status == 2:
+        if local_note and local_note.sync_status == 2:
             local_content = NoteService.fetch_note(note.id)
             remote_content = zlib.decompress(note.content).decode("utf8")
             content = f"{local_content}\n{'>'*100}\n{remote_content}"
