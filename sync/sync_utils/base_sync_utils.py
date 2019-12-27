@@ -39,3 +39,7 @@ class BaseSyncUtils(ABC):
     @abstractmethod
     def fetch_sync_note_list(self):
         pass
+
+    @abstractmethod
+    def delete_obsolete_change(self, day:int=30):
+        pass

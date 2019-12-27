@@ -8,7 +8,7 @@ import json
 import os
 import socket
 import pickle
-from datetime import datetime
+from datetime import datetime, timedelta
 from sync.sync_utils.base_sync_utils import BaseSyncUtils
 
 
@@ -91,3 +91,9 @@ class NetDiskSyncUtils(BaseSyncUtils):
                 "timestamp": note.get("timestamp")
             })
         return result
+
+    def delete_obsolete_change(self, day:int=30):
+        for i in self.fetch_sync_note_list():
+            if i.get("timestamp") + timedelta(days=day) < datetime.now():
+                os.remove(os.path.join(self.work_dir, i.get("filename")))
+        return True

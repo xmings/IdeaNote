@@ -9,7 +9,7 @@ import requests
 import json
 import pickle
 import socket
-from datetime import datetime
+from datetime import datetime, timedelta
 from base64 import b64encode, b64decode
 from .base_sync_utils import BaseSyncUtils
 from common import Resp
@@ -50,7 +50,7 @@ class GithubSyncUtils(BaseSyncUtils):
         })
         return Resp(status=resp.ok, content=resp.json())
 
-    def _push_file_with_reponse(self, filename, message, content, sha=None)->Resp:
+    def _push_file_with_reponse(self, filename, message, content, sha=None) -> Resp:
         url = f"{self.base_url}/contents/{filename}"
         data = {
             "message": message,
@@ -67,6 +67,19 @@ class GithubSyncUtils(BaseSyncUtils):
         resp = requests.put(url, data=json.dumps(data), params={
             "access_token": self.access_token
         })
+        return Resp(resp.ok, resp.json())
+
+    def _delete_file_with_reponse(self, filename, message, sha) -> Resp:
+        url = f"{self.base_url}/contents/{filename}"
+        data = {
+            "message": message,
+            "sha": sha,
+            "branch": self.branch
+        }
+        resp = requests.delete(url, data=json.dumps(data), params={
+            "access_token": self.access_token
+        })
+
         return Resp(resp.ok, resp.json())
 
     def load_version_info(self) -> dict:
@@ -124,6 +137,7 @@ class GithubSyncUtils(BaseSyncUtils):
         for i in note_list.content:
             filename = i.get("name")
             version_id, note_id = filename[:-len(self.note_info_file_suffix)].split("-")
+            if not version_id or not note_id: continue
             note = self.load_note_info_by_version_note_id(version_id, note_id)
             result.append({
                 "version_id": note.get("version"),
@@ -131,6 +145,13 @@ class GithubSyncUtils(BaseSyncUtils):
                 "filename": filename,
                 "title": note.get("title"),
                 "from_client": note.get("client_id"),
-                "timestamp": note.get("timestamp")
+                "timestamp": note.get("timestamp"),
+                "_sha": i.get("sha")
             })
-        return note_list
+        return result
+
+    def delete_obsolete_change(self, day: int = 30):
+        for note in self.fetch_sync_note_list():
+            if note.get("timestamp") + timedelta(days=day) < datetime.now():
+                self._delete_file_with_reponse(note.get("filename"), f"obsolete, timestamp: {datetime.now().isoformat()}", note.get("_sha"))
+        return True

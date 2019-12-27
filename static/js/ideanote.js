@@ -647,4 +647,4 @@ class Toc {
 
 }
 
-export {Catalog, ContentArea};
+export {Catalog, ContentArea, messageBox};

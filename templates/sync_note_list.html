@@ -1,5 +1,10 @@
 {% extends 'base.html' %}
 {% block content %}
+    <div class="blue ui buttons" style="margin: 10px 10%; float: right">
+        <div class="ui button view-latest-version">查看最新版本信息</div>
+        <div class="ui button delete-obsolete-change">删除过期变更日志</div>
+    </div>
+
     <table class="ui table inverted  compact " style="width: 80%; margin: 10px 10%;">
         <thead>
         <tr class="center aligned">
@@ -22,6 +27,8 @@
                 <td>
                     <a href="#" class="view-sync-note"
                        data-note-id="{{ i.note_id }}" data-version-id="{{ i.version_id }}">查看</a>
+                    <a href="#" class="apply-sync-note"
+                       data-note-id="{{ i.note_id }}" data-version-id="{{ i.version_id }}">重应用</a>
                 </td>
             </tr>
         {% endfor %}
@@ -37,14 +44,16 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import {messageBox} from "{{ url_for('static', filename='js/ideanote.js') }}";
+
         $(document).ready(function () {
-            view_modal = $(".view-sync-note-modal");
+            let view_modal = $(".view-sync-note-modal");
             view_modal.modal();
 
             $(".view-sync-note").click(function () {
                 $.ajax({
-                    url: "{{ url_for('sync.sync_note_view') }}",
+                    url: "{{ url_for('sync.view_sync_note_content') }}",
                     data: {
                         "note_id": $(this).attr("data-note-id"),
                         "version_id": $(this).attr("data-version-id")
@@ -56,6 +65,52 @@
                     }
                 })
             });
+
+            $(".apply-sync-note").click(function () {
+                $.ajax({
+                    url: "{{ url_for('sync.apply_sync_note_change') }}",
+                    data: {
+                        "note_id": $(this).attr("data-note-id"),
+                        "version_id": $(this).attr("data-version-id")
+                    },
+                    type: "POST",
+                    success: () => {
+                        messageBox.show("应用变更日志成功")
+                    },
+                    error: (XMLHttpRequest) => {
+                        messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
+                    }
+                })
+            });
+
+            $(".view-latest-version").click(function () {
+                $.ajax({
+                    url: "{{ url_for('sync.view_latest_version_info') }}",
+                    type: "GET",
+                    success: (info) => {
+                        let div = $("<p style='font-size: 14px; padding: 10px 2px'></p>");
+                        div.text(info);
+                        messageBox.show(div, "success", 20000);
+                    },
+                    error: (XMLHttpRequest) => {
+                        messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
+                    }
+                })
+            });
+
+
+            $(".delete-obsolete-change").click(function () {
+                $.ajax({
+                    url: "{{ url_for('sync.delete_obsolete_change') }}",
+                    type: "POST",
+                    success: () => {
+                        messageBox.show("删除过期日志成功")
+                    },
+                    error: (XMLHttpRequest) => {
+                        messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
+                    }
+                })
+            })
         })
     </script>
 {% endblock %}
