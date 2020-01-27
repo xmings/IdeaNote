@@ -248,6 +248,10 @@ class Catalog {
                     id: data.node.id
                 },
                 success: content => {
+                    let item = localStorage.getItem("ideanote-" + data.node.id);
+                    if (typeof item !== "undefined") {
+                        content = JSON.parse(item).content;
+                    }
                     this.contentArea.switchDoc(data.node.id, content);
                 },
                 error: XMLHttpRequest => {
