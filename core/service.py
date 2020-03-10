@@ -47,6 +47,7 @@ class NoteService(object):
 
             child.seq_no = node_seq
             child.status = 3
+            child.sync_status = 2
             child.modification_time = datetime.now()
             node_seq += 1
         # 最后插入该位置
@@ -100,6 +101,7 @@ class NoteService(object):
             delete_notes += list(children)
 
             note.status = -1
+            note.sync_status = 2
             note.modification_time = datetime.now()
 
         db.session.commit()
