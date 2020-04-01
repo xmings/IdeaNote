@@ -4,7 +4,6 @@
 # @Author: wangms
 # @Date  : 2019/12/20
 # @Brief: 简述报表功能
-import os
 import requests
 import json
 import pickle
@@ -146,6 +145,7 @@ class GithubSyncUtils(BaseSyncUtils):
                 "title": note.get("title"),
                 "from_client": note.get("client_id"),
                 "timestamp": note.get("timestamp"),
+                "status": note.get("status"),
                 "_sha": i.get("sha")
             })
         return result

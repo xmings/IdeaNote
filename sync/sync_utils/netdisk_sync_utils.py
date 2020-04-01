@@ -74,12 +74,9 @@ class NetDiskSyncUtils(BaseSyncUtils):
         return True
 
     def fetch_sync_note_list(self):
-        note_filename_list = os.listdir(self.work_dir)
-        note_filename_list.remove(os.path.basename(self.version_info_file))
-
         result = []
 
-        for filename in note_filename_list:
+        for filename in [i for i in os.listdir(self.work_dir) if i.endswith(self.note_info_file_suffix)]:
             version_id, note_id = filename[:-len(self.note_info_file_suffix)].split("-")
             note = self.load_note_info_by_version_note_id(version_id, note_id)
             result.append({

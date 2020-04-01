@@ -8,7 +8,7 @@ from core.model import Catalog, Image, db
 from datetime import datetime
 from app import app
 from flask import session
-
+from common import SyncStatusEnum, NoteStatusEnum, PasswordStatusEnum
 
 class NoteService(object):
     @classmethod
@@ -17,7 +17,8 @@ class NoteService(object):
         last_child = Catalog.query.filter(Catalog.parent_id == parent_id).order_by(Catalog.seq_no.asc()).first()
         seq_no = 1 if not last_child or not last_child.seq_no else last_child.seq_no + 1
         note = Catalog(title=title, parent_id=parent_id, content=content, seq_no=seq_no, **kwargs)
-        note.sync_status = 2
+        note.status = NoteStatusEnum.create.value
+        note.sync_status = SyncStatusEnum.need_sync.value
         db.session.add(note)
         db.session.commit()
 
@@ -27,8 +28,9 @@ class NoteService(object):
     def update_note_title(cls, note_id, title):
         note = Catalog.query.filter_by(id=note_id).first()
         note.title = title
-        note.sync_status = 2
+        note.sync_status = SyncStatusEnum.need_sync.value
         note.modification_time = datetime.now()
+        note.status = NoteStatusEnum.update_title.value
         db.session.commit()
         return True
 
@@ -38,24 +40,25 @@ class NoteService(object):
         node_seq = 0
         for child in Catalog.query.filter(
                 Catalog.parent_id==parent_id,
-                Catalog.status != -1,
+                Catalog.status != NoteStatusEnum.delete.value,
                 Catalog.id!=note.id
         ).order_by(Catalog.seq_no.asc()).all():
             if node_seq == index:
                 # 为note留出该位置
                 node_seq += 1
+            if child.seq_no != node_seq:
+                child.seq_no = node_seq
+                child.sync_status = SyncStatusEnum.need_sync.value
+                child.modification_time = datetime.now()
+                child.status = NoteStatusEnum.update_position.value
 
-            child.seq_no = node_seq
-            child.status = 3
-            child.sync_status = 2
-            child.modification_time = datetime.now()
             node_seq += 1
         # 最后插入该位置
         note.parent_id = parent_id
         note.seq_no = index
-        note.sync_status = 2
+        note.sync_status = SyncStatusEnum.need_sync.value
         note.modification_time = datetime.now()
-
+        note.status = NoteStatusEnum.update_position.value
         db.session.commit()
         return True
 
@@ -65,17 +68,9 @@ class NoteService(object):
         if zlib.decompress(note.content).decode("utf8") == content:
             return True
         note.content = zlib.compress(content.encode("utf8"))
-        note.sync_status = 2
+        note.sync_status = SyncStatusEnum.need_sync.value
         note.modification_time = datetime.now()
-        db.session.commit()
-        return True
-
-    @classmethod
-    def update_note_status(cls, note_id, status):
-        note = Catalog.query.filter_by(id=note_id).first()
-        note.status = status
-        note.sync_status = 2
-        note.modification_time = datetime.now()
+        note.status = NoteStatusEnum.update_content.value
         db.session.commit()
         return True
 
@@ -83,11 +78,13 @@ class NoteService(object):
     def update_note_lock_status(cls, note_id, toggle=True, lock=True):
         note = Catalog.query.filter_by(id=note_id).first()
         if toggle:
-            note.with_passwd = 1 if note.with_passwd == 0 else 0
+            note.with_passwd = PasswordStatusEnum.has_password.value \
+                if note.with_passwd == PasswordStatusEnum.no_password.value else PasswordStatusEnum.no_password.value
         else:
-            note.with_passwd = 1 if lock else 0
-        note.sync_status = 2
+            note.with_passwd = PasswordStatusEnum.has_password.value if lock else PasswordStatusEnum.no_password.value
+        note.sync_status = SyncStatusEnum.need_sync.value
         note.modification_time = datetime.now()
+        note.status = NoteStatusEnum.update_lock.value
         db.session.commit()
         return True
 
@@ -100,8 +97,8 @@ class NoteService(object):
             children = Catalog.query.filter_by(parent_id=note.id).all()
             delete_notes += list(children)
 
-            note.status = -1
-            note.sync_status = 2
+            note.sync_status = SyncStatusEnum.need_sync.value
+            note.status = NoteStatusEnum.delete.value
             note.modification_time = datetime.now()
 
         db.session.commit()
@@ -109,8 +106,8 @@ class NoteService(object):
 
     @classmethod
     def fetch_catalog_tree(cls):
-        root = Catalog.query.filter(Catalog.status != -1, Catalog.parent_id == "self").first()
-        notes = Catalog.query.filter(Catalog.status != -1).order_by(Catalog.parent_id, Catalog.seq_no).all()
+        root = Catalog.query.filter(Catalog.status != NoteStatusEnum.delete.value, Catalog.parent_id == "self").first()
+        notes = Catalog.query.filter(Catalog.status != NoteStatusEnum.delete.value).order_by(Catalog.parent_id, Catalog.seq_no).all()
         notes_dict = {}
         for n in notes:
             notes_dict[n.id] = {
@@ -147,10 +144,10 @@ class NoteService(object):
     def fetch_note(cls, id):
         note = Catalog.query.filter_by(id=id).first()
         content = zlib.decompress(note.content).decode("utf8")
-        images = Image.query.filter(Image.note_id==id, Image.status != -1).all()
+        images = Image.query.filter(Image.note_id == id, Image.status != NoteStatusEnum.delete.value).all()
         for img in images:
             if img.id not in content:
-                img.status = -1
+                img.status = NoteStatusEnum.delete.value
                 img.modification_time = datetime.now()
                 db.session.commit()
         return content
@@ -159,6 +156,7 @@ class NoteService(object):
     def create_image(cls, note_id, image, image_id=None):
         image_content = zlib.compress(image.read())
         image = Image(id=image_id, note_id=note_id, image=image_content, mime_type=image.mimetype)
+        image.status = NoteStatusEnum.create
         db.session.add(image)
         db.session.commit()
         return image.id
@@ -172,11 +170,6 @@ class NoteService(object):
     def fetch_images(cls, note_id):
         imgs = Image.query.filter_by(note_id=note_id).all()
         return ((zlib.decompress(i.image), i.mime_type) for i in imgs)
-
-    @classmethod
-    def fetch_need_merge_notes(cls):
-        notes = Catalog.query.filter(Catalog.status==2).all()
-        return notes
 
     @classmethod
     def translate_text(cls, text):

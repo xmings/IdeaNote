@@ -32,6 +32,7 @@ def fetch_sync_note_list():
         result = sync_utils.fetch_sync_note_list()
     except Exception as e:
         current_app.logger.error(e)
+        traceback.print_exc()
         return Response(str(e), status=500)
     return render_template('sync_note_list.html', note_list=result)
 

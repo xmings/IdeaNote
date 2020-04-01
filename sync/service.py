@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from core.model import Catalog, Image
 from core.service import NoteService
 from .model import SyncInfo, db
-from common import fetch_logger
+from common import fetch_logger, NoteStatusEnum, SyncStatusEnum
 from .sync_utils.base_sync_utils import BaseSyncUtils
 
 logger = fetch_logger(os.path.abspath(__file__), "sync.log")
@@ -27,19 +27,30 @@ class SyncService(object):
 
     def run(self):
         """
-        1. 加载sync_status == 2的Note信息
-        2. 加载最新的version_info
-        3. 比较latest_version_info中的client_id是否和自己相同，如果是就跳到第6步骤
-        4. 如果client_id不相同，比较本地版本是否小于最新版本，如果是就先应用日志
-            - 应用每一个Note变更日志时先判断当前note.sync_status等于2，如果是就把同步过来的Note的内容append到原content末尾，并更新状态未待合并
-        5. 如果版本相同，并且步骤1有数据，就更新latest_version_info中的client_id和change_time，等待下一轮检查
-        6. 如果client_id相同，如果步骤1有数据，就再检查latest_version_info中的change_time是否太久远，如果是就更新change_time，等待下一轮检查，如果否就push日志
+        > 比较latest_version_info中的client_id是否和自己相同
+          > client_id不相同
+            > 本地版本是否小于最新版本
+              > 本地版本小于最新版本，开始以下应用日志过程
+                > Note的note.sync_status是否等于SyncStatusEnum.need_sync
+                  > 是，把同步过来的Note的内容append到原content末尾，并更新状态为SyncStatusEnum.need_sync，并增加本地的版本id
+                  > 不是，就直接把同步过来的Note的内容写入当前的content字段，并增加本地的版本id
+              > 本地版本等于最新版本
+                > 本地有变更数据等待push
+                  > 是，version_info文件中的change_time是否过期
+                    > 是，先更新version_info文件的中client_id为本地client_id，change_time为当前系统时间，等待下一轮检查
+                    > 否，等待下一轮检查
+          > client_id相同
+            > 本地有变更数据等待push
+              > 检查version_info文件的change_time是否过期
+                > 是，更新change_time为当前时间，等待下一轮检查
+                > 否, push变更日志，并更新对应Note的sync_status=SyncStatusEnum.has_sync，并增加本地和version_info文件中的版本id
+        TODO: 1. 接下来计划去掉总的version_id, 每个note各自维护自己的version_id，有变更就push
         :return:
         """
         while True:
             local_version_info = SyncInfo.query.first()
             try:
-                not_push_change = Catalog.query.filter(Catalog.sync_status == 2).all()
+                not_push_change = Catalog.query.filter(Catalog.sync_status == SyncStatusEnum.need_sync.value).all()
                 logger.debug(f"waiting for pushing change log: {not_push_change}")
                 latest_version_info = self.sync_utils.load_version_info()
                 if self.client_id != latest_version_info["client_id"]:
@@ -97,15 +108,16 @@ class SyncService(object):
         note = pickle.loads(note_info.get("note"))
         local_note = Catalog.query.filter(Catalog.id==note.id).first()
 
-        if local_note and local_note.sync_status == 2:
+        if local_note and local_note.sync_status == SyncStatusEnum.need_sync.value:
             local_content = NoteService.fetch_note(note.id)
             remote_content = zlib.decompress(note.content).decode("utf8")
             content = f"{local_content}\n{'>'*100}\n{remote_content}"
             note.content = zlib.compress(content.encode("utf8"))
-            note.status = 2
+            note.sync_status = SyncStatusEnum.need_sync.value
+            note.status = NoteStatusEnum.need_merge.value
             note.modification_time = datetime.now()
         else:
-            note.sync_status = 1 # 标记未同步状态
+            note.sync_status = SyncStatusEnum.has_sync.value # 标记未同步状态
 
         db.session.merge(note)
 
@@ -130,8 +142,9 @@ class SyncService(object):
         note_info["client_id"] = self.client_id
         note_info["version"] = version
         note_info["timestamp"] = datetime.now()
+        note_info["status"] = NoteStatusEnum(note.status).name
         self.sync_utils.dump_note_info(note_info)
-        note.sync_status = 1 # 标记未同步状态
+        note.sync_status = SyncStatusEnum.has_sync.value # 标记未同步状态
         db.session.commit()
         logger.info(f"Succeed in pushing change log: <title={note.title}, version={version}>")
         return True

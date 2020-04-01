@@ -6,7 +6,7 @@
 from app import db
 from uuid import uuid1
 from datetime import datetime
-
+from common import NoteStatusEnum, SyncStatusEnum, PasswordStatusEnum
 
 class Catalog(db.Model):
     __tablename__ = "t_catalog"
@@ -17,9 +17,9 @@ class Catalog(db.Model):
     content = db.Column(db.Binary)
     remote_content = db.Column(db.Binary)
     seq_no = db.Column(db.Integer, autoincrement=True)
-    with_passwd = db.Column(db.Integer, default=0)
-    status = db.Column(db.Integer, default=1) # 1=clean;2=not merge status;-1=delete status
-    sync_status = db.Column(db.Integer, default=1) # 1= sync status; 2= not push status
+    with_passwd = db.Column(db.Integer, default=PasswordStatusEnum.no_password.value)
+    status = db.Column(db.Integer, default=NoteStatusEnum.create.value)
+    sync_status = db.Column(db.Integer, default=SyncStatusEnum.need_sync.value)
     creation_time = db.Column(db.DateTime, default=datetime.now())
     modification_time = db.Column(db.DateTime)
 
@@ -30,7 +30,7 @@ class Image(db.Model):
     note_id = db.Column(db.String, db.ForeignKey('t_catalog.id'))
     image = db.Column(db.Binary)
     mime_type = db.Column(db.String)
-    status = db.Column(db.Integer, default=1)
+    status = db.Column(db.Integer, default=NoteStatusEnum.create.value)
     creation_time = db.Column(db.DateTime, default=datetime.now())
     modification_time = db.Column(db.DateTime)
 
