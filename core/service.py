@@ -8,9 +8,11 @@ from core.model import Catalog, Image, db
 from datetime import datetime
 from app import app
 from flask import session
+from sqlalchemy.sql import functions
 from common import SyncStatusEnum, NoteStatusEnum, PasswordStatusEnum
 
 class NoteService(object):
+    catalog_root_id = 0
     @classmethod
     def create_note(self, title, parent_id, content, **kwargs):
         content = zlib.compress(content.encode("utf8"))
@@ -125,6 +127,7 @@ class NoteService(object):
                 notes_dict[pid]["children"].append(v)
                 notes_dict[pid]["type"] = "folder"
 
+        cls.catalog_root_id = root.id
         root = notes_dict[root.id]
         root["opened"] = True
         return root
@@ -151,6 +154,30 @@ class NoteService(object):
                 img.modification_time = datetime.now()
                 db.session.commit()
         return content
+
+    @classmethod
+    def fetch_recently_change_note(cls):
+        notes = Catalog.query.order_by(
+            functions.coalesce(Catalog.creation_time, Catalog.modification_time).desc()).limit(30).all()
+        notes_list = []
+        status_text_mapping = {
+            NoteStatusEnum.create.value: "新建笔记",
+            NoteStatusEnum.update_title.value: "更新标题",
+            NoteStatusEnum.update_content.value: "更新内容",
+            NoteStatusEnum.update_lock.value: "更新密码",
+            NoteStatusEnum.update_position.value: "更新顺序",
+            NoteStatusEnum.delete.value: "删除笔记"
+        }
+        for n in notes:
+            notes_list.append({
+                "id": n.id,
+                "title": n.title,
+                "status": status_text_mapping[n.status],
+                "sync_status": "已同步" if n.sync_status == SyncStatusEnum.has_sync.value else "未同步",
+                "change_time": str(n.modification_time if n.modification_time else n.creation_time)
+            })
+
+        return notes_list
 
     @classmethod
     def create_image(cls, note_id, image, image_id=None):

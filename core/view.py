@@ -59,6 +59,8 @@ def fetch_notes():
 def fetch_content():
     note_id = request.args.get('id')
     try:
+        if note_id == NoteService.catalog_root_id:
+            return render_template("change_history.html", notes=NoteService.fetch_recently_change_note())
         content = NoteService.fetch_note(note_id)
     except Exception as e:
         current_app.logger.error(e)
@@ -146,3 +148,13 @@ def text_translator():
         current_app.logger.error(e)
         return Response(str(e), status=500)
     return jsonify(result)
+
+
+@core.route('/recently_change')
+def fetch_recently_change():
+    try:
+        notes = NoteService.fetch_recently_change_note()
+    except Exception as e:
+        current_app.logger.error(e)
+        return Response(str(e), status=500)
+    return jsonify(notes)

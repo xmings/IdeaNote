@@ -1,0 +1,27 @@
+<!--html-->
+<div class="change-history">
+    <div class="ui relaxed list" style="padding-left: 30px">
+        {% for n in notes %}
+            <div class="item" data-note-id="{{ n.id }}">
+                <i class="file outline icon"></i>
+                <div class="content">
+                    <a class="header">{{ n.title }}</a>
+                    <div class="description" style="font-size: 12px">
+                        {{ n.status }}, 同步状态: {{ n.sync_status }}
+                        {% if n.sync_status == "未同步" %}
+                            <i class="sync alternate link bordered blue icon" data-note-id="{{ n.id }}"></i>
+                        {% endif %}, 修改时间: {{ n.change_time }}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+</div>
+<script>
+    $(document).ready(function () {
+        $(".sync.icon").click(function () {
+            
+        });
+    });
+</script>

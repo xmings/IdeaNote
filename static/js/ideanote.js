@@ -575,6 +575,8 @@ class ContentArea {
 
     previewContent(content) {
         //content = content.replace(/\n\n/g, "\n<br>");
+        if (content.startsWith("<!--html-->")){this.viewContainer.html(content); return}
+
         this.viewContainer.html(
             marked(content, {
                 highlight: function (code) {
