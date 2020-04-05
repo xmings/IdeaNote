@@ -158,7 +158,7 @@ class NoteService(object):
     @classmethod
     def fetch_recently_change_note(cls):
         notes = Catalog.query.order_by(
-            functions.coalesce(Catalog.creation_time, Catalog.modification_time).desc()).limit(30).all()
+            functions.coalesce(Catalog.modification_time, Catalog.creation_time).desc()).limit(30).all()
         notes_list = []
         for n in notes:
             notes_list.append({
