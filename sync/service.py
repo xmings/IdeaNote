@@ -53,8 +53,10 @@ class SyncService(object):
                 not_push_change = Catalog.query.filter(Catalog.sync_status == SyncStatusEnum.need_sync.value).all()
                 logger.debug(f"waiting for pushing change log: {not_push_change}")
                 latest_version_info = self.sync_utils.load_version_info()
+                change_time = datetime.fromisoformat(latest_version_info["change_time"])
+                latest_version = int(latest_version_info["latest_version"])
+
                 if self.client_id != latest_version_info["client_id"]:
-                    latest_version = int(latest_version_info["latest_version"])
                     if local_version_info.current_version < latest_version:
                         local_version_info.latest_version = latest_version
                         local_version_info.modification_time = datetime.now()
@@ -68,35 +70,31 @@ class SyncService(object):
                         db.session.commit()
                     else:
                         # 已经处于同步状态
-                        change_time = datetime.fromisoformat(latest_version_info["change_time"])
                         if len(not_push_change)>0 and change_time + self.sync_interval * 3 < datetime.now():
                             # 如果有未push得变更并且其他client在180秒之内没有push变更，就先修改latest_version_info，等待下一轮遍历
                             latest_version_info["client_id"] = self.client_id
                             latest_version_info["change_time"] = datetime.now().isoformat()
                             self.sync_utils.dump_version_info(latest_version_info)
                 else:
-                    latest_version = int(latest_version_info["latest_version"])
-                    assert local_version_info.current_version == latest_version, "client_id相同则version必须相同"
-
-                    change_time = datetime.fromisoformat(latest_version_info["change_time"])
-                    if len(not_push_change)>0 and change_time + self.sync_interval * 1.5 < datetime.now():
-                        # 如果latest_version_info中的client是自己，但chnage_time太久远，先更新change_time，等待下一轮遍历
-                        latest_version_info["change_time"] = datetime.now().isoformat()
-                        self.sync_utils.dump_version_info(latest_version_info)
-                    else:
-                        for note in not_push_change:
-                            # 如果latest_version_info中的client是自己，change_time在self.sync_interval内，并且有未提交的变更，就直接push
-                            latest_version += 1
-                            self.push_change(note.id, latest_version)
-
-                            latest_version_info["latest_version"] = latest_version
+                    if len(not_push_change)>0:
+                        if change_time + self.sync_interval * 1.5 < datetime.now():
+                            # 如果latest_version_info中的client是自己，但chnage_time太久远，先更新change_time，等待下一轮遍历
                             latest_version_info["change_time"] = datetime.now().isoformat()
                             self.sync_utils.dump_version_info(latest_version_info)
+                        else:
+                            for note in not_push_change:
+                                # 如果latest_version_info中的client是自己，change_time在self.sync_interval内，并且有未提交的变更，就直接push
+                                latest_version += 1
+                                self.push_change(note.id, latest_version)
 
-                            local_version_info.current_version = latest_version
-                            local_version_info.latest_version = latest_version
-                            local_version_info.modification_time = datetime.now()
-                            db.session.commit()
+                                latest_version_info["latest_version"] = latest_version
+                                latest_version_info["change_time"] = datetime.now().isoformat()
+                                self.sync_utils.dump_version_info(latest_version_info)
+
+                                local_version_info.current_version = latest_version
+                                local_version_info.latest_version = latest_version
+                                local_version_info.modification_time = datetime.now()
+                                db.session.commit()
             except Exception as e:
                 logger.error(e)
                 logger.error(traceback.format_exc())
@@ -142,7 +140,7 @@ class SyncService(object):
         note_info["client_id"] = self.client_id
         note_info["version"] = version
         note_info["timestamp"] = datetime.now()
-        note_info["status"] = NoteStatusEnum(note.status).name
+        note_info["status"] = note.status
         self.sync_utils.dump_note_info(note_info)
         note.sync_status = SyncStatusEnum.has_sync.value # 标记未同步状态
         db.session.commit()

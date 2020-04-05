@@ -9,7 +9,7 @@ from datetime import datetime
 from app import app
 from flask import session
 from sqlalchemy.sql import functions
-from common import SyncStatusEnum, NoteStatusEnum, PasswordStatusEnum
+from common import SyncStatusEnum, NoteStatusEnum, PasswordStatusEnum, status_text_mapping
 
 class NoteService(object):
     catalog_root_id = 0
@@ -160,14 +160,6 @@ class NoteService(object):
         notes = Catalog.query.order_by(
             functions.coalesce(Catalog.creation_time, Catalog.modification_time).desc()).limit(30).all()
         notes_list = []
-        status_text_mapping = {
-            NoteStatusEnum.create.value: "新建笔记",
-            NoteStatusEnum.update_title.value: "更新标题",
-            NoteStatusEnum.update_content.value: "更新内容",
-            NoteStatusEnum.update_lock.value: "更新密码",
-            NoteStatusEnum.update_position.value: "更新顺序",
-            NoteStatusEnum.delete.value: "删除笔记"
-        }
         for n in notes:
             notes_list.append({
                 "id": n.id,

@@ -10,6 +10,7 @@ import socket
 import pickle
 from datetime import datetime, timedelta
 from sync.sync_utils.base_sync_utils import BaseSyncUtils
+from common import status_text_mapping
 
 
 class NetDiskSyncUtils(BaseSyncUtils):
@@ -17,6 +18,13 @@ class NetDiskSyncUtils(BaseSyncUtils):
         self.work_dir = work_dir
         self.version_info_file = os.path.join(self.work_dir, "version_info.json")
         self.note_info_file_suffix = ".note"
+
+    def is_online(self):
+        try:
+            socket.getaddrinfo("www.baidu.com", 80)
+        except:
+            return False
+        return True
 
     def init_version_info(self):
         with open(self.version_info_file, "w", encoding="utf8") as f:
@@ -84,6 +92,7 @@ class NetDiskSyncUtils(BaseSyncUtils):
                 "note_id": note.get("id"),
                 "filename": filename,
                 "title": note.get("title"),
+                "status": status_text_mapping.get(note.get("status")),
                 "from_client": note.get("client_id"),
                 "timestamp": note.get("timestamp")
             })

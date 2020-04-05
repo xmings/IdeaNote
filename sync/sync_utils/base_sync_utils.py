@@ -9,6 +9,10 @@ from abc import ABC, abstractmethod
 
 class BaseSyncUtils(ABC):
     @abstractmethod
+    def is_online(self):
+        pass
+
+    @abstractmethod
     def init_version_info(self):
         pass
 

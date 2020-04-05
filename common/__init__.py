@@ -6,9 +6,11 @@
 from enum import Enum
 from common.utils import conf, timestamp_from_str, timestamp_to_str, timestamp_max, fetch_logger, Resp
 
+
 class SyncStatusEnum(Enum):
     has_sync = 1
     need_sync = 2
+
 
 class NoteStatusEnum(Enum):
     create = 1
@@ -24,10 +26,20 @@ class PasswordStatusEnum(Enum):
     no_password = 0
     has_password = 1
 
+
 class Result(object):
     def __init__(self, status, content=None):
         self.status = status
         self.content = content
 
+
+status_text_mapping = {
+    NoteStatusEnum.create.value: "新建笔记",
+    NoteStatusEnum.update_title.value: "更新标题",
+    NoteStatusEnum.update_content.value: "更新内容",
+    NoteStatusEnum.update_lock.value: "更新密码",
+    NoteStatusEnum.update_position.value: "更新顺序",
+    NoteStatusEnum.delete.value: "删除笔记"
+}
 
 __all__ = ("Result", "conf", "timestamp_from_str", "timestamp_to_str", "timestamp_max", "fetch_logger", "Resp")
