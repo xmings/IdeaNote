@@ -1,9 +1,10 @@
 <!--html-->
 <div class="change-history">
-    <div class="ui relaxed list" style="padding-left: 30px">
+    <div class="ui relaxed list" style="width: 80%; margin: 10px 10%;">
         {% for n in notes %}
-            <div class="item" data-note-id="{{ n.id }}">
-                <i class="file outline icon"></i>
+            <div class="ui item left floated segment
+                       {% if n.sync_status == "未同步" %} red {% else %} green {% endif %}"
+                 data-note-id="{{ n.id }}" style="padding: 10px; min-width: 60%">
                 <div class="content">
                     <a class="header">{{ n.title }}</a>
                     <div class="description" style="font-size: 12px">

@@ -13,6 +13,7 @@ from threading import Thread
 from .service import SyncService
 from .sync_utils.netdisk_sync_utils import NetDiskSyncUtils
 from .sync_utils.github_sync_utils import GithubSyncUtils
+from .model import SyncInfo
 from sync import sync
 from flask import request, current_app, Response, render_template
 
@@ -30,11 +31,12 @@ sync_thread.start()
 def fetch_sync_note_list():
     try:
         result = sync_utils.fetch_sync_note_list()
+        local_version_info = SyncInfo.query.first()
     except Exception as e:
         current_app.logger.error(e)
         traceback.print_exc()
         return Response(str(e), status=500)
-    return render_template('sync_note_list.html', note_list=result)
+    return render_template('sync_note_list.html', note_list=result, local_version_id=local_version_info.current_version)
 
 
 @sync.route("/sync/view/note")
