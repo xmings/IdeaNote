@@ -51,7 +51,7 @@ body {
 
 .left-frame {
     float: left;
-    width: 200px;
+    min-width: 150px;
 }
 
 ::-webkit-scrollbar {

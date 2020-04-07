@@ -5,7 +5,7 @@
 # @Date  : 2019/5/16
 # @Brief: 简述报表功能
 from . import core
-from flask import render_template, request, Response, jsonify, current_app, session
+from flask import render_template, request, Response, jsonify, current_app, session, redirect, url_for
 from core.service import NoteService
 from common import conf
 
@@ -59,8 +59,6 @@ def fetch_notes():
 def fetch_content():
     note_id = request.args.get('id')
     try:
-        if note_id == NoteService.catalog_root_id:
-            return render_template("change_history.html", notes=NoteService.fetch_recently_change_note())
         content = NoteService.fetch_note(note_id)
     except Exception as e:
         current_app.logger.error(e)
@@ -158,3 +156,17 @@ def fetch_recently_change():
         current_app.logger.error(e)
         return Response(str(e), status=500)
     return jsonify(notes)
+
+
+@core.route("/tool_page")
+def fetch_tool_page():
+    type = request.args.get("type")
+    try:
+        if type == "local_change_list":
+            return render_template("change_history.html", notes=NoteService.fetch_recently_change_note())
+        if type == "change_sync_list":
+            return redirect(url_for("sync.fetch_sync_note_list"))
+    except Exception as e:
+        current_app.logger.error(e)
+        return Response(str(e), status=500)
+    return Response(status=500)

@@ -383,6 +383,7 @@ class ContentArea {
             editContainer: "#editor",
             viewContainer: "#preview",
             outlineContainer: "#toc",
+            toolClassName: null,
             submitContentUri: null,
             submitImageUri: null
         }, options);
@@ -390,8 +391,10 @@ class ContentArea {
         this.editContainer = $(options.editContainer).get(0);
         this.viewContainer = $(options.viewContainer);
         this.outlineContainer = $(options.outlineContainer);
+        this.toolClassName = $(options.toolClassName);
         this.submitContentUri = options.submitContentUri;
         this.submitImageUri = options.submitImageUri;
+        this.toolPageUri = options.toolPageUri;
         this.currentNoteId = null;
         this.splitter1 = null;
         this.splitter2 = null;
@@ -511,6 +514,18 @@ class ContentArea {
             }
 
         });
+
+        this.toolClassName.click(e => {
+            $.ajax({
+                url: this.toolPageUri,
+                data: {"type": $(e.target).attr("data-tool-type")},
+                dataType: "html",
+                success: e => {
+                    console.log(e);
+                    this.viewContainer.html(e);
+                }
+            })
+        })
 
     }
 

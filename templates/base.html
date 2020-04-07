@@ -34,6 +34,7 @@
         <div class="ui top attached tabular menu">
             <a class="active item" data-tab="catalog">目录</a>
             <a class="item" data-tab="outline">大纲</a>
+            <a class="item" data-tab="tool">工具</a>
         </div>
 
         <div class="ui bottom attached active tab segment" data-tab="catalog" style="padding-left: 0">
@@ -42,6 +43,11 @@
         <div class="ui bottom attached tab segment" data-tab="outline">
             <ol class="ui list" id="toc" data-toc="content" data-toc-headings="headings"></ol>
         </div>
+        <div class="ui bottom attached tab segment" data-tab="tool">
+            <button class="ui basic button floated center ideanote-tool" data-tool-type="local_change_list" style="width: 80%; margin-bottom: 5px">本地修改记录 </button>
+            <button class="ui basic button ideanote-tool" data-tool-type="change_sync_list" style="width: 80%; margin-bottom: 5px">变更同步记录 </button>
+        </div>
+
     </div>
     <div class="center-frame" id="center-frame">
         <div class="editing">

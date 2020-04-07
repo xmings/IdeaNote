@@ -41,8 +41,10 @@
             editContainer: "#editor",
             viewContainer: "#preview",
             outlineContainer: "#toc",
+            toolClassName: ".ideanote-tool",
             submitContentUri: "{{ url_for('core.update_note') }}",
-            submitImageUri: "{{ url_for('core.upload_image') }}"
+            submitImageUri: "{{ url_for('core.upload_image') }}",
+            toolPageUri: "{{ url_for('core.fetch_tool_page') }}"
         });
 
         contentArea.initWindowSplit("#workspace-ui", "#center-frame");
