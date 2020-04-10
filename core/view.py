@@ -170,3 +170,15 @@ def fetch_tool_page():
         current_app.logger.error(e)
         return Response(str(e), status=500)
     return Response(status=500)
+
+
+@core.route("/note/sync", methods=["POST"])
+def sync_note():
+    note_id = request.form.get("id")
+    with_children = request.form.get("with_children")
+    try:
+        NoteService.sync_note(note_id, int(with_children))
+    except Exception as e:
+        current_app.logger.error(e)
+        return Response(str(e), status=500)
+    return Response(status=200)

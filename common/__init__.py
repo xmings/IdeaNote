@@ -19,6 +19,7 @@ class NoteStatusEnum(Enum):
     update_position = 4
     update_lock = 5
     need_merge = 6
+    manual_sync = 7
     delete = -1
 
 
@@ -39,6 +40,7 @@ status_text_mapping = {
     NoteStatusEnum.update_content.value: "更新内容",
     NoteStatusEnum.update_lock.value: "更新密码",
     NoteStatusEnum.update_position.value: "更新顺序",
+    NoteStatusEnum.manual_sync.value: "手工同步",
     NoteStatusEnum.delete.value: "删除笔记"
 }
 

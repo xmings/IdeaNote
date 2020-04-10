@@ -52,6 +52,7 @@ class Catalog {
             updateNoteUri: null,
             dropNoteUri: null,
             addNoteUri: null,
+            syncUri: null,
             contentArea: null
         }, options);
         this.treeContainer = $(options.treeContainer);
@@ -66,6 +67,7 @@ class Catalog {
         this.authUri = options.authUri;
         this.needAuthUri = options.needAuthUri;
         this.toggleNoteLockUri = options.toggleNoteLock;
+        this.syncUri = options.syncUri;
         this.attribution = {
             'core': {
                 'data': [],
@@ -235,6 +237,54 @@ class Catalog {
                                     }
                                 }
                             })
+                        }
+                    },
+                    'sync': {
+                        'label': "同步该笔记",
+                        'icon': 'sync icon',
+                        'separator_after': true,
+                        'action': data => {
+                            let node = this.treeObj.get_node(data.reference);
+                            $.ajax({
+                                url: this.syncUri,
+                                data: {
+                                    id: node.id,
+                                    with_children: 0
+                                },
+                                type: 'POST',
+                                success: e => {
+                                    messageBox.show("笔记《"+ node.text + "》同步成功.")
+                                },
+                                error: XMLHttpRequest => {
+                                    messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
+                                }
+
+                            });
+
+                        }
+                    },
+                    'sync_with_children': {
+                        'label': "同步笔记树",
+                        'icon': 'sync icon',
+                        'separator_after': true,
+                        'action': data => {
+                            let node = this.treeObj.get_node(data.reference);
+                            $.ajax({
+                                url: this.syncUri,
+                                data: {
+                                    id: node.id,
+                                    with_children: 1
+                                },
+                                type: 'POST',
+                                success: e => {
+                                    messageBox.show("笔记《"+ node.text + "》及其子笔记同步成功.")
+                                },
+                                error: XMLHttpRequest => {
+                                    messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
+                                }
+
+                            });
+
                         }
                     },
                 }
@@ -521,7 +571,6 @@ class ContentArea {
                 data: {"type": $(e.target).attr("data-tool-type")},
                 dataType: "html",
                 success: e => {
-                    console.log(e);
                     this.viewContainer.html(e);
                 }
             })

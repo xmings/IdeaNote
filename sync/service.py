@@ -23,7 +23,7 @@ class SyncService(object):
     def __init__(self, sync_utils: BaseSyncUtils):
         self.sync_utils = sync_utils
         self.client_id = socket.gethostname()
-        self.sync_interval = timedelta(seconds=30)
+        self.sync_interval = timedelta(seconds=10)
 
     def run(self):
         """

@@ -1,14 +1,16 @@
 <div class="ui segment">
     <div class="ui vertical segment">
-        <h3 id="content">Markdown内容：</h3>
+        <h3 id="content">文本内容：</h3>
         <textarea style="width: 100%; border: none; box-shadow: none;
                          outline: none;line-height: 2em; background:transparent"
-                  rows="15" readonly aria-label="content">{{ content }}</textarea>
+                   rows="15" readonly aria-label="content">{{ content }}</textarea>
     </div>
-    {% for i in images %}
-        <div class="ui vertical segment" style="display: grid;">
-            <h3>图片{{ loop.index }}</h3>
-            <img src="data:;base64,{{ i }}" alt="">
-        </div>
-    {% endfor %}
+    <div class="images" style="overflow: auto;">
+        {% for i in images %}
+            <div class="ui vertical segment" style="display: grid">
+                <h3>图片{{ loop.index }}：</h3>
+                <img src="data:;base64,{{ i }}" alt="" width="100%">
+            </div>
+        {% endfor %}
+    </div>
 </div>

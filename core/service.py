@@ -191,6 +191,22 @@ class NoteService(object):
         return ((zlib.decompress(i.image), i.mime_type) for i in imgs)
 
     @classmethod
+    def sync_note(cls, note_id, with_children=0):
+        note = Catalog.query.filter_by(id=note_id).first()
+        sync_notes = [note]
+        while sync_notes:
+            note = sync_notes.pop(0)
+            if with_children==1:
+                children = Catalog.query.filter_by(parent_id=note.id).all()
+                sync_notes += list(children)
+
+            note.sync_status = SyncStatusEnum.need_sync.value
+            note.status = NoteStatusEnum.manual_sync.value
+            note.modification_time = datetime.now()
+
+        db.session.commit()
+
+    @classmethod
     def translate_text(cls, text):
         r = requests.post("http://fy.iciba.com/ajax.php?a=fy", data={"f": "auto", "t": "auto", "w": text})
         return r.json()
