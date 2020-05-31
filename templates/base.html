@@ -22,43 +22,112 @@
 </div>
 
 <div class="ui floating auth-frame" id="auth-frame">
-    <div class="ui fluid action input">
-        <input type="password" data-auth-code="" placeholder="请输入密码..." autocomplete="off">
+    <form class="ui fluid action input">
+        <input type="password" data-auth-code="" placeholder="请输入密码..." autocomplete="off" aria-label="abc">
         <div class="ui button teal">验证</div>
+    </form>
+</div>
+
+<i class="ui tasks big circular inverted teal icon top attached url-button" style=""></i>
+<div class="ui right vertical wide sidebar url-bar" style="">
+    <div class="ui segment">
+        <img class="ui circular image floated left" 
+             src="http://www.ddpool.cn/favicon.ico" 
+             data-src="http://www.ddpool.cn/article/13297.html" alt="">
+        基于javascript实现按圆形排列DIV元素(三)_JavaScript_编程脚本学习网
     </div>
 </div>
 
 {% block content %}
-<div class="workspace-ui" id="workspace-ui">
-    <div class="left-frame">
-        <div class="ui top attached tabular menu">
-            <a class="active item" data-tab="catalog">目录</a>
-            <a class="item" data-tab="outline">大纲</a>
-            <a class="item" data-tab="tool">工具</a>
-        </div>
+    <div class="workspace-ui pusher" id="workspace-ui">
+        <div class="left-frame">
+            <div class="ui top attached tabular menu">
+                <a class="active item" data-tab="catalog">目录</a>
+                <a class="item" data-tab="outline">大纲</a>
+                <a class="item" data-tab="tool">工具</a>
+            </div>
 
-        <div class="ui bottom attached active tab segment" data-tab="catalog" style="padding-left: 0">
-            <ul id="catalog-tree" class="catalog-tree"></ul>
-        </div>
-        <div class="ui bottom attached tab segment" data-tab="outline">
-            <ol class="ui list" id="toc" data-toc="content" data-toc-headings="headings"></ol>
-        </div>
-        <div class="ui bottom attached tab segment" data-tab="tool">
-            <button class="ui basic button floated center ideanote-tool" data-tool-type="local_change_list" style="width: 80%; margin-bottom: 5px">本地修改记录 </button>
-            <button class="ui basic button ideanote-tool" data-tool-type="change_sync_list" style="width: 80%; margin-bottom: 5px">变更同步记录 </button>
-        </div>
+            <div class="ui bottom attached active tab segment" data-tab="catalog" style="padding-left: 0">
+                <ul id="catalog-tree" class="catalog-tree"></ul>
+            </div>
+            <div class="ui bottom attached tab segment" data-tab="outline">
+                <ol class="ui list" id="toc" data-toc="content" data-toc-headings="headings"></ol>
+            </div>
+            <div class="ui bottom attached tab segment" data-tab="tool">
+                <button class="ui basic button floated center ideanote-tool" data-tool-type="local_change_list"
+                        style="width: 80%; margin-bottom: 5px">本地修改记录
+                </button>
+                <button class="ui basic button ideanote-tool" data-tool-type="change_sync_list"
+                        style="width: 80%; margin-bottom: 5px">变更同步记录
+                </button>
+                <button class="ui basic button task-tool" data-tool-type="task_list"
+                        style="width: 80%; margin-bottom: 5px">待办清单
+                </button>
+            </div>
 
-    </div>
-    <div class="center-frame" id="center-frame">
-        <div class="editing">
-            {% block centerframe %}{% endblock %}
         </div>
-        <div class="preview" id="preview"></div>
+        <div class="center-frame" id="center-frame">
+            <div class="editing">
+                {% block centerframe %}{% endblock %}
+            </div>
+            <div class="preview" id="preview"></div>
+        </div>
     </div>
-</div>
 {% endblock %}
 
 <div class="footer"></div>
+<script>
+    $(document).ready(function () {
+        let urlButton = $('.url-button'),
+            rightSidebar = $('.ui.right.sidebar'),
+            urlSegment = $('.url-bar>.segment'),
+            urlButtonDragStart = false,
+            hasDragDrop = false,
+            lastMousePos;
+
+        rightSidebar.sidebar({
+            transition: "overlay",
+            dimPage: false
+        });
+
+        urlButton.mousedown((e) => {
+            urlButtonDragStart = true;
+            lastMousePos = {
+                "x": e.clientX,
+                "y": e.clientY
+            };
+        });
+
+        urlButton.mouseup((e) => {
+            if (!hasDragDrop) rightSidebar.sidebar('toggle');
+        });
+
+        urlSegment.click(function (e) {
+            let url = $(this).find("img").attr("data-src");
+            window.open(url, '_blank').location;
+        });
+
+        $(document).mousemove((e) => {
+            if (urlButtonDragStart) {
+                hasDragDrop = true;
+                let pos = urlButton.position();
+                urlButton.css("left", pos.left + (e.clientX - lastMousePos.x) + "px");
+                urlButton.css("top", pos.top + (e.clientY - lastMousePos.y) + "px");
+                lastMousePos.x = e.clientX;
+                lastMousePos.y = e.clientY;
+            }
+        });
+
+        $(document).mouseup((e) => {
+            if (urlButtonDragStart) {
+                urlButtonDragStart = false;
+                hasDragDrop = false;
+            }
+
+        })
+
+    });
+</script>
 {% block jsdefineafter %}{% endblock %}
 </body>
 </html>

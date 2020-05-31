@@ -112,8 +112,8 @@ body {
     font-family: inherit;
 }
 
-.preview h1,.preview h2,.preview h3,
-.preview h4,.preview h5,.preview h6 {
+.preview h1, .preview h2, .preview h3,
+.preview h4, .preview h5, .preview h6 {
     padding-bottom: 0;
     margin-bottom: 0.5em;
     margin-top: 0.5em;
@@ -223,6 +223,7 @@ code, kbd, samp {
 #toc a:focus {
     color: rgba(0, 0, 0, 0.23);
 }
+
 .auth-frame,
 .flash-message {
     z-index: 100;
@@ -236,10 +237,11 @@ code, kbd, samp {
     font-family: inherit;
     margin: 0 !important;
     background-color: #e1f1f1f0 !important;
-    -webkit-box-shadow: 0 0 0 1px rgba(34,36,38,.22) inset, 0 2px 4px 0 rgba(34,36,38,.12), 0 2px 10px 0 rgba(34,36,38,.15) !important;
-    box-shadow: 5px 5px 8px #888888!important;
+    -webkit-box-shadow: 0 0 0 1px rgba(34, 36, 38, .22) inset, 0 2px 4px 0 rgba(34, 36, 38, .12), 0 2px 10px 0 rgba(34, 36, 38, .15) !important;
+    box-shadow: 5px 5px 8px #888888 !important;
 }
-.flash-message>.content {
+
+.flash-message > .content {
     height: 36px !important;
     line-height: 36px !important;
     font-size: 1.15em;
@@ -326,6 +328,39 @@ code, kbd, samp {
     padding: 0;
 }
 
-#toc li:before{
+#toc li:before {
     position: relative !important;
+}
+
+.ui.url-button,
+.ui.attached.top.url-button {
+    position: absolute;
+    right: 0;
+    top: 10px;
+    z-index: 1000;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+}
+
+.ui.sidebar.url-bar,
+.ui.right.visible.sidebar.url-bar {
+    background: transparent;
+    box-shadow: none;
+    padding: 10px;
+    padding-right: 0
+}
+
+.ui.sidebar.url-bar>.ui.segment {
+    white-space: nowrap;
+    line-height: 32px;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    border-bottom-left-radius: 50px;!important;
+    border-top-left-radius: 50px;!important;
+}
+
+.ui.sidebar.url-bar>.ui.segment>image.ui.image{
+    width: 30px; !important;
+    height: 30px; !important;
 }
