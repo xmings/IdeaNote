@@ -3,16 +3,16 @@
 # @File  : __init__.py.py
 # @Author: wangms
 # @Date  : 2019/7/23
-from enum import Enum
+from enum import IntEnum
 from common.utils import conf, timestamp_from_str, timestamp_to_str, timestamp_max, fetch_logger, Resp
 
 
-class SyncStatusEnum(Enum):
+class SyncStatusEnum(IntEnum):
     has_sync = 1
     need_sync = 2
 
 
-class NoteStatusEnum(Enum):
+class NoteStatusEnum(IntEnum):
     create = 1
     update_title = 2
     update_content = 3
@@ -23,7 +23,7 @@ class NoteStatusEnum(Enum):
     delete = -1
 
 
-class PasswordStatusEnum(Enum):
+class PasswordStatusEnum(IntEnum):
     no_password = 0
     has_password = 1
 
