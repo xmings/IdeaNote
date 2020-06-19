@@ -146,6 +146,7 @@
     width: 9em;
     font-size: 1em;
     font-family: "Microsoft Yahei", "Ubuntu Mono", sans-serif;
+    z-index: 100;
 }
 
 .vakata-context,
