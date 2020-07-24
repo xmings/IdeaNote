@@ -160,6 +160,11 @@ code, kbd, samp {
     width: fit-content;
     font-weight: normal;
     min-width: 30%;
+    max-width: 100%;
+    word-wrap: break-word;
+    word-break:break-all;
+    line-break: inherit;
+    display:block;
 }
 
 .preview hr {
@@ -364,3 +369,4 @@ code, kbd, samp {
     width: 30px; !important;
     height: 30px; !important;
 }
+

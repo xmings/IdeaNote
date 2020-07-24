@@ -643,7 +643,8 @@ class ContentArea {
 
         this.viewContainer.html(
             marked(content, {
-                highlight: function (code) {
+                highlight: function (code, language) {
+                    if (["java", "python", "bash", "shell", "c", "sql", "js"].indexOf(language.toLowerCase())<0) return code;
                     return hljs.highlightAuto(code).value;
                 },
                 pedantic: false,
