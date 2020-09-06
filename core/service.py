@@ -197,7 +197,8 @@ class NoteService(object):
         while sync_notes:
             note = sync_notes.pop(0)
             if with_children==1:
-                children = Catalog.query.filter(Catalog.parent_id==note.id, Catalog.status!=NoteStatusEnum.delete.value).all()
+                children = Catalog.query.filter(Catalog.parent_id==note.id,
+                                                Catalog.status!=NoteStatusEnum.delete.value).all()
                 sync_notes += list(children)
 
             note.sync_status = SyncStatusEnum.need_sync.value

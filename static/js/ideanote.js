@@ -253,7 +253,7 @@ class Catalog {
                                 },
                                 type: 'POST',
                                 success: e => {
-                                    messageBox.show("笔记《"+ node.text + "》同步成功.")
+                                    messageBox.show("笔记《" + node.text + "》同步成功.")
                                 },
                                 error: XMLHttpRequest => {
                                     messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
@@ -277,7 +277,7 @@ class Catalog {
                                 },
                                 type: 'POST',
                                 success: e => {
-                                    messageBox.show("笔记《"+ node.text + "》及其子笔记同步成功.")
+                                    messageBox.show("笔记《" + node.text + "》及其子笔记同步成功.")
                                 },
                                 error: XMLHttpRequest => {
                                     messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
@@ -299,7 +299,7 @@ class Catalog {
                 },
                 success: content => {
                     let item = localStorage.getItem("ideanote-" + data.node.id);
-                    if (typeof item === "string" ) {
+                    if (typeof item === "string") {
                         content = JSON.parse(item).content;
                     }
                     this.contentArea.switchDoc(data.node.id, content);
@@ -483,45 +483,7 @@ class ContentArea {
             }));
         });
 
-        let lastPostTimeStr = null;
-        setInterval(() => {
-            let minChangeTimeNode = null;
-            for (let i = 0; i < localStorage.length; i++) {
-                let key = localStorage.key(i);
-                if (key.startsWith("ideanote")) {
-                    let node = JSON.parse(localStorage.getItem(key));
-                    if (minChangeTimeNode === null) {
-                        minChangeTimeNode = node;
-                    } else {
-                        if (lastPostTimeStr === null || node.changeTime > lastPostTimeStr) {
-                            minChangeTimeNode = node.changeTime < minChangeTimeNode.changeTime ? node : minChangeTimeNode;
-                        }
-                    }
-                }
-            }
-            if (minChangeTimeNode !== null && (lastPostTimeStr === null || minChangeTimeNode.changeTime > lastPostTimeStr)) {
-                $.ajax({
-                    url: this.submitContentUri,
-                    type: "POST",
-                    data: {
-                        id: minChangeTimeNode.id,
-                        type: "content",
-                        content: minChangeTimeNode.content,
-                    },
-                    success: () => {
-                        lastPostTimeStr = minChangeTimeNode.changeTime;
-                        // 清除在localStorage中存在但并没有打开的note
-                        if (!(minChangeTimeNode.id in this.docBuffer)) {
-                            localStorage.removeItem('ideanote-' + minChangeTimeNode.id);
-                        }
-                    },
-                    error: XMLHttpRequest => {
-                        messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
-                    }
-                });
-            }
-        }, 5000);
-
+        setInterval(() => this.saveChangedNote(), 5000);
 
         this.editorObj.on('scroll', e => {
             let scrollRate = this.editorObj.getScrollInfo().top / this.editorObj.getScrollInfo().height;
@@ -565,6 +527,11 @@ class ContentArea {
 
         });
 
+        this.editorObj.on("blur", (instance, event)=>{
+            this.saveChangedNote();
+            console.log("go");
+        });
+
         this.toolClassName.click(e => {
             $.ajax({
                 url: this.toolPageUri,
@@ -574,7 +541,34 @@ class ContentArea {
                     this.viewContainer.html(e);
                 }
             })
-        })
+        });
+
+    }
+
+    saveChangedNote() {
+        for (let i = 0; i < localStorage.length; i++) {
+            let key = localStorage.key(i);
+            if (key.startsWith("ideanote")) {
+                let text = localStorage.getItem(key);
+                let note = JSON.parse(text);
+                $.ajax({
+                    url: this.submitContentUri,
+                    type: "POST",
+                    data: {
+                        id: note.id,
+                        type: "content",
+                        content: note.content,
+                    },
+                    success: () => {
+                        if (text === localStorage.getItem(key)) localStorage.removeItem(key);
+                    },
+                    error: XMLHttpRequest => {
+                        messageBox.show(XMLHttpRequest.responseText || XMLHttpRequest.statusText, "negative");
+                    }
+                });
+            }
+        }
+
 
     }
 
@@ -639,12 +633,16 @@ class ContentArea {
 
     previewContent(content) {
         //content = content.replace(/\n\n/g, "\n<br>");
-        if (content.startsWith("<!--html-->")){this.viewContainer.html(content); return}
+        if (content.startsWith("<!--html-->")) {
+            this.viewContainer.html(content);
+            return
+        }
 
         this.viewContainer.html(
             marked(content, {
                 highlight: function (code, language) {
-                    if (["java", "python", "bash", "shell", "c", "sql", "js"].indexOf(language.toLowerCase())<0) return code;
+                    if (typeof (language) === "undefined") return code;
+                    if (["java", "python", "bash", "shell", "c", "sql", "js"].indexOf(language.toLowerCase()) < 0) return code;
                     return hljs.highlightAuto(code).value;
                 },
                 pedantic: false,
