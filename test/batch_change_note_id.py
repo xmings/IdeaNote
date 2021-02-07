@@ -3,7 +3,7 @@
 # @File  : batch_change_note_id.py
 # @Author: wangms
 # @Date  : 2019/8/2
-# @Brief: 简述报表功能
+
 from core.model import Catalog, db
 from uuid import uuid1
 

@@ -3,7 +3,7 @@
 # @File  : load_note_content_to_db.py
 # @Author: wangms
 # @Date  : 2019/8/1
-# @Brief: 简述报表功能
+
 import os
 import sqlite3
 import zlib

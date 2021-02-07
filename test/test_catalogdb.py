@@ -3,7 +3,7 @@
 # @File  : test_catalogdb.py
 # @Author: wangms
 # @Date  : 2019/5/10
-# @Brief: 简述报表功能
+
 
 from catalogdb import DBOperator
 from catalogdb.model import Item,User

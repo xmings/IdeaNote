@@ -3,7 +3,7 @@
 # @File  : test_local_metadata.py
 # @Author: wangms
 # @Date  : 2019/8/1
-# @Brief: 简述报表功能
+
 from dataclasses import dataclass
 import sqlite3
 

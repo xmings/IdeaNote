@@ -11,8 +11,10 @@ from flask import session
 from sqlalchemy.sql import functions
 from common import SyncStatusEnum, NoteStatusEnum, PasswordStatusEnum, status_text_mapping
 
+
 class NoteService(object):
     catalog_root_id = 0
+
     @classmethod
     def create_note(self, title, parent_id, content, **kwargs):
         content = zlib.compress(content.encode("utf8"))
@@ -41,9 +43,9 @@ class NoteService(object):
         note = Catalog.query.filter_by(id=note_id).first()
         node_seq = 0
         for child in Catalog.query.filter(
-                Catalog.parent_id==parent_id,
+                Catalog.parent_id == parent_id,
                 Catalog.status != NoteStatusEnum.delete.value,
-                Catalog.id!=note.id
+                Catalog.id != note.id
         ).order_by(Catalog.seq_no.asc()).all():
             if node_seq == index:
                 # 为note留出该位置
@@ -109,7 +111,8 @@ class NoteService(object):
     @classmethod
     def fetch_catalog_tree(cls):
         root = Catalog.query.filter(Catalog.status != NoteStatusEnum.delete.value, Catalog.parent_id == "self").first()
-        notes = Catalog.query.filter(Catalog.status != NoteStatusEnum.delete.value).order_by(Catalog.parent_id, Catalog.seq_no).all()
+        notes = Catalog.query.filter(Catalog.status != NoteStatusEnum.delete.value).order_by(Catalog.parent_id,
+                                                                                             Catalog.seq_no).all()
         notes_dict = {}
         for n in notes:
             notes_dict[n.id] = {
@@ -196,9 +199,9 @@ class NoteService(object):
         sync_notes = [note]
         while sync_notes:
             note = sync_notes.pop(0)
-            if with_children==1:
-                children = Catalog.query.filter(Catalog.parent_id==note.id,
-                                                Catalog.status!=NoteStatusEnum.delete.value).all()
+            if with_children == 1:
+                children = Catalog.query.filter(Catalog.parent_id == note.id,
+                                                Catalog.status != NoteStatusEnum.delete.value).all()
                 sync_notes += list(children)
 
             note.sync_status = SyncStatusEnum.need_sync.value

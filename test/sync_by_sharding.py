@@ -3,7 +3,7 @@
 # @File  : sync_by_sharding.py
 # @Author: wangms
 # @Date  : 2019/8/6
-# @Brief: 简述报表功能
+
 import tempfile
 import os
 import zlib

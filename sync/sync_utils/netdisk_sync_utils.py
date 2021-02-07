@@ -3,7 +3,7 @@
 # @File  : netdisk_sync_utils.py
 # @Author: wangms
 # @Date  : 2019/8/8
-# @Brief: 简述报表功能
+
 import json
 import os
 import socket

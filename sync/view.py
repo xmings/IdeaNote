@@ -3,7 +3,7 @@
 # @File  : view.py
 # @Author: wangms
 # @Date  : 2019/12/20
-# @Brief: 简述报表功能
+
 import pickle
 import zlib
 import traceback

@@ -8,6 +8,7 @@ from uuid import uuid1
 from datetime import datetime
 from common import NoteStatusEnum, SyncStatusEnum, PasswordStatusEnum
 
+
 class Catalog(db.Model):
     __tablename__ = "t_catalog"
     id = db.Column(db.String, primary_key=True, default=lambda: uuid1().hex)

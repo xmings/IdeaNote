@@ -11,15 +11,18 @@ from logging.handlers import TimedRotatingFileHandler
 import yaml
 import json
 
+
 def timestamp_from_str(s):
     if s:
         return datetime.fromisoformat(s)
     return None
 
+
 def timestamp_to_str(ts):
     if ts:
         return str(ts)
     return None
+
 
 def timestamp_max(ts1, ts2):
     if ts1 is None:
@@ -27,6 +30,7 @@ def timestamp_max(ts1, ts2):
     elif ts2 is None:
         return ts1
     return max(ts1, ts2)
+
 
 class ConfigLoader(object):
     def __init__(self):
@@ -119,7 +123,10 @@ class JsonEncoderForFrontEnd(json.JSONEncoder):
             }
         return super().default(o)
 
+
 basicConfig(format=conf.log_formatter, datefmt=None)
+
+
 def fetch_logger(logger_name, log_filename):
     logger = getLogger(logger_name)
     logger.setLevel(DEBUG)

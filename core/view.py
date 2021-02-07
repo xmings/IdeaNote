@@ -3,17 +3,18 @@
 # @File  : view.py
 # @Author: wangms
 # @Date  : 2019/5/16
-# @Brief: 简述报表功能
 from . import core
 from flask import render_template, request, Response, jsonify, current_app, session, redirect, url_for
 from core.service import NoteService
 from common import conf
+
 
 @core.route("/")
 def index():
     for i in [ii for ii in session if ii.startswith('auth')]:
         session.pop(i)
     return render_template('editor.html')
+
 
 @core.route("/note/auth", methods=["POST"])
 def auth():
@@ -24,6 +25,7 @@ def auth():
 
     session[f"auth-{note_id}"] = 1
     return Response(status=200)
+
 
 @core.route("/note/toggle/lock", methods=["POST"])
 def toggle_note_lock():
@@ -36,6 +38,7 @@ def toggle_note_lock():
         return Response(str(e), status=500)
     return Response(status=200)
 
+
 @core.route("/note/need/lock")
 def need_auth_note():
     note_id = request.args.get("id")
@@ -44,6 +47,7 @@ def need_auth_note():
     except Exception as e:
         return Response(str(e), status=500)
     return jsonify({"status": status})
+
 
 @core.route('/notes', methods=['GET'])
 def fetch_notes():
@@ -71,7 +75,7 @@ def add_note():
     title = request.form.get('title')
     pid = request.form.get('pid')
     try:
-        note_id = NoteService.create_note(title=title,parent_id=pid, content="")
+        note_id = NoteService.create_note(title=title, parent_id=pid, content="")
     except Exception as e:
         current_app.logger.error(e)
         return Response(e, status=500)
@@ -89,7 +93,7 @@ def update_note():
         elif type == "position":
             parent_id = request.form.get('parent_id')
             index = request.form.get('index')
-            NoteService.update_note_position(note_id=id, parent_id=parent_id,index=int(index))
+            NoteService.update_note_position(note_id=id, parent_id=parent_id, index=int(index))
         elif type == "content":
             content = request.form.get('content')
             NoteService.update_note_content(note_id=id, content=content)

@@ -3,7 +3,7 @@
 # @File  : service.py
 # @Author: wangms
 # @Date  : 2019/12/18
-# @Brief: 简述报表功能
+
 import os
 import pickle
 import socket
@@ -17,7 +17,8 @@ from .model import SyncInfo, db
 from common import fetch_logger, NoteStatusEnum, SyncStatusEnum
 from .sync_utils.base_sync_utils import BaseSyncUtils
 
-logger = fetch_logger(os.path.abspath(__file__), "sync.log")
+logger = fetch_logger(logger_name="IdeaNoteSync", log_filename="sync.log")
+
 
 class SyncService(object):
     def __init__(self, sync_utils: BaseSyncUtils):
@@ -70,13 +71,13 @@ class SyncService(object):
                         db.session.commit()
                     else:
                         # 已经处于同步状态
-                        if len(not_push_change)>0 and change_time + self.sync_interval * 3 < datetime.now():
+                        if len(not_push_change) > 0 and change_time + self.sync_interval * 3 < datetime.now():
                             # 如果有未push得变更并且其他client在180秒之内没有push变更，就先修改latest_version_info，等待下一轮遍历
                             latest_version_info["client_id"] = self.client_id
                             latest_version_info["change_time"] = datetime.now().isoformat()
                             self.sync_utils.dump_version_info(latest_version_info)
                 else:
-                    if len(not_push_change)>0:
+                    if len(not_push_change) > 0:
                         if change_time + self.sync_interval * 1.5 < datetime.now():
                             # 如果latest_version_info中的client是自己，但chnage_time太久远，先更新change_time，等待下一轮遍历
                             latest_version_info["change_time"] = datetime.now().isoformat()
@@ -104,18 +105,18 @@ class SyncService(object):
 
     def apply_change(self, note_info):
         note = pickle.loads(note_info.get("note"))
-        local_note = Catalog.query.filter(Catalog.id==note.id).first()
+        local_note = Catalog.query.filter(Catalog.id == note.id).first()
 
         if local_note and local_note.sync_status == SyncStatusEnum.need_sync.value:
             local_content = NoteService.fetch_note(note.id)
             remote_content = zlib.decompress(note.content).decode("utf8")
-            content = f"{local_content}\n{'>'*100}\n{remote_content}"
+            content = f"{local_content}\n{'>' * 100}\n{remote_content}"
             note.content = zlib.compress(content.encode("utf8"))
             note.sync_status = SyncStatusEnum.need_sync.value
             note.status = NoteStatusEnum.need_merge.value
             note.modification_time = datetime.now()
         else:
-            note.sync_status = SyncStatusEnum.has_sync.value # 标记未同步状态
+            note.sync_status = SyncStatusEnum.has_sync.value  # 标记未同步状态
 
         db.session.merge(note)
 
@@ -142,7 +143,7 @@ class SyncService(object):
         note_info["timestamp"] = datetime.now()
         note_info["status"] = note.status
         self.sync_utils.dump_note_info(note_info)
-        note.sync_status = SyncStatusEnum.has_sync.value # 标记未同步状态
+        note.sync_status = SyncStatusEnum.has_sync.value  # 标记未同步状态
         db.session.commit()
         logger.info(f"Succeed in pushing change log: <title={note.title}, version={version}>")
         return True

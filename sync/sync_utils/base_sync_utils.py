@@ -3,7 +3,7 @@
 # @File  : base_sync_utils.py
 # @Author: wangms
 # @Date  : 2019/12/19
-# @Brief: 简述报表功能
+
 from abc import ABC, abstractmethod
 
 

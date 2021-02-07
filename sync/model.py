@@ -3,8 +3,9 @@
 # @File  : model.py
 # @Author: wangms
 # @Date  : 2019/12/18
-# @Brief: 简述报表功能
+
 from app import db
+
 
 class SyncInfo(db.Model):
     __tablename__ = "t_sync_info"

@@ -3,7 +3,7 @@
 # @File  : github_sync_utils.py
 # @Author: wangms
 # @Date  : 2019/12/20
-# @Brief: 简述报表功能
+
 import requests
 import json
 import pickle
