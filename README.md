@@ -3,6 +3,9 @@ IdeaNote
 IdeaNote是一款基于WEB的集树形目录管理、`Markdown`编辑、`免费增量离线`同步等众多优秀功能于一身的开源知识管理平台。
 > IdeaNote开发语言是Python3.7 + Flask框架
 
+![DEMO](show.jpg)
+
+
 ### 一. 设计初衷
 努力把`IdeaNote`打造成一款功能强大个人知识管理**平台**，是平台而不仅仅是笔记软件。
 
